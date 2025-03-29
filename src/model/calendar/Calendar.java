@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
-import utilities.CSVExporter;
+import model.export.IDataExporter;
 import utilities.DateTimeUtil;
 import utilities.EventPropertyUpdater;
 import utilities.TimeZoneHandler;
@@ -379,8 +379,14 @@ public class Calendar implements ICalendar {
    * @throws IOException if an I/O error occurs
    */
   @Override
-  public String exportToCSV(String filePath) throws IOException {
-    return CSVExporter.exportToCSV(filePath, events);
+  public String exportData(String filePath, IDataExporter exporter) throws IOException {
+    if (filePath == null || filePath.trim().isEmpty()) {
+      throw new IllegalArgumentException("File path cannot be null or empty");
+    }
+    if (exporter == null) {
+      throw new IllegalArgumentException("Exporter cannot be null");
+    }
+    return exporter.export(filePath, events);
   }
 
   /**

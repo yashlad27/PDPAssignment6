@@ -10,6 +10,7 @@ import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
 import model.exceptions.EventNotFoundException;
 import model.exceptions.InvalidEventException;
+import model.export.IDataExporter;
 
 /**
  * Interface defining the core functionality of a calendar system.
@@ -233,16 +234,13 @@ public interface ICalendar {
   List<RecurringEvent> getAllRecurringEvents();
 
   /**
-   * Exports the calendar to a CSV file compatible with common calendar applications.
+   * Exports the calendar data using the specified exporter.
    *
-   * <p>The exported CSV includes all events (both single and recurring) with their: - Subject -
-   * Start date/time - End date/time - Description - Location - Visibility (public/private) -
-   * Recurrence information (if applicable)
-   *
-   * @param filePath The path where the CSV file should be created
-   * @return The absolute path of the created CSV file
-   * @throws IOException              if there are issues writing to the file
+   * @param filePath the path where the file should be created
+   * @param exporter the exporter to use for formatting the data
+   * @return the path of the created file
+   * @throws IOException if there are issues writing to the file
    * @throws IllegalArgumentException if filePath is null or empty
    */
-  String exportToCSV(String filePath) throws IOException;
+  String exportData(String filePath, IDataExporter exporter) throws IOException;
 }
