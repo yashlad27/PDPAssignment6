@@ -3,46 +3,56 @@ package model.event;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
  * Represents a calendar event with properties like subject, start and end times, description,
- * location, and privacy setting.
+ * location, and privacy setting. All times are stored in UTC.
  */
 public class Event {
 
   private final UUID id;
   private String subject;
-  private LocalDateTime startDateTime;
-  private LocalDateTime endDateTime;
+  private LocalDateTime startDateTime; // Stored in UTC
+  private LocalDateTime endDateTime;   // Stored in UTC
   private String description;
   private String location;
   private boolean isPublic;
   private boolean isAllDay;
+  private String timeZone; // The timezone context of the event
 
   /**
    * Constructs a new Event with the given parameters.
    *
    * @param subject       the subject/title of the event
-   * @param startDateTime the start date and time
-   * @param endDateTime   the end date and time, null if all-day event
+   * @param startDateTime the start date and time in the specified timezone
+   * @param endDateTime   the end date and time in the specified timezone, null if all-day event
    * @param description   a description of the event, can be null
    * @param location      the location of the event, can be null
    * @param isPublic      whether the event is public
+   * @param timeZone      the timezone context of the event
    */
   public Event(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-               String description, String location, boolean isPublic) {
+               String description, String location, boolean isPublic, String timeZone) {
     if (subject == null || subject.trim().isEmpty()) {
       throw new IllegalArgumentException("Event subject cannot be null or empty");
     }
     if (startDateTime == null) {
       throw new IllegalArgumentException("Start date/time cannot be null");
     }
+    if (timeZone == null) {
+      throw new IllegalArgumentException("Timezone cannot be null");
+    }
 
     this.id = UUID.randomUUID();
     this.subject = subject;
-    this.startDateTime = startDateTime;
+    this.timeZone = timeZone;
+    
+    // Convert input times to UTC for storage
+    this.startDateTime = convertToUTC(startDateTime, timeZone);
     this.description = description != null ? description : "";
     this.location = location != null ? location : "";
     this.isPublic = isPublic;
@@ -55,7 +65,7 @@ public class Event {
         throw new IllegalArgumentException("End date/time cannot be before start date/time");
       }
       this.isAllDay = false;
-      this.endDateTime = endDateTime;
+      this.endDateTime = convertToUTC(endDateTime, timeZone);
     }
   }
 
@@ -67,14 +77,15 @@ public class Event {
    * @param description a description of the event, can be null
    * @param location    the location of the event, can be null
    * @param isPublic    whether the event is public
+   * @param timeZone    the timezone context of the event
    * @return a new all-day Event
    */
   public static Event createAllDayEvent(String subject, LocalDate date, String description,
-                                        String location, boolean isPublic) {
+                                      String location, boolean isPublic, String timeZone) {
     LocalDateTime start = LocalDateTime.of(date, LocalTime.of(0, 0));
     LocalDateTime end = LocalDateTime.of(date, LocalTime.of(23, 59, 59));
 
-    Event event = new Event(subject, start, end, description, location, isPublic);
+    Event event = new Event(subject, start, end, description, location, isPublic, timeZone);
     event.isAllDay = true;
     event.date = date;
     return event;
@@ -137,42 +148,105 @@ public class Event {
   }
 
   /**
-   * Gets the start date and time of this event.
+   * Gets the start date and time in the event's timezone.
    *
-   * @return the start date and time
+   * @return the start date and time in the event's timezone
    */
   public LocalDateTime getStartDateTime() {
-    return startDateTime;
+    return convertFromUTC(startDateTime, timeZone);
   }
 
   /**
-   * Gets the end date and time of this event.
+   * Gets the end date and time in the event's timezone.
    *
-   * @return the end date and time
+   * @return the end date and time in the event's timezone
    */
   public LocalDateTime getEndDateTime() {
-    return endDateTime;
+    return convertFromUTC(endDateTime, timeZone);
   }
 
   /**
-   * Sets the end date and time of this event.
+   * Sets the start date and time in the event's timezone.
    *
-   * @param endDateTime the new end date and time
-   * @throws IllegalArgumentException if endDateTime is before startDateTime
+   * @param startDateTime the new start date and time in the event's timezone
+   */
+  public void setStartDateTime(LocalDateTime startDateTime) {
+    if (startDateTime == null) {
+      throw new IllegalArgumentException("Start date/time cannot be null");
+    }
+    LocalDateTime utcStart = convertToUTC(startDateTime, timeZone);
+    if (this.endDateTime != null && utcStart.isAfter(this.endDateTime)) {
+      throw new IllegalArgumentException("Start date/time cannot be after end date/time");
+    }
+    this.startDateTime = utcStart;
+  }
+
+  /**
+   * Sets the end date and time in the event's timezone.
+   *
+   * @param endDateTime the new end date and time in the event's timezone
    */
   public void setEndDateTime(LocalDateTime endDateTime) {
     if (endDateTime == null) {
       // Converting to all-day event
       this.isAllDay = true;
-      this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(),
-              LocalTime.of(23, 59, 59));
+      this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(), LocalTime.of(23, 59, 59));
     } else {
-      if (endDateTime.isBefore(startDateTime)) {
+      LocalDateTime utcEnd = convertToUTC(endDateTime, timeZone);
+      if (utcEnd.isBefore(this.startDateTime)) {
         throw new IllegalArgumentException("End date/time cannot be before start date/time");
       }
-      this.endDateTime = endDateTime;
+      this.endDateTime = utcEnd;
       this.isAllDay = false;
     }
+  }
+
+  /**
+   * Gets the event's timezone.
+   *
+   * @return the event's timezone
+   */
+  public String getTimeZone() {
+    return timeZone;
+  }
+
+  /**
+   * Sets the event's timezone.
+   *
+   * @param timeZone the new timezone
+   */
+  public void setTimeZone(String timeZone) {
+    if (timeZone == null) {
+      throw new IllegalArgumentException("Timezone cannot be null");
+    }
+    // Convert the stored UTC times to the new timezone
+    this.startDateTime = convertToUTC(convertFromUTC(this.startDateTime, this.timeZone), timeZone);
+    this.endDateTime = convertToUTC(convertFromUTC(this.endDateTime, this.timeZone), timeZone);
+    this.timeZone = timeZone;
+  }
+
+  /**
+   * Converts a LocalDateTime from a specific timezone to UTC.
+   *
+   * @param dateTime the LocalDateTime to convert
+   * @param timeZone the source timezone
+   * @return the UTC LocalDateTime
+   */
+  private LocalDateTime convertToUTC(LocalDateTime dateTime, String timeZone) {
+    ZonedDateTime zonedDateTime = dateTime.atZone(ZoneId.of(timeZone));
+    return zonedDateTime.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime();
+  }
+
+  /**
+   * Converts a UTC LocalDateTime to a specific timezone.
+   *
+   * @param dateTime the UTC LocalDateTime to convert
+   * @param timeZone the target timezone
+   * @return the LocalDateTime in the target timezone
+   */
+  private LocalDateTime convertFromUTC(LocalDateTime dateTime, String timeZone) {
+    ZonedDateTime zonedDateTime = dateTime.atZone(ZoneId.of("UTC"));
+    return zonedDateTime.withZoneSameInstant(ZoneId.of(timeZone)).toLocalDateTime();
   }
 
   /**
@@ -241,30 +315,6 @@ public class Event {
    */
   public void setLocation(String location) {
     this.location = location;
-  }
-
-  /**
-   * Sets the start date and time of this event.
-   *
-   * @param startDateTime the new start date and time
-   */
-  public void setStartDateTime(LocalDateTime startDateTime) {
-    if (startDateTime == null) {
-      throw new IllegalArgumentException("Start date/time cannot be null");
-    }
-    if (this.endDateTime != null && startDateTime.isAfter(this.endDateTime)) {
-      throw new IllegalArgumentException("Start date/time cannot be after end date/time");
-    }
-    this.startDateTime = startDateTime;
-  }
-
-  /**
-   * Sets whether this event is public.
-   *
-   * @param isPublic true if the event is public, false otherwise
-   */
-  public void setPublic(boolean isPublic) {
-    this.isPublic = isPublic;
   }
 
   /**

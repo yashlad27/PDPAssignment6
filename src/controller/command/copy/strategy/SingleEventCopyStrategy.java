@@ -116,13 +116,19 @@ public class SingleEventCopyStrategy implements CopyStrategy {
     String targetTimezone = calendarManager.executeOnCalendar(targetCalendarName,
         calendar -> ((model.calendar.Calendar) calendar).getTimezone());
 
+    // Get the timezone converter
     TimezoneConverter converter = timezoneHandler.getConverter(sourceTimezone, targetTimezone);
 
-    long durationSeconds = sourceEvent.getEndDateTime().toEpochSecond(java.time.ZoneOffset.UTC)
-        - sourceEvent.getStartDateTime().toEpochSecond(java.time.ZoneOffset.UTC);
+    // Calculate the duration in the source timezone
+    long durationSeconds = sourceEvent.getEndDateTime().toEpochSecond(
+        java.time.ZoneId.of(sourceTimezone).getRules().getOffset(sourceEvent.getEndDateTime()))
+        - sourceEvent.getStartDateTime().toEpochSecond(
+            java.time.ZoneId.of(sourceTimezone).getRules().getOffset(sourceEvent.getStartDateTime()));
 
-    Event newEvent = new Event(sourceEvent.getSubject(), converter.convert(targetDateTime),
-        converter.convert(targetDateTime.plusSeconds(durationSeconds)),
+    // Create new event with target time and duration
+    Event newEvent = new Event(sourceEvent.getSubject(), 
+        targetDateTime,  // Target time is already in target timezone
+        targetDateTime.plusSeconds(durationSeconds),  // Add duration to maintain event length
         sourceEvent.getDescription(), sourceEvent.getLocation(), sourceEvent.isPublic());
 
     boolean success = calendarManager.executeOnCalendar(targetCalendarName,

@@ -2,9 +2,9 @@ package controller.command.calendar;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import controller.ICommandFactory;
-import controller.command.CommandAdapter;
 import controller.command.ICommand;
 import controller.command.copy.CopyEventCommand;
 import model.calendar.CalendarManager;
@@ -146,7 +146,7 @@ public class CalendarCommandFactory implements ICommandFactory {
 
     CalendarCommandHandler handler = commands.get(commandName);
     if (handler != null) {
-      return new CommandAdapter(commandName, args -> {
+      return ICommand.fromExecutor(commandName, args -> {
         try {
           return handler.execute(args);
         } catch (Exception e) {

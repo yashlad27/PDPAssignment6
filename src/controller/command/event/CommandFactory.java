@@ -2,10 +2,9 @@ package controller.command.event;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import controller.ICommandFactory;
-import controller.command.CommandAdapter;
-import controller.command.CommandExecutor;
 import controller.command.ICommand;
 import controller.command.create.CreateEventCommand;
 import controller.command.edit.EditEventCommand;
@@ -18,7 +17,7 @@ import view.ICalendarView;
  */
 public class CommandFactory implements ICommandFactory {
 
-  private final Map<String, CommandExecutor> commands;
+  private final Map<String, Function<String[], String>> commands;
   private final ICalendar calendar;
   private final ICalendarView view;
 
@@ -101,7 +100,7 @@ public class CommandFactory implements ICommandFactory {
    * @param name the name of the command
    * @return the command executor, or null if not found
    */
-  public CommandExecutor getCommandExecutor(String name) {
+  public Function<String[], String> getCommandExecutor(String name) {
     return commands.get(name);
   }
 
@@ -124,11 +123,11 @@ public class CommandFactory implements ICommandFactory {
    */
   @Override
   public ICommand getCommand(String commandName) {
-    CommandExecutor executor = getCommandExecutor(commandName);
+    Function<String[], String> executor = getCommandExecutor(commandName);
     if (executor == null) {
       return null;
     }
-    return new CommandAdapter(commandName, executor);
+    return ICommand.fromExecutor(commandName, executor);
   }
 
   /**
@@ -164,7 +163,7 @@ public class CommandFactory implements ICommandFactory {
    * @param name     the name of the command
    * @param executor the command executor
    */
-  public void registerCommand(String name, CommandExecutor executor) {
+  public void registerCommand(String name, Function<String[], String> executor) {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Command name cannot be null or empty");
     }

@@ -864,31 +864,40 @@ public class CalendarTest {
 
   @Test
   public void testCopyWithTimezoneConversion() throws Exception {
+    // Create a test event in UTC
     LocalDateTime startTime = LocalDateTime.of(2024, 3, 15, 10, 0);
     LocalDateTime endTime = LocalDateTime.of(2024, 3, 15, 11, 0);
     Event testEvent = new Event("Test Meeting", startTime, endTime, "Test Description",
         "Test Location", true);
+    calendar.setTimezone("UTC");
     calendar.addEvent(testEvent, false);
 
-    Calendar mockCalendar = new Calendar() {
-      @Override
-      public String exportToCSV(String filePath) throws IOException {
-        StringBuilder csv = new StringBuilder();
-        csv.append("Subject,Start Date,Start Time,End Date,End Time,All Day Event,"
-                + "Description,Location," + "Private\n");
-        csv.append("Test Meeting,03/15/2024,10:00 AM,03/15/2024,11:00 AM,False,"
-                + "Test Description,Test Location,False\n");
-        mockFileSystem.put(filePath, csv.toString());
+    // Create a target calendar in New York timezone
+    Calendar targetCalendar = new Calendar();
+    targetCalendar.setName("Target Calendar");
+    targetCalendar.setTimezone("America/New_York");
 
-        return filePath;
-      }
-    };
-    mockCalendar.setName("Test Mock Calendar");
-    mockCalendar.setTimezone("America/New_York");
+    // Set up calendar manager
+    CalendarManager calendarManager = new CalendarManager();
+    calendarManager.addCalendar("source", calendar);
+    calendarManager.addCalendar("target", targetCalendar);
+    calendarManager.setActiveCalendar("source");
 
-    String result = mockCalendar.exportToCSV("calendar_export.csv");
+    // Copy the event from UTC to New York timezone using the copy command
+    // In March 2024, EDT is UTC-4, so 10:00 UTC is 6:00 EDT
+    CopyEventCommand copyCommand = new CopyEventCommand(calendarManager, new TimeZoneHandler());
+    String[] args = new String[]{"copy", "event", "Test Meeting", "on", "2024-03-15T10:00",
+        "--target", "target", "to", "2024-03-15T06:00"};
+    String result = copyCommand.execute(args);
 
     assertTrue(result.contains("copied successfully"));
+
+    // Verify the conversion
+    calendarManager.setActiveCalendar("target");
+    Event copiedEvent = targetCalendar.findEvent("Test Meeting", LocalDateTime.of(2024, 3, 15, 6, 0));
+    assertNotNull("Copied event should exist", copiedEvent);
+    assertEquals(LocalDateTime.of(2024, 3, 15, 6, 0), copiedEvent.getStartDateTime());
+    assertEquals(LocalDateTime.of(2024, 3, 15, 7, 0), copiedEvent.getEndDateTime());
   }
 
 }
