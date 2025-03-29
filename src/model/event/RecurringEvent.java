@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -12,29 +13,39 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Represents a recurring event that repeats on specific days of the week.
+ * Represents a recurring event that repeats on specified days of the week.
  * Extends the base Event class to add repetition functionality.
  */
 public class RecurringEvent extends Event {
 
   private final Set<DayOfWeek> repeatDays;
   private final int occurrences;
-  private final LocalDate endDate;
+  private final LocalDate untilDate;
   private final UUID recurringId;
 
   /**
-   * Private constructor used by the builder.
+   * Constructs a new recurring event.
+   *
+   * @param subject     the subject of the event
+   * @param startDateTime the start date and time
+   * @param endDateTime   the end date and time
+   * @param description   the event description
+   * @param location      the event location
+   * @param isPublic      whether the event is public
+   * @param repeatDays    the days of the week to repeat on
+   * @param occurrences   the number of occurrences
+   * @param untilDate     the date until which to repeat
    */
-  private RecurringEvent(Builder builder) {
-    super(builder.subject, builder.startDateTime, builder.endDateTime, builder.description,
-            builder.location, builder.isPublic);
+  public RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
+      String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
+      int occurrences, LocalDate untilDate) {
+    super(subject, startDateTime, endDateTime, description, location, isPublic);
+    this.repeatDays = repeatDays;
+    this.occurrences = occurrences;
+    this.untilDate = untilDate;
+    this.recurringId = UUID.randomUUID();
 
-    this.repeatDays = EnumSet.copyOf(builder.repeatDays);
-    this.occurrences = builder.occurrences;
-    this.endDate = builder.endDate;
-    this.recurringId = builder.recurringId != null ? builder.recurringId : UUID.randomUUID();
-
-    if (builder.isAllDay) {
+    if (isAllDay()) {
       this.setAllDay(true);
     }
   }
@@ -163,7 +174,7 @@ public class RecurringEvent extends Event {
      */
     public RecurringEvent build() {
       validate();
-      return new RecurringEvent(this);
+      return new RecurringEvent(subject, startDateTime, endDateTime, description, location, isPublic, repeatDays, occurrences, endDate);
     }
 
     /**
@@ -219,77 +230,38 @@ public class RecurringEvent extends Event {
    */
   public List<Event> getAllOccurrences() {
     List<Event> occurrences = new ArrayList<>();
-
-    LocalDate currentDate = getStartDateTime().toLocalDate();
-    LocalTime startTime = getStartDateTime().toLocalTime();
-    LocalTime endTime = getEndDateTime().toLocalTime();
+    LocalDateTime currentDate = getStartDateTime();
     int count = 0;
 
-    while (shouldContinueGeneratingOccurrences(count, currentDate)) {
+    while (count < this.occurrences) {
       if (repeatDays.contains(currentDate.getDayOfWeek())) {
-        occurrences.add(createOccurrence(currentDate, startTime, endTime));
+        Event occurrence = createOccurrence(currentDate);
+        occurrences.add(occurrence);
         count++;
       }
-
       currentDate = currentDate.plusDays(1);
-
-      if (hasReachedOccurrenceLimit(count) || hasPassedEndDate(currentDate)) {
-        break;
-      }
     }
 
     return occurrences;
   }
 
-  /**
-   * Determines if we should continue generating occurrences.
-   *
-   * @param count       the current count of occurrences
-   * @param currentDate the current date being processed
-   * @return true if we should continue generating occurrences
-   */
-  private boolean shouldContinueGeneratingOccurrences(int count, LocalDate currentDate) {
-    return (this.occurrences > 0 && count < this.occurrences) ||
-            (this.endDate != null && !currentDate.isAfter(this.endDate));
-  }
+  private Event createOccurrence(LocalDateTime date) {
+    // Create occurrence using UTC times directly
+    LocalDateTime startTime = date.withHour(getStartDateTime().getHour())
+                                 .withMinute(getStartDateTime().getMinute())
+                                 .withSecond(getStartDateTime().getSecond());
+    
+    Duration duration = Duration.between(getStartDateTime(), getEndDateTime());
+    LocalDateTime endTime = startTime.plus(duration);
 
-  /**
-   * Checks if we've reached the occurrence limit.
-   *
-   * @param count the current count of occurrences
-   * @return true if we've reached the limit
-   */
-  private boolean hasReachedOccurrenceLimit(int count) {
-    return this.occurrences > 0 && count >= this.occurrences;
-  }
-
-  /**
-   * Checks if the current date has passed the end date.
-   *
-   * @param currentDate the current date being processed
-   * @return true if we've passed the end date
-   */
-  private boolean hasPassedEndDate(LocalDate currentDate) {
-    return this.endDate != null && currentDate.isAfter(this.endDate);
-  }
-
-  /**
-   * Creates a new occurrence of this event on the specified date.
-   *
-   * @param date      the date for the occurrence
-   * @param startTime the start time for the occurrence
-   * @param endTime   the end time for the occurrence
-   * @return a new Event representing the occurrence
-   */
-  private Event createOccurrence(LocalDate date, LocalTime startTime, LocalTime endTime) {
-    LocalDateTime occurrenceStart = LocalDateTime.of(date, startTime);
-    LocalDateTime occurrenceEnd = LocalDateTime.of(date, endTime);
-
-    Event occurrence = new Event(getSubject(), occurrenceStart, occurrenceEnd,
-            getDescription(), getLocation(), isPublic());
-    occurrence.setAllDay(isAllDay());
-
-    return occurrence;
+    return new Event(
+        getSubject(),
+        startTime,
+        endTime,
+        getDescription(),
+        getLocation(),
+        isPublic()
+    );
   }
 
   /**
@@ -307,7 +279,7 @@ public class RecurringEvent extends Event {
    * @return a set of days of the week
    */
   public Set<DayOfWeek> getRepeatDays() {
-    return EnumSet.copyOf(repeatDays);
+    return repeatDays;
   }
 
   /**
@@ -325,6 +297,6 @@ public class RecurringEvent extends Event {
    * @return the end date, or null if based on occurrences
    */
   public LocalDate getEndDate() {
-    return endDate;
+    return untilDate;
   }
 }
