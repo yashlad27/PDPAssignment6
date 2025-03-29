@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import controller.command.CommandParser;
+import controller.command.Command;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.exceptions.CalendarNotFoundException;
@@ -32,7 +32,6 @@ import view.ICalendarView;
 public class CalendarController {
 
     private final ICalendarView view;
-    private CommandParser parser;
     private final ICommandFactory commandFactory;
     private final CalendarManager calendarManager;
     private static final String EXIT_COMMAND = "exit";
@@ -67,7 +66,6 @@ public class CalendarController {
         this.view = view;
         this.commandFactory = commandFactory;
         this.calendarManager = calendarManager;
-        this.parser = new CommandParser(commandFactory);
     }
 
     /**
@@ -101,7 +99,7 @@ public class CalendarController {
         }
 
         try {
-            ICommand command = commandFactory.getCommand(commandName);
+            Command command = commandFactory.getCommand(commandName);
             if (command == null) {
                 return "Error: Command '" + commandName + "' not found";
             }

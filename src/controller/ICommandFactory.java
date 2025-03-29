@@ -1,25 +1,24 @@
 package controller;
 
-import controller.command.ICommand;
+import controller.command.Command;
 
 /**
- * Interface for command factories.
- * This provides an abstraction for different types of command factories.
+ * Interface for command factory that creates and manages commands.
  */
 public interface ICommandFactory {
-  /**
-   * Checks if a command is registered.
-   *
-   * @param commandName the name of the command
-   * @return true if the command is registered, false otherwise
-   */
-  boolean hasCommand(String commandName);
+    /**
+     * Checks if a command exists.
+     *
+     * @param commandName the name of the command
+     * @return true if the command exists, false otherwise
+     */
+    boolean hasCommand(String commandName);
 
-  /**
-   * Gets a command handler by name.
-   *
-   * @param commandName the name of the command
-   * @return the command handler
-   */
-  ICommand getCommand(String commandName);
+    /**
+     * Gets a command by name.
+     *
+     * @param commandName the name of the command
+     * @return the command, or null if not found
+     */
+    Command getCommand(String commandName);
 }
