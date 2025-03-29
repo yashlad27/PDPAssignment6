@@ -1,5 +1,3 @@
-package java;
-
 import org.junit.Test;
 
 import java.time.LocalDateTime;
@@ -89,7 +87,7 @@ public class AllDayEventCreatorTest {
   @Test
   public void testCreateEventSuccess() throws InvalidEventException {
     String[] args = {"allday", "Meeting", "2023-05-15", "false", "Team meeting", "Conference Room",
-        "true"};
+            "true"};
     AllDayEventCreator creator = new AllDayEventCreator(args);
     Event event = creator.createEvent();
 
@@ -107,7 +105,7 @@ public class AllDayEventCreatorTest {
     LocalDateTime eventTime = LocalDateTime.of(2025, 3, 26, 10, 0);
     LocalDateTime eventEndTime = LocalDateTime.of(2025, 3, 26, 10, 10);
     Event event = new Event("Meeting", eventTime, eventEndTime, "Conference Room",
-        "Discuss project updates", true);
+            "Discuss project updates", true);
 
     EventAction updateSubject = e -> e.setSubject("Updated Subject");
     EventAction updateLocation = e -> e.setLocation("New Location");
