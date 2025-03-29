@@ -126,8 +126,25 @@ public class Calendar implements ICalendar {
 
     List<Event> occurrences = recurringEvent.getAllOccurrences();
 
+    // Convert each occurrence's times to UTC before checking conflicts
+    List<Event> utcOccurrences = new ArrayList<>();
     for (Event occurrence : occurrences) {
-      if (hasConflict(occurrence)) {
+      LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone);
+      LocalDateTime endUTC = timezoneHandler.convertToUTC(occurrence.getEndDateTime(), timezone);
+      Event utcOccurrence = new Event(
+          occurrence.getSubject(),
+          startUTC,
+          endUTC,
+          occurrence.getDescription(),
+          occurrence.getLocation(),
+          occurrence.isPublic()
+      );
+      utcOccurrences.add(utcOccurrence);
+    }
+
+    // Check for conflicts using UTC times
+    for (Event utcOccurrence : utcOccurrences) {
+      if (hasConflict(utcOccurrence)) {
         if (autoDecline) {
           throw new ConflictingEventException(
               "Cannot add recurring event '" + recurringEvent.getSubject()
@@ -140,9 +157,10 @@ public class Calendar implements ICalendar {
     recurringEvents.add(recurringEvent);
     recurringEventById.put(recurringEvent.getId(), recurringEvent);
 
-    for (Event occurrence : occurrences) {
-      events.add(occurrence);
-      eventById.put(occurrence.getId(), occurrence);
+    // Add UTC occurrences to events list
+    for (Event utcOccurrence : utcOccurrences) {
+      events.add(utcOccurrence);
+      eventById.put(utcOccurrence.getId(), utcOccurrence);
     }
 
     return true;
@@ -249,14 +267,10 @@ public class Calendar implements ICalendar {
     // If not found in regular events, check recurring events
     for (RecurringEvent recurringEvent : recurringEvents) {
       if (recurringEvent.getSubject().equals(subject)) {
-        // Convert the recurring event's start time to the calendar's timezone
-        LocalDateTime recurringStartTime = timezoneHandler.convertFromUTC(recurringEvent.getStartDateTime(), timezone);
-        
-        // Get all occurrences and convert their times to UTC for comparison
+        // Get all occurrences and compare UTC times
         List<Event> occurrences = recurringEvent.getAllOccurrences();
         for (Event occurrence : occurrences) {
-          LocalDateTime occurrenceStartUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone);
-          if (occurrenceStartUTC.equals(utcStartTime)) {
+          if (occurrence.getStartDateTime().equals(utcStartTime)) {
             return occurrence;
           }
         }

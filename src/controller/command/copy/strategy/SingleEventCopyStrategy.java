@@ -11,7 +11,6 @@ import model.exceptions.EventNotFoundException;
 import model.exceptions.InvalidEventException;
 import utilities.DateTimeUtil;
 import utilities.TimeZoneHandler;
-import utilities.TimezoneConverter;
 
 /**
  * Strategy for copying a single event from one calendar to another. Format: copy event
@@ -95,37 +94,33 @@ public class SingleEventCopyStrategy implements CopyStrategy {
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
-          "Target calendar '" + targetCalendarName + "' does not " + "exist");
+          "Target calendar '" + targetCalendarName + "' does not exist");
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
-
     String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimezone();
-    String targetTimezone = calendarManager.executeOnCalendar(targetCalendarName,
-        calendar -> ((model.calendar.Calendar) calendar).getTimezone());
 
-    // First find the event using original source time (no conversion)
+    // Find the event using the original time in source calendar's timezone
     Event sourceEvent = sourceCalendar.findEvent(eventName, sourceDateTime);
     if (sourceEvent == null) {
       throw new EventNotFoundException("Event not found: " + eventName + " at " + sourceDateTime);
     }
 
-    // Calculate the duration in minutes
-    long durationMinutes = java.time.Duration.between(
-        sourceEvent.getStartDateTime(), 
-        sourceEvent.getEndDateTime()
-    ).toMinutes();
+    // Get target calendar
+    ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
+    String targetTimezone = ((model.calendar.Calendar) targetCalendar).getTimezone();
 
-    // Convert source event time to target timezone
-    LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(), targetTimezone);
+    // Convert UTC times to target calendar's timezone
+    LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(), targetTimezone);
+    LocalDateTime endInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getEndDateTime(), targetTimezone);
 
-    // Create new event with target time and duration
+    // Create new event using times in target calendar's timezone
     Event newEvent = new Event(
-        sourceEvent.getSubject(), 
-        targetDateTime,
-        targetDateTime.plusMinutes(durationMinutes),
-        sourceEvent.getDescription(), 
-        sourceEvent.getLocation(), 
+        sourceEvent.getSubject(),
+        startInTargetTz,
+        endInTargetTz,
+        sourceEvent.getDescription(),
+        sourceEvent.getLocation(),
         sourceEvent.isPublic()
     );
 
