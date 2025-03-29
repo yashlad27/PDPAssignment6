@@ -68,8 +68,7 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
     String targetStartDate = args[9];
 
     try {
-      return copyEventsBetweenDates(sourceStartDate, sourceEndDate, targetCalendar,
-          targetStartDate);
+      return copyEvents(sourceStartDate, sourceEndDate, targetCalendar, targetStartDate);
     } catch (Exception e) {
       throw new InvalidEventException("Error copying events: " + e.getMessage());
     }
@@ -87,11 +86,10 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
   /**
    * Copies events within a date range from the active calendar to a target calendar.
    */
-  private String copyEventsBetweenDates(String startDateStr, String endDateStr,
-      String targetCalendarName, String targetStartDateStr) throws Exception {
+  private String copyEvents(String startDateStr, String endDateStr, String targetCalendarName,
+      String targetStartDateStr) throws Exception {
     LocalDate sourceStartDate = DateTimeUtil.parseDate(startDateStr);
     LocalDate sourceEndDate = DateTimeUtil.parseDate(endDateStr);
-    LocalDate targetStartDate = DateTimeUtil.parseDate(targetStartDateStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
@@ -99,63 +97,63 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
-    List<Event> eventsInRange = sourceCalendar.getEventsInRange(sourceStartDate, sourceEndDate);
+    List<Event> eventsToCopy = sourceCalendar.getEventsInRange(sourceStartDate, sourceEndDate);
 
-    if (eventsInRange.isEmpty()) {
+    if (eventsToCopy.isEmpty()) {
       return "No events found between " + sourceStartDate + " and " + sourceEndDate + " to copy.";
     }
 
-    String sourceTimezone = ((Calendar) sourceCalendar).getTimezone();
+    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimezone();
     String targetTimezone = calendarManager.executeOnCalendar(targetCalendarName,
         calendar -> ((model.calendar.Calendar) calendar).getTimezone());
 
-    TimezoneConverter converter = timezoneHandler.getConverter(sourceTimezone, targetTimezone);
-
-    long daysDifference = targetStartDate.toEpochDay() - sourceStartDate.toEpochDay();
-
     int successCount = 0;
-    int failCount = 0;
+    for (Event sourceEvent : eventsToCopy) {
+      // Get the source event's UTC time (it's already in UTC in storage)
+      LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
+      long durationMinutes = java.time.Duration.between(
+          sourceEvent.getStartDateTime(),
+          sourceEvent.getEndDateTime()
+      ).toMinutes();
 
-    for (Event sourceEvent : eventsInRange) {
+      // Convert UTC time to target timezone
+      LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
+
+      // Create new event with target time and duration
+      Event newEvent = new Event(
+          sourceEvent.getSubject(),
+          targetDateTime,
+          targetDateTime.plusMinutes(durationMinutes),
+          sourceEvent.getDescription(),
+          sourceEvent.getLocation(),
+          sourceEvent.isPublic()
+      );
+
+      // Add the event to the target calendar
       try {
-        Event newEvent;
-
-        if (sourceEvent.isAllDay()) {
-          LocalDate eventDate = sourceEvent.getDate();
-          if (eventDate == null) {
-            eventDate = sourceEvent.getStartDateTime().toLocalDate();
+        calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
+          try {
+            calendar.addEvent(newEvent, false);
+            return true;
+          } catch (ConflictingEventException e) {
+            return false;
           }
-
-          LocalDate adjustedDate = eventDate.plusDays(daysDifference);
-
-          newEvent = Event.createAllDayEvent(sourceEvent.getSubject(), adjustedDate,
-              sourceEvent.getDescription(), sourceEvent.getLocation(), sourceEvent.isPublic());
-        } else {
-          LocalDateTime adjustedStart = sourceEvent.getStartDateTime().plusDays(daysDifference);
-          LocalDateTime adjustedEnd = sourceEvent.getEndDateTime().plusDays(daysDifference);
-
-          newEvent = new Event(sourceEvent.getSubject(), converter.convert(adjustedStart),
-              converter.convert(adjustedEnd), sourceEvent.getDescription(),
-              sourceEvent.getLocation(), sourceEvent.isPublic());
-        }
-
-        calendarManager.executeOnCalendar(targetCalendarName,
-            calendar -> calendar.addEvent(newEvent, true));
-
+        });
         successCount++;
-      } catch (ConflictingEventException e) {
-        failCount++;
       } catch (Exception e) {
-        throw new RuntimeException("Error copying event: " + e.getMessage(), e);
+        // Continue with next event if one fails
+        continue;
       }
     }
 
-    if (failCount == 0) {
-      return "Successfully copied " + successCount + " events from date range " + sourceStartDate
-          + " to " + sourceEndDate + " in calendar '" + targetCalendarName + "'.";
+    if (successCount == 0) {
+      return "Failed to copy any events to calendar '" + targetCalendarName + "'.";
+    } else if (successCount < eventsToCopy.size()) {
+      return "Copied " + successCount + " out of " + eventsToCopy.size() + " events to calendar '"
+          + targetCalendarName + "'.";
     } else {
-      return "Copied " + successCount + " events, but " + failCount
-          + " events could not be copied due to conflicts.";
+      return "Successfully copied all " + successCount + " events to calendar '" + targetCalendarName
+          + "'.";
     }
   }
 }

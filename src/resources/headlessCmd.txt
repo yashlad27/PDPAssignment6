@@ -12,7 +12,7 @@ create event "Team Football Match" from 2024-03-23T09:00 to 2024-03-23T11:00 rep
 create event "Client Presentation" from 2024-03-26T14:00 to 2024-03-26T15:30 desc "Q2 Results" at "Board Room"
 create event "Training Session" from 2024-03-27T13:00 to 2024-03-27T16:00 desc "New Tool Training" at "Training Room"
 create event "Team Building" from 2024-03-29T09:00 to 2024-03-29T17:00 desc "Annual Event" at "Resort"
-create event "Project Review" from 2024-03-30T10:00 to 2024-03-30T12:00 desc "Monthly Review" at "Meeting Room"
+create event --autoDecline "Project Review" from 2024-03-30T10:00 to 2024-03-30T12:00 desc "Monthly Review" at "Meeting Room"
 
 use calendar --name Personal
 create event "Gym" from 2024-03-26T18:00 to 2024-03-26T19:30 desc "Workout session" at "Fitness Center"
@@ -53,10 +53,10 @@ print events on 2024-03-25
 print events from 2024-03-23 to 2024-03-30
 show status on 2024-03-26T14:30
 
-copy event "Team Meeting" on 2024-03-25T10:00 --target Personal to 2024-04-01T10:00
-copy events on 2024-03-28 --target Personal to 2024-04-05
-copy events between 2024-03-23 and 2024-03-28 --target Travel to 2024-04-16
-copy events on 2024-03-25 --target Family to 2024-04-01
+copy event "Team Meeting" on 2024-03-25T10:00 --target Personal
+copy event "Project Deadline" on 2024-03-28T09:00 --target Personal
+copy event "Daily Standup" on 2024-03-25T08:00 --target Travel
+copy event "Team Football Match" on 2024-03-23T09:00 --target Family
 
 use calendar --name Personal
 edit event subject "Gym" from 2024-03-26T18:00 with "Weightlifting Session"
@@ -64,10 +64,6 @@ edit event location "Dinner with Friends" from 2024-03-27T19:00 with "Mexican Re
 edit event description "Yoga Class" from 2024-03-20T17:00 with "Advanced Yoga Class"
 edit event start "Doctor Appointment" from 2024-03-28T15:00 with "2024-03-28T16:00"
 edit event end "Movie Night" from 2024-03-30T20:00 with "2024-03-30T22:30"
-
-edit calendar --name Personal --property timezone "Europe/Paris"
-edit calendar --name Work --property timezone "America/Chicago"
-edit calendar --name Family --property timezone "Europe/London"
 
 use calendar --name Personal
 print events on 2024-04-01
@@ -95,4 +91,9 @@ export cal health_events.csv
 use calendar --name Work
 print events on 2024-03-25
 show status on 2024-03-26T14:30
+
+edit calendar --name Personal --property timezone "Europe/Paris"
+edit calendar --name Work --property timezone "America/Chicago"
+edit calendar --name Family --property timezone "Europe/London"
+
 exit

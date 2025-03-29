@@ -19,7 +19,7 @@ import model.exceptions.ConflictingEventException;
 import utilities.CSVExporter;
 import utilities.DateTimeUtil;
 import utilities.EventPropertyUpdater;
-import utilities.TimezoneHandler;
+import utilities.TimeZoneHandler;
 
 /**
  * Implementation of the ICalendar interface that manages a calendar's events and operations. This
@@ -42,7 +42,7 @@ public class Calendar implements ICalendar {
   private String name;
   private String timezone;
   private final Map<String, EventPropertyUpdater> propertyUpdaters;
-  private final TimezoneHandler timezoneHandler;
+  private final TimeZoneHandler timezoneHandler;
 
   /**
    * Constructs a new Calendar instance with default settings. Initializes empty event collections
@@ -60,7 +60,7 @@ public class Calendar implements ICalendar {
 
     this.propertyUpdaters = new HashMap<>();
     initializePropertyUpdaters();
-    this.timezoneHandler = new TimezoneHandler();
+    this.timezoneHandler = new TimeZoneHandler();
   }
 
   /**
@@ -78,14 +78,16 @@ public class Calendar implements ICalendar {
     }
 
     // Convert event times to UTC for storage
+    LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(), timezone);
+    LocalDateTime endUTC = timezoneHandler.convertToUTC(event.getEndDateTime(), timezone);
+
     Event utcEvent = new Event(
         event.getSubject(),
-        event.getStartDateTime(),
-        event.getEndDateTime(),
+        startUTC,
+        endUTC,
         event.getDescription(),
         event.getLocation(),
-        event.isPublic(),
-        timezone
+        event.isPublic()
     );
 
     // Check for conflicts using UTC times
@@ -233,11 +235,35 @@ public class Calendar implements ICalendar {
     // Convert input time to UTC for comparison
     LocalDateTime utcStartTime = timezoneHandler.convertToUTC(startDateTime, timezone);
 
-    return events.stream()
+    // First try to find in regular events
+    Event event = events.stream()
         .filter(e -> e.getSubject().equals(subject) && 
                     e.getStartDateTime().equals(utcStartTime))
         .findFirst()
         .orElse(null);
+
+    if (event != null) {
+      return event;
+    }
+
+    // If not found in regular events, check recurring events
+    for (RecurringEvent recurringEvent : recurringEvents) {
+      if (recurringEvent.getSubject().equals(subject)) {
+        // Convert the recurring event's start time to the calendar's timezone
+        LocalDateTime recurringStartTime = timezoneHandler.convertFromUTC(recurringEvent.getStartDateTime(), timezone);
+        
+        // Get all occurrences and convert their times to UTC for comparison
+        List<Event> occurrences = recurringEvent.getAllOccurrences();
+        for (Event occurrence : occurrences) {
+          LocalDateTime occurrenceStartUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone);
+          if (occurrenceStartUTC.equals(utcStartTime)) {
+            return occurrence;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   /**

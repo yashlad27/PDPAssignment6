@@ -45,7 +45,7 @@ public class SingleEventCopyStrategy implements CopyStrategy {
   public String execute(String[] args)
       throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException
       , InvalidEventException {
-    if (args.length < 9) {
+    if (args.length < 7) {
       throw new InvalidEventException("Insufficient arguments for copy event command");
     }
 
@@ -70,14 +70,8 @@ public class SingleEventCopyStrategy implements CopyStrategy {
 
     String targetCalendar = args[6];
 
-    if (!args[7].equals("to")) {
-      throw new InvalidEventException("Expected 'to' keyword");
-    }
-
-    String targetDateTime = args[8];
-
     try {
-      return copyEvent(eventName, sourceDateTime, targetCalendar, targetDateTime);
+      return copyEvent(eventName, sourceDateTime, targetCalendar, null);
     } catch (Exception e) {
       throw new InvalidEventException("Error copying events: " + e.getMessage());
     }
@@ -98,7 +92,6 @@ public class SingleEventCopyStrategy implements CopyStrategy {
   private String copyEvent(String eventName, String dateTimeStr, String targetCalendarName,
       String targetDateTimeStr) throws Exception {
     LocalDateTime sourceDateTime = DateTimeUtil.parseDateTime(dateTimeStr);
-    LocalDateTime targetDateTime = DateTimeUtil.parseDateTime(targetDateTimeStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
@@ -107,38 +100,45 @@ public class SingleEventCopyStrategy implements CopyStrategy {
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
 
+    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimezone();
+    String targetTimezone = calendarManager.executeOnCalendar(targetCalendarName,
+        calendar -> ((model.calendar.Calendar) calendar).getTimezone());
+
+    // First find the event using original source time (no conversion)
     Event sourceEvent = sourceCalendar.findEvent(eventName, sourceDateTime);
     if (sourceEvent == null) {
       throw new EventNotFoundException("Event not found: " + eventName + " at " + sourceDateTime);
     }
 
-    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimezone();
-    String targetTimezone = calendarManager.executeOnCalendar(targetCalendarName,
-        calendar -> ((model.calendar.Calendar) calendar).getTimezone());
+    // Calculate the duration in minutes
+    long durationMinutes = java.time.Duration.between(
+        sourceEvent.getStartDateTime(), 
+        sourceEvent.getEndDateTime()
+    ).toMinutes();
 
-    // Get the timezone converter
-    TimezoneConverter converter = timezoneHandler.getConverter(sourceTimezone, targetTimezone);
-
-    // Calculate the duration in the source timezone
-    long durationSeconds = sourceEvent.getEndDateTime().toEpochSecond(
-        java.time.ZoneId.of(sourceTimezone).getRules().getOffset(sourceEvent.getEndDateTime()))
-        - sourceEvent.getStartDateTime().toEpochSecond(
-            java.time.ZoneId.of(sourceTimezone).getRules().getOffset(sourceEvent.getStartDateTime()));
+    // Convert source event time to target timezone
+    LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(), targetTimezone);
 
     // Create new event with target time and duration
-    Event newEvent = new Event(sourceEvent.getSubject(), 
-        targetDateTime,  // Target time is already in target timezone
-        targetDateTime.plusSeconds(durationSeconds),  // Add duration to maintain event length
-        sourceEvent.getDescription(), sourceEvent.getLocation(), sourceEvent.isPublic());
+    Event newEvent = new Event(
+        sourceEvent.getSubject(), 
+        targetDateTime,
+        targetDateTime.plusMinutes(durationMinutes),
+        sourceEvent.getDescription(), 
+        sourceEvent.getLocation(), 
+        sourceEvent.isPublic()
+    );
 
-    boolean success = calendarManager.executeOnCalendar(targetCalendarName,
-        calendar -> calendar.addEvent(newEvent, true));
+    // Add the event to the target calendar
+    calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
+      try {
+        calendar.addEvent(newEvent, false);
+        return true;
+      } catch (ConflictingEventException e) {
+        return false;
+      }
+    });
 
-    if (success) {
-      return "Event '" + eventName + "' copied successfully to calendar '" + targetCalendarName
-          + "'.";
-    } else {
-      return "Failed to copy event due to conflicts.";
-    }
+    return "Event '" + eventName + "' copied successfully to calendar '" + targetCalendarName + "'.";
   }
 }

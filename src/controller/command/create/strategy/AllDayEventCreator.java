@@ -55,7 +55,12 @@ public class AllDayEventCreator extends AbstractEventCreator {
     }
 
     return Event.createAllDayEvent(
-            eventName, date, description, location, isPublic);
+            eventName,
+            date,
+            description,
+            location,
+            isPublic
+    );
   }
 
   @Override

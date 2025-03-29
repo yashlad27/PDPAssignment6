@@ -127,7 +127,7 @@ public class CommandParser {
 
     // Copy single event pattern
     registerPattern("copy_event", Pattern.compile(
-                    "copy event \"?([^\"]*)\"? " + "on (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
+                    "copy event ([\"']?[^\"']+[\"']?|[^\\s]+) " + "on (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
                             + "--target ([\\w-]+) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})"),
             this::parseCopyEventCommand);
 
