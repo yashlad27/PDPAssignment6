@@ -28,12 +28,9 @@ public class CalendarApp {
     CalendarManager calendarManager = factory.createCalendarManager(timezoneHandler);
 
     ICalendar calendar = new Calendar();
-    ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
-    ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
-        view);
+    ICommandFactory commandFactory = factory.createCommandFactory(calendar, calendarManager, view);
 
-    CalendarController controller = factory.createController(eventCommandFactory,
-        calendarCommandFactory, calendarManager, view);
+    CalendarController controller = factory.createController(commandFactory, calendarManager, view);
 
     try {
       // Process command line arguments

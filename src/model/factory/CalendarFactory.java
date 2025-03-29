@@ -2,8 +2,7 @@ package model.factory;
 
 import controller.CalendarController;
 import controller.ICommandFactory;
-import controller.command.calendar.CalendarCommandFactory;
-import controller.command.event.CommandFactory;
+import controller.command.UnifiedCommandFactory;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import utilities.TimeZoneHandler;
@@ -50,42 +49,28 @@ public class CalendarFactory {
   }
 
   /**
-   * Creates a command factory for event commands.
+   * Creates a unified command factory for all commands.
    *
    * @param calendar the calendar to operate on
-   * @param view     the view to interact with
-   * @return an ICommandFactory for event commands
+   * @param calendarManager the calendar manager
+   * @param view the view to interact with
+   * @return an ICommandFactory for all commands
    */
-  public ICommandFactory createEventCommandFactory(ICalendar calendar, ICalendarView view) {
-    return new CommandFactory(calendar, view);
-  }
-
-  /**
-   * Creates a command factory for calendar management commands.
-   *
-   * @param calendarManager the calendar manager to operate on
-   * @param view            the view to interact with
-   * @return an ICommandFactory for calendar commands
-   */
-  public ICommandFactory createCalendarCommandFactory(CalendarManager calendarManager,
-                                                      ICalendarView view) {
-    return new CalendarCommandFactory(calendarManager, view);
+  public ICommandFactory createCommandFactory(ICalendar calendar, CalendarManager calendarManager, ICalendarView view) {
+    return new UnifiedCommandFactory(calendar, calendarManager, view);
   }
 
   /**
    * Creates a calendar controller with all its dependencies.
    *
-   * @param eventCommandFactory    the command factory for event commands
-   * @param calendarCommandFactory the command factory for calendar commands
-   * @param calendarManager        the calendar manager
-   * @param view                   the view to interact with
+   * @param commandFactory the unified command factory
+   * @param calendarManager the calendar manager
+   * @param view the view to interact with
    * @return a CalendarController instance
    */
-  public CalendarController createController(ICommandFactory eventCommandFactory,
-                                             ICommandFactory calendarCommandFactory,
-                                             CalendarManager calendarManager, ICalendarView view) {
-
-    return new CalendarController(eventCommandFactory, calendarCommandFactory, calendarManager,
-            view);
+  public CalendarController createController(ICommandFactory commandFactory,
+                                             CalendarManager calendarManager,
+                                             ICalendarView view) {
+    return new CalendarController(commandFactory, calendarManager, view);
   }
 }
