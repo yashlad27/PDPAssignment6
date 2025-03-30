@@ -6,6 +6,7 @@ import model.calendar.ICalendar;
 import model.factory.CalendarFactory;
 import utilities.TimeZoneHandler;
 import view.ConsoleView;
+import view.GUIView;
 import view.ICalendarView;
 
 /**
@@ -17,13 +18,14 @@ public class CalendarApp {
   /**
    * Main method that serves as the entry point for the application.
    *
-   * @param args Command line arguments: --mode interactive    : Starts the application in
-   *             interactive mode --mode headless file : Starts the application in headless mode
-   *             with the specified command file
+   * @param args Command line arguments: 
+   *             --mode interactive : Starts the application in interactive mode
+   *             --mode headless file : Starts the application in headless mode with the specified command file
+   *             --mode gui : Starts the application in GUI mode
    */
   public static void main(String[] args) {
     CalendarFactory factory = new CalendarFactory();
-    ICalendarView view = factory.createView();
+    ICalendarView view = factory.createView(args.length > 0 ? args[0] : "gui");
     TimeZoneHandler timezoneHandler = factory.createTimeZoneHandler();
     CalendarManager calendarManager = factory.createCalendarManager(timezoneHandler);
 
@@ -37,13 +39,17 @@ public class CalendarApp {
 
     try {
       // Process command line arguments
-      if (args.length < 2) {
-        view.displayError("Usage: java CalendarApp.java --mode [interactive|headless filename]");
+      if (args.length == 0) {
+        // No arguments means GUI mode
+        if (view instanceof GUIView) {
+          ((GUIView) view).show();
+        }
+        controller.startInteractiveMode();
         return;
       }
 
       String modeArg = args[0].toLowerCase();
-      String modeValue = args[1].toLowerCase();
+      String modeValue = args.length > 1 ? args[1].toLowerCase() : "";
 
       if (!modeArg.equals("--mode")) {
         view.displayError("Invalid argument. Expected: --mode");
@@ -69,8 +75,15 @@ public class CalendarApp {
           }
           break;
 
+        case "gui":
+          if (view instanceof GUIView) {
+            ((GUIView) view).show();
+          }
+          controller.startInteractiveMode();
+          break;
+
         default:
-          view.displayError("Invalid mode. Expected: interactive or headless");
+          view.displayError("Invalid mode. Expected: interactive, headless, or gui");
           return;
       }
 
