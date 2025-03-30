@@ -2,26 +2,21 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
-import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
- * A panel that manages calendar selection and creation.
- * This component allows users to select from existing calendars,
- * create new calendars, and view calendar timezone information.
+ * Panel class that handles calendar selection and creation.
  */
 public class GUICalendarSelectorPanel extends JPanel {
-    private final JPanel calendarListPanel;
-    private final JButton addCalendarButton;
-    private final List<CalendarSelectionListener> listeners;
-    private final Set<String> calendarNames;
-    private String selectedCalendar;
+    private final JList<String> calendarList;
+    private final JTextField newCalendarNameField;
+    private final JComboBox<String> timezoneComboBox;
+    private final JButton createButton;
+    private final DefaultListModel<String> listModel;
+    private CalendarSelectionListener listener;
 
     /**
-     * Interface for listening to calendar selection events.
+     * Interface for calendar selection events.
      */
     public interface CalendarSelectionListener {
         void onCalendarSelected(String calendarName);
@@ -32,158 +27,128 @@ public class GUICalendarSelectorPanel extends JPanel {
      * Constructs a new GUICalendarSelectorPanel.
      */
     public GUICalendarSelectorPanel() {
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Calendars"));
-        
-        this.listeners = new ArrayList<>();
-        this.calendarNames = new TreeSet<>();
-        this.calendarListPanel = new JPanel();
-        this.calendarListPanel.setLayout(new BoxLayout(calendarListPanel, BoxLayout.Y_AXIS));
-        
-        // Create add calendar button
-        this.addCalendarButton = new JButton("+ Add Calendar");
-        addCalendarButton.addActionListener(e -> showAddCalendarDialog());
-        
-        // Add components
-        add(calendarListPanel);
-        add(Box.createVerticalStrut(10));
-        add(addCalendarButton);
-        
-        // Add default calendar
-        addCalendar("Default", ZoneId.systemDefault().toString());
+
+        // Initialize components
+        listModel = new DefaultListModel<>();
+        calendarList = new JList<>(listModel);
+        newCalendarNameField = new JTextField();
+        timezoneComboBox = new JComboBox<>(java.util.TimeZone.getAvailableIDs());
+        createButton = new JButton("Create Calendar");
+
+        // Set up layout
+        setupLayout();
+        setupListeners();
     }
 
     /**
-     * Shows a dialog for creating a new calendar.
+     * Sets up the layout of the calendar selector panel.
      */
-    private void showAddCalendarDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), 
-                                   "Add New Calendar", true);
-        dialog.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Calendar name field
-        JTextField nameField = new JTextField(20);
-        gbc.gridx = 0; gbc.gridy = 0;
-        dialog.add(new JLabel("Calendar Name:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0;
-        dialog.add(nameField, gbc);
-        
-        // Timezone selector
-        JComboBox<String> timezoneCombo = new JComboBox<>(getAvailableTimezones());
-        gbc.gridx = 0; gbc.gridy = 1;
-        dialog.add(new JLabel("Timezone:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1;
-        dialog.add(timezoneCombo, gbc);
-        
-        // Buttons
-        JPanel buttonPanel = new JPanel();
-        JButton createButton = new JButton("Create");
-        JButton cancelButton = new JButton("Cancel");
-        
-        createButton.addActionListener(e -> {
-            String name = nameField.getText().trim();
-            String timezone = (String) timezoneCombo.getSelectedItem();
-            if (!name.isEmpty()) {
-                addCalendar(name, timezone);
-                dialog.dispose();
+    private void setupLayout() {
+        // Calendar list panel
+        JPanel listPanel = new JPanel(new BorderLayout(5, 5));
+        listPanel.add(new JLabel("Available Calendars:"), BorderLayout.NORTH);
+        listPanel.add(new JScrollPane(calendarList), BorderLayout.CENTER);
+
+        // New calendar panel
+        JPanel newCalendarPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+        newCalendarPanel.setBorder(BorderFactory.createTitledBorder("Create New Calendar"));
+        newCalendarPanel.add(new JLabel("Calendar Name:"));
+        newCalendarPanel.add(newCalendarNameField);
+        newCalendarPanel.add(new JLabel("Timezone:"));
+        newCalendarPanel.add(timezoneComboBox);
+        newCalendarPanel.add(createButton);
+
+        // Add components to panel
+        add(listPanel, BorderLayout.CENTER);
+        add(newCalendarPanel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Sets up event listeners.
+     */
+    private void setupListeners() {
+        calendarList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && listener != null) {
+                String selected = calendarList.getSelectedValue();
+                if (selected != null) {
+                    listener.onCalendarSelected(selected);
+                }
             }
         });
-        
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        buttonPanel.add(createButton);
-        buttonPanel.add(cancelButton);
-        
-        gbc.gridx = 0; gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        dialog.add(buttonPanel, gbc);
-        
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
+
+        createButton.addActionListener(e -> {
+            if (listener != null) {
+                String name = newCalendarNameField.getText().trim();
+                String timezone = (String) timezoneComboBox.getSelectedItem();
+                if (!name.isEmpty()) {
+                    listener.onCalendarCreated(name, timezone);
+                    newCalendarNameField.setText("");
+                }
+            }
+        });
     }
 
     /**
-     * Gets a list of available timezone IDs.
+     * Updates the list of calendars.
      *
-     * @return array of timezone IDs
+     * @param calendarNames the list of calendar names
      */
-    private String[] getAvailableTimezones() {
-        return ZoneId.getAvailableZoneIds().toArray(new String[0]);
+    public void updateCalendars(List<String> calendarNames) {
+        listModel.clear();
+        for (String name : calendarNames) {
+            listModel.addElement(name);
+        }
     }
 
     /**
-     * Adds a new calendar to the selector.
+     * Adds a new calendar to the list.
      *
      * @param name the name of the calendar
      * @param timezone the timezone of the calendar
      */
     public void addCalendar(String name, String timezone) {
-        if (calendarNames.add(name)) {
-            JPanel calendarPanel = new JPanel(new BorderLayout());
-            JRadioButton radioButton = new JRadioButton(name);
-            JLabel timezoneLabel = new JLabel("(" + timezone + ")");
-            timezoneLabel.setForeground(Color.GRAY);
-            
-            ButtonGroup group = new ButtonGroup();
-            group.add(radioButton);
-            
-            radioButton.addActionListener(e -> {
-                selectedCalendar = name;
-                notifyCalendarSelected(name);
-            });
-            
-            calendarPanel.add(radioButton, BorderLayout.WEST);
-            calendarPanel.add(timezoneLabel, BorderLayout.EAST);
-            
-            calendarListPanel.add(calendarPanel);
-            calendarListPanel.revalidate();
-            calendarListPanel.repaint();
-            
-            notifyCalendarCreated(name, timezone);
-        }
-    }
-
-    /**
-     * Adds a calendar selection listener.
-     *
-     * @param listener the listener to add
-     */
-    public void addCalendarSelectionListener(CalendarSelectionListener listener) {
-        listeners.add(listener);
-    }
-
-    /**
-     * Notifies all listeners that a calendar was selected.
-     *
-     * @param calendarName the name of the selected calendar
-     */
-    private void notifyCalendarSelected(String calendarName) {
-        for (CalendarSelectionListener listener : listeners) {
-            listener.onCalendarSelected(calendarName);
-        }
-    }
-
-    /**
-     * Notifies all listeners that a calendar was created.
-     *
-     * @param calendarName the name of the created calendar
-     * @param timezone the timezone of the created calendar
-     */
-    private void notifyCalendarCreated(String calendarName, String timezone) {
-        for (CalendarSelectionListener listener : listeners) {
-            listener.onCalendarCreated(calendarName, timezone);
+        if (!listModel.contains(name)) {
+            listModel.addElement(name);
         }
     }
 
     /**
      * Gets the currently selected calendar.
      *
-     * @return the name of the selected calendar
+     * @return the selected calendar name
      */
     public String getSelectedCalendar() {
-        return selectedCalendar;
+        return calendarList.getSelectedValue();
+    }
+
+    /**
+     * Sets the selected calendar.
+     *
+     * @param calendarName the name of the calendar to select
+     */
+    public void setSelectedCalendar(String calendarName) {
+        int index = listModel.indexOf(calendarName);
+        if (index >= 0) {
+            calendarList.setSelectedIndex(index);
+        }
+    }
+
+    /**
+     * Adds a listener for calendar selection events.
+     *
+     * @param listener the listener to add
+     */
+    public void addCalendarSelectionListener(CalendarSelectionListener listener) {
+        this.listener = listener;
+    }
+
+    /**
+     * Refreshes the calendar selector panel.
+     */
+    public void refresh() {
+        calendarList.revalidate();
+        calendarList.repaint();
     }
 } 

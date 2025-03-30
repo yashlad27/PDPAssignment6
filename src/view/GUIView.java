@@ -1,174 +1,188 @@
 package view;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.time.LocalDate;
+import java.util.List;
+
+import javax.swing.*;
+
+import model.calendar.ICalendar;
+import model.event.Event;
+import model.event.RecurringEvent;
 
 /**
- * A Swing-based implementation of the ICalendarView interface.
- * This class provides a graphical user interface for the calendar application
- * using Java Swing components.
+ * Main GUI view class that integrates all GUI components and implements the IGUIView interface.
+ * This class provides the main window and layout for the calendar application.
  */
-public class GUIView implements ICalendarView {
-    private final JFrame mainFrame;
-    private final JTextArea messageArea;
-    private final BlockingQueue<String> commandQueue;
-    private final JTextField commandInput;
-    private final JButton submitButton;
-    private final GUICalendarPanel calendarPanel;
-    private final JPanel leftSidebar;
-    private final JPanel mainContent;
-    private final JPanel eventDetailsPanel;
+public class GUIView extends JFrame implements IGUIView {
+  private final GUICalendarPanel calendarPanel;
+  private final GUIEventPanel eventPanel;
+  private final GUICalendarSelectorPanel calendarSelectorPanel;
+  private final GUIExportImportPanel exportImportPanel;
+  private final JTextArea messageArea;
 
-    /**
-     * Constructs a new GUIView.
-     * Initializes the main window and its components.
-     */
-    public GUIView() {
-        this.commandQueue = new LinkedBlockingQueue<>();
-        this.mainFrame = new JFrame("Calendar Application");
-        this.messageArea = new JTextArea(10, 40);
-        this.commandInput = new JTextField(40);
-        this.submitButton = new JButton("Submit");
-        this.calendarPanel = new GUICalendarPanel();
-        this.leftSidebar = new JPanel();
-        this.mainContent = new JPanel();
-        this.eventDetailsPanel = new JPanel();
+  /**
+   * Constructs a new GUIView.
+   */
+  public GUIView() {
+    setTitle("Calendar Application");
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setSize(1200, 800);
+    setLocationRelativeTo(null);
 
-        initializeUI();
-    }
+    // Initialize components
+    calendarPanel = new GUICalendarPanel();
+    eventPanel = new GUIEventPanel();
+    calendarSelectorPanel = new GUICalendarSelectorPanel();
+    exportImportPanel = new GUIExportImportPanel();
+    messageArea = new JTextArea(3, 40);
+    messageArea.setEditable(false);
+    messageArea.setLineWrap(true);
+    messageArea.setWrapStyleWord(true);
 
-    /**
-     * Initializes the user interface components and layout.
-     */
-    private void initializeUI() {
-        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        mainFrame.setLayout(new BorderLayout());
-        mainFrame.setSize(800, 600);
+    // Set up layout
+    setupLayout();
 
-        // Create left sidebar
-        leftSidebar.setPreferredSize(new Dimension(200, 0));
-        leftSidebar.setLayout(new BoxLayout(leftSidebar, BoxLayout.Y_AXIS));
-        leftSidebar.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    // Make the window visible
+    setVisible(true);
+  }
 
-        // Add calendar selector
-        JPanel calendarSelector = new JPanel();
-        calendarSelector.setLayout(new BoxLayout(calendarSelector, BoxLayout.Y_AXIS));
-        calendarSelector.setBorder(BorderFactory.createTitledBorder("Calendars"));
-        
-        JButton addCalendarButton = new JButton("+ Add Calendar");
-        calendarSelector.add(addCalendarButton);
-        leftSidebar.add(calendarSelector);
+  /**
+   * Sets up the layout of the GUI components.
+   */
+  private void setupLayout() {
+    // Main panel with BorderLayout
+    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Add import/export panel
-        JPanel importExportPanel = new JPanel();
-        importExportPanel.setLayout(new BoxLayout(importExportPanel, BoxLayout.Y_AXIS));
-        importExportPanel.setBorder(BorderFactory.createTitledBorder("Import/Export"));
-        
-        JButton importButton = new JButton("Import from CSV");
-        JButton exportButton = new JButton("Export to CSV");
-        importExportPanel.add(importButton);
-        importExportPanel.add(exportButton);
-        leftSidebar.add(importExportPanel);
+    // Left panel for calendar selector and export/import
+    JPanel leftPanel = new JPanel(new BorderLayout(5, 5));
+    leftPanel.add(calendarSelectorPanel, BorderLayout.NORTH);
+    leftPanel.add(exportImportPanel, BorderLayout.CENTER);
+    leftPanel.setPreferredSize(new Dimension(250, 0));
 
-        // Create main content area
-        mainContent.setLayout(new BorderLayout());
-        mainContent.add(calendarPanel, BorderLayout.CENTER);
+    // Center panel for calendar view
+    JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
+    centerPanel.add(calendarPanel, BorderLayout.CENTER);
+    centerPanel.add(new JScrollPane(messageArea), BorderLayout.SOUTH);
 
-        // Create event details panel
-        eventDetailsPanel.setLayout(new BoxLayout(eventDetailsPanel, BoxLayout.Y_AXIS));
-        eventDetailsPanel.setBorder(BorderFactory.createTitledBorder("Event Details"));
-        eventDetailsPanel.setPreferredSize(new Dimension(0, 150));
-        
-        // Add event detail fields
-        JTextField subjectField = new JTextField();
-        JTextField dateField = new JTextField();
-        JTextField startTimeField = new JTextField();
-        JTextField endTimeField = new JTextField();
-        JTextField locationField = new JTextField();
-        JTextField descriptionField = new JTextField();
-        
-        eventDetailsPanel.add(new JLabel("Subject:"));
-        eventDetailsPanel.add(subjectField);
-        eventDetailsPanel.add(new JLabel("Date:"));
-        eventDetailsPanel.add(dateField);
-        eventDetailsPanel.add(new JLabel("Start Time:"));
-        eventDetailsPanel.add(startTimeField);
-        eventDetailsPanel.add(new JLabel("End Time:"));
-        eventDetailsPanel.add(endTimeField);
-        eventDetailsPanel.add(new JLabel("Location:"));
-        eventDetailsPanel.add(locationField);
-        eventDetailsPanel.add(new JLabel("Description:"));
-        eventDetailsPanel.add(descriptionField);
-        
-        mainContent.add(eventDetailsPanel, BorderLayout.SOUTH);
+    // Right panel for event panel
+    JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
+    rightPanel.add(eventPanel, BorderLayout.CENTER);
+    rightPanel.setPreferredSize(new Dimension(300, 0));
 
-        // Create message area
-        messageArea.setEditable(false);
-        messageArea.setLineWrap(true);
-        messageArea.setWrapStyleWord(true);
-        JScrollPane messageScrollPane = new JScrollPane(messageArea);
-        messageScrollPane.setPreferredSize(new Dimension(0, 100));
-        mainContent.add(messageScrollPane, BorderLayout.NORTH);
+    // Add panels to main panel
+    mainPanel.add(leftPanel, BorderLayout.WEST);
+    mainPanel.add(centerPanel, BorderLayout.CENTER);
+    mainPanel.add(rightPanel, BorderLayout.EAST);
 
-        // Create input panel
-        JPanel inputPanel = new JPanel(new BorderLayout());
-        inputPanel.add(commandInput, BorderLayout.CENTER);
-        inputPanel.add(submitButton, BorderLayout.EAST);
+    // Add main panel to frame
+    add(mainPanel);
+  }
 
-        // Add action listener for submit button
-        submitButton.addActionListener(e -> {
-            String command = commandInput.getText().trim();
-            if (!command.isEmpty()) {
-                commandQueue.offer(command);
-                commandInput.setText("");
-            }
-        });
+  /**
+   * Gets the calendar panel.
+   *
+   * @return the calendar panel
+   */
+  public GUICalendarPanel getCalendarPanel() {
+    return calendarPanel;
+  }
 
-        // Add action listener for enter key in command input
-        commandInput.addActionListener(e -> submitButton.doClick());
+  /**
+   * Gets the event panel.
+   *
+   * @return the event panel
+   */
+  public GUIEventPanel getEventPanel() {
+    return eventPanel;
+  }
 
-        // Add components to main frame
-        mainFrame.add(leftSidebar, BorderLayout.WEST);
-        mainFrame.add(mainContent, BorderLayout.CENTER);
-        mainFrame.add(inputPanel, BorderLayout.SOUTH);
+  /**
+   * Gets the calendar selector panel.
+   *
+   * @return the calendar selector panel
+   */
+  public GUICalendarSelectorPanel getCalendarSelectorPanel() {
+    return calendarSelectorPanel;
+  }
 
-        mainFrame.setLocationRelativeTo(null);
-    }
+  /**
+   * Gets the export/import panel.
+   *
+   * @return the export/import panel
+   */
+  public GUIExportImportPanel getExportImportPanel() {
+    return exportImportPanel;
+  }
 
-    /**
-     * Shows the main window.
-     */
-    public void show() {
-        mainFrame.setVisible(true);
-    }
+  @Override
+  public void updateCalendarView(ICalendar calendar) {
+    calendarPanel.updateCalendar(calendar);
+  }
 
-    @Override
-    public String readCommand() {
-        try {
-            return commandQueue.take();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return "";
-        }
-    }
+  @Override
+  public void updateEventList(List<Event> events) {
+    calendarPanel.updateEvents(events);
+  }
 
-    @Override
-    public void displayMessage(String message) {
-        SwingUtilities.invokeLater(() -> {
-            messageArea.append(message + "\n");
-            messageArea.setCaretPosition(messageArea.getDocument().getLength());
-        });
-    }
+  @Override
+  public void updateRecurringEventList(List<RecurringEvent> recurringEvents) {
+    calendarPanel.updateRecurringEvents(recurringEvents);
+  }
 
-    @Override
-    public void displayError(String errorMessage) {
-        SwingUtilities.invokeLater(() -> {
-            messageArea.append("ERROR: " + errorMessage + "\n");
-            messageArea.setCaretPosition(messageArea.getDocument().getLength());
-        });
-    }
+  @Override
+  public void showEventDetails(Event event) {
+    eventPanel.displayEvent(event);
+  }
+
+  @Override
+  public void clearEventDetails() {
+    eventPanel.clearForm();
+  }
+
+  @Override
+  public void updateCalendarList(List<String> calendarNames) {
+    calendarSelectorPanel.updateCalendars(calendarNames);
+  }
+
+  @Override
+  public void setSelectedCalendar(String calendarName) {
+    calendarSelectorPanel.setSelectedCalendar(calendarName);
+  }
+
+  @Override
+  public String getSelectedCalendar() {
+    return calendarSelectorPanel.getSelectedCalendar();
+  }
+
+  @Override
+  public LocalDate getSelectedDate() {
+    return calendarPanel.getSelectedDate();
+  }
+
+  @Override
+  public void setSelectedDate(LocalDate date) {
+    calendarPanel.setSelectedDate(date);
+  }
+
+  @Override
+  public void refreshView() {
+    calendarPanel.refresh();
+    eventPanel.refresh();
+    calendarSelectorPanel.refresh();
+    exportImportPanel.refresh();
+  }
+
+  @Override
+  public void displayMessage(String message) {
+    messageArea.append(message + "\n");
+    messageArea.setCaretPosition(messageArea.getDocument().getLength());
+  }
+
+  @Override
+  public void displayError(String error) {
+    messageArea.append("Error: " + error + "\n");
+    messageArea.setCaretPosition(messageArea.getDocument().getLength());
+  }
 } 
