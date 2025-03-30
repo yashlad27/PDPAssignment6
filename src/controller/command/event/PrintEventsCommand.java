@@ -7,7 +7,7 @@ import java.util.List;
 import controller.command.ICommand;
 import model.calendar.ICalendar;
 import model.event.Event;
-import utilities.CSVExporter;
+import model.export.CSVExporter;
 import utilities.DateTimeUtil;
 
 /**
@@ -16,6 +16,7 @@ import utilities.DateTimeUtil;
 public class PrintEventsCommand implements ICommand {
 
   private final ICalendar calendar;
+  private final CSVExporter csvExporter;
 
   /**
    * Creates a PrintEventsCommand with the given calendar.
@@ -27,6 +28,7 @@ public class PrintEventsCommand implements ICommand {
       throw new IllegalArgumentException("Calendar cannot be null");
     }
     this.calendar = calendar;
+    this.csvExporter = new CSVExporter();
   }
 
   /**
@@ -91,7 +93,7 @@ public class PrintEventsCommand implements ICommand {
 
     StringBuilder result = new StringBuilder();
     result.append("Events on ").append(date.format(DateTimeFormatter.ISO_LOCAL_DATE)).append(":\n");
-    result.append(CSVExporter.formatEventsForDisplay(events, true));
+    result.append(csvExporter.formatForDisplay(events, true));
 
     return result.toString();
   }
@@ -107,7 +109,7 @@ public class PrintEventsCommand implements ICommand {
     StringBuilder result = new StringBuilder();
     result.append("Events from ").append(startDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
             .append(" to ").append(endDate.format(DateTimeFormatter.ISO_LOCAL_DATE)).append(":\n");
-    result.append(CSVExporter.formatEventsForDisplay(events, true));
+    result.append(csvExporter.formatForDisplay(events, true));
 
     return result.toString();
   }

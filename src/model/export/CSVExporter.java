@@ -1,4 +1,4 @@
-package utilities;
+package model.export;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,13 +9,11 @@ import java.util.stream.Collectors;
 import model.event.Event;
 
 /**
- * Utility class for exporting calendar events to CSV format.
+ * Implementation of IDataExporter that handles CSV format exports.
  * This class provides functionality to convert Event objects into CSV format
- * for data persistence, reporting, and interoperability with other applications.
- * It handles proper CSV formatting including escaping special characters and
- * handles both export to file and string representation for display purposes.
+ * for data persistence and interoperability with other applications.
  */
-public class CSVExporter {
+public class CSVExporter implements IDataExporter {
 
   /**
    * Date formatter used to format just the date portion (YYYY-MM-DD) of date-time values.
@@ -36,24 +34,14 @@ public class CSVExporter {
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-"
           + "MM-dd'T'HH:mm");
 
-  /**
-   * Exports a list of events to a CSV file.
-   * This method creates a CSV file at the specified path and writes all the provided
-   * events in CSV format, with appropriate headers and value escaping.
-   *
-   * @param filePath the path where the CSV file should be created
-   * @param events   the list of events to export to the CSV file
-   * @return the path of the created CSV file (same as the input filePath)
-   * @throws IOException      if there is an error creating or writing to the file
-   * @throws RuntimeException if there is an error during event processing or writing
-   */
-  public static String exportToCSV(String filePath, List<Event> events) throws IOException {
+  @Override
+  public String export(String filePath, List<Event> events) throws IOException {
     try (FileWriter writer = new FileWriter(filePath)) {
       writer.write("Subject,Start Date,Start Time,End Date,End Time,All Day," +
               "Description,Location,Public\n");
 
       events.stream()
-              .map(CSVExporter::formatEventForCSV)
+              .map(this::formatEventForCSV)
               .forEach(line -> {
                 try {
                   writer.write(line);
@@ -65,17 +53,8 @@ public class CSVExporter {
     return filePath;
   }
 
-  /**
-   * Formats a list of events for display in a human-readable format.
-   * This method generates a string representation of events suitable for display
-   * in a UI or console, with optional detailed information for each event.
-   *
-   * @param events      the list of events to format for display
-   * @param showDetails whether to include detailed information (description, location, privacy)
-   * @return a formatted string representation of the events, with one event per line,
-   *       or a message indicating no events if the list is empty or null
-   */
-  public static String formatEventsForDisplay(List<Event> events, boolean showDetails) {
+  @Override
+  public String formatForDisplay(List<Event> events, boolean showDetails) {
     if (events == null || events.isEmpty()) {
       return "No events found.";
     }
@@ -93,7 +72,7 @@ public class CSVExporter {
    * @param event the event to format as a CSV row
    * @return a CSV-formatted string representing the event, ending with a newline
    */
-  private static String formatEventForCSV(Event event) {
+  private String formatEventForCSV(Event event) {
     return String.format("%s,%s,%s,%s,%s,%b,%s,%s,%b\n",
             escapeCSV(event.getSubject()),
             event.getStartDateTime().format(DATE_FORMATTER),
@@ -115,7 +94,7 @@ public class CSVExporter {
    * @param showDetails whether to include detailed information like description,location & privacy
    * @return a formatted string representation of the event
    */
-  private static String formatEventForDisplay(Event event, boolean showDetails) {
+  private String formatEventForDisplay(Event event, boolean showDetails) {
     StringBuilder display = new StringBuilder();
 
     display.append(event.getSubject());
@@ -158,7 +137,7 @@ public class CSVExporter {
    * @param value the string value to escape for CSV format
    * @return the properly escaped CSV value
    */
-  private static String escapeCSV(String value) {
+  private String escapeCSV(String value) {
     if (value == null) {
       return "";
     }
