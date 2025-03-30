@@ -15,20 +15,21 @@ import java.util.Set;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * Panel class that handles event creation, editing, and display.
  */
 public class GUIEventPanel extends JPanel {
     private final JTextField subjectField;
-    private final JTextField locationField;
-    private final JTextField descriptionField;
+    private final JTextArea descriptionArea;
     private final JSpinner dateSpinner;
     private final JSpinner startTimeSpinner;
     private final JSpinner endTimeSpinner;
+    private final JTextField locationField;
     private final JCheckBox recurringCheckBox;
-    private final JPanel recurringPanel;
-    private final JList<DayOfWeek> weekdaysList;
+    private final JPanel recurringOptionsPanel;
+    private final List<JCheckBox> weekdayCheckboxes;
     private final JSpinner occurrencesSpinner;
     private final JSpinner untilDateSpinner;
     private final JButton saveButton;
@@ -65,10 +66,9 @@ public class GUIEventPanel extends JPanel {
      * Interface for event panel events.
      */
     public interface EventPanelListener {
-        void onEventSaved(String[] args, boolean isRecurring);
+        void onEventSaved(String[] eventData, boolean isRecurring);
         void onEventCancelled();
         void onEventUpdated(String[] args, boolean isRecurring);
-        void onEventDeleted(String[] args, boolean isRecurring);
     }
 
     /**
@@ -79,178 +79,229 @@ public class GUIEventPanel extends JPanel {
         setBorder(BorderFactory.createTitledBorder("Event Details"));
 
         // Initialize components
-        subjectField = new JTextField();
-        locationField = new JTextField();
-        descriptionField = new JTextField();
+        subjectField = new JTextField(20);
+        descriptionArea = new JTextArea(3, 20);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+
+        // Date and time spinners
         dateSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
+        dateSpinner.setEditor(dateEditor);
+
         startTimeSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor startTimeEditor = new JSpinner.DateEditor(startTimeSpinner, "HH:mm");
+        startTimeSpinner.setEditor(startTimeEditor);
+
         endTimeSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor endTimeEditor = new JSpinner.DateEditor(endTimeSpinner, "HH:mm");
+        endTimeSpinner.setEditor(endTimeEditor);
+
+        locationField = new JTextField(20);
         recurringCheckBox = new JCheckBox("Recurring Event");
-        weekdaysList = new JList<>(DayOfWeek.values());
-        occurrencesSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 999, 1));
+        
+        // Initialize recurring options
+        recurringOptionsPanel = new JPanel();
+        recurringOptionsPanel.setLayout(new BoxLayout(recurringOptionsPanel, BoxLayout.Y_AXIS));
+        recurringOptionsPanel.setBorder(BorderFactory.createTitledBorder("Recurring Options"));
+        recurringOptionsPanel.setVisible(false);
+
+        // Weekday checkboxes
+        JPanel weekdayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        weekdayPanel.add(new JLabel("Repeat on: "));
+        weekdayCheckboxes = new ArrayList<>();
+        String[] weekdays = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        for (String day : weekdays) {
+            JCheckBox checkbox = new JCheckBox(day);
+            weekdayCheckboxes.add(checkbox);
+            weekdayPanel.add(checkbox);
+        }
+        recurringOptionsPanel.add(weekdayPanel);
+
+        // Occurrences spinner
+        JPanel occurrencesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        occurrencesPanel.add(new JLabel("Number of occurrences: "));
+        occurrencesSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 52, 1));
+        occurrencesPanel.add(occurrencesSpinner);
+        recurringOptionsPanel.add(occurrencesPanel);
+
+        // Until date spinner
+        JPanel untilPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        untilPanel.add(new JLabel("Until date: "));
         untilDateSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor untilDateEditor = new JSpinner.DateEditor(untilDateSpinner, "yyyy-MM-dd");
+        untilDateSpinner.setEditor(untilDateEditor);
+        untilPanel.add(untilDateSpinner);
+        recurringOptionsPanel.add(untilPanel);
+
+        // Buttons
         saveButton = new JButton("Save");
         cancelButton = new JButton("Cancel");
-        recurringPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+
         errorLabels = new HashMap<>();
 
-        // Configure spinners
-        configureSpinners();
-
-        // Set up layout
         setupLayout();
         setupListeners();
     }
 
-    private void configureSpinners() {
-        // Configure date spinner
-        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
-        dateSpinner.setEditor(dateEditor);
-
-        // Configure time spinners
-        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(startTimeSpinner, "HH:mm");
-        startTimeSpinner.setEditor(timeEditor);
-        endTimeSpinner.setEditor(new JSpinner.DateEditor(endTimeSpinner, "HH:mm"));
-
-        // Set default values
-        LocalDateTime now = LocalDateTime.now();
-        dateSpinner.setValue(Date.from(now.toInstant(ZoneOffset.UTC)));
-        startTimeSpinner.setValue(Date.from(now.withHour(9).withMinute(0).toInstant(ZoneOffset.UTC)));
-        endTimeSpinner.setValue(Date.from(now.withHour(10).withMinute(0).toInstant(ZoneOffset.UTC)));
-    }
-
-    /**
-     * Sets up the layout of the event panel.
-     */
     private void setupLayout() {
         // Main form panel
-        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Subject field with error label
-        JPanel subjectPanel = new JPanel(new BorderLayout());
-        subjectPanel.add(new JLabel("Subject:"), BorderLayout.WEST);
-        subjectPanel.add(subjectField, BorderLayout.CENTER);
-        JLabel subjectError = new JLabel("❌");
-        subjectError.setForeground(Color.RED);
-        subjectError.setVisible(false);
-        subjectPanel.add(subjectError, BorderLayout.EAST);
-        errorLabels.put(subjectField, subjectError);
+        // Subject
+        JPanel subjectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        subjectPanel.add(new JLabel("Subject:"));
+        subjectPanel.add(subjectField);
         formPanel.add(subjectPanel);
 
-        // Location field
-        formPanel.add(locationField);
+        // Description
+        JPanel descriptionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        descriptionPanel.add(new JLabel("Description:"));
+        descriptionPanel.add(new JScrollPane(descriptionArea));
+        formPanel.add(descriptionPanel);
 
-        // Description field
-        formPanel.add(new JLabel("Description:"));
-        formPanel.add(descriptionField);
+        // Date and time - using GridBagLayout for better control
+        JPanel dateTimePanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(2, 2, 2, 5);
 
-        // Date and time fields with error labels
-        JPanel datePanel = new JPanel(new BorderLayout());
-        datePanel.add(new JLabel("Date:"), BorderLayout.WEST);
-        datePanel.add(dateSpinner, BorderLayout.CENTER);
-        JLabel dateError = new JLabel("❌");
-        dateError.setForeground(Color.RED);
-        dateError.setVisible(false);
-        datePanel.add(dateError, BorderLayout.EAST);
-        errorLabels.put(dateSpinner, dateError);
-        formPanel.add(datePanel);
+        // Date field
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        dateTimePanel.add(new JLabel("Date:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        dateTimePanel.add(dateSpinner, gbc);
 
-        JPanel startTimePanel = new JPanel(new BorderLayout());
-        startTimePanel.add(new JLabel("Start Time:"), BorderLayout.WEST);
-        startTimePanel.add(startTimeSpinner, BorderLayout.CENTER);
-        JLabel startTimeError = new JLabel("❌");
-        startTimeError.setForeground(Color.RED);
-        startTimeError.setVisible(false);
-        startTimePanel.add(startTimeError, BorderLayout.EAST);
-        errorLabels.put(startTimeSpinner, startTimeError);
-        formPanel.add(startTimePanel);
+        // Start time field
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0.0;
+        dateTimePanel.add(new JLabel("Start Time:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        dateTimePanel.add(startTimeSpinner, gbc);
 
-        JPanel endTimePanel = new JPanel(new BorderLayout());
-        endTimePanel.add(new JLabel("End Time:"), BorderLayout.WEST);
-        endTimePanel.add(endTimeSpinner, BorderLayout.CENTER);
-        JLabel endTimeError = new JLabel("❌");
-        endTimeError.setForeground(Color.RED);
-        endTimeError.setVisible(false);
-        endTimePanel.add(endTimeError, BorderLayout.EAST);
-        errorLabels.put(endTimeSpinner, endTimeError);
-        formPanel.add(endTimePanel);
+        // End time field
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0.0;
+        dateTimePanel.add(new JLabel("End Time:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        dateTimePanel.add(endTimeSpinner, gbc);
 
-        // Recurring event panel
-        recurringPanel.setBorder(BorderFactory.createTitledBorder("Recurring Event Options"));
-        recurringPanel.setVisible(false);
+        formPanel.add(dateTimePanel);
 
-        // Weekdays selection with error label
-        JPanel weekdaysPanel = new JPanel(new BorderLayout());
-        weekdaysPanel.add(new JLabel("Repeat on:"), BorderLayout.NORTH);
-        weekdaysList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        weekdaysPanel.add(new JScrollPane(weekdaysList), BorderLayout.CENTER);
-        JLabel weekdaysError = new JLabel("❌");
-        weekdaysError.setForeground(Color.RED);
-        weekdaysError.setVisible(false);
-        weekdaysPanel.add(weekdaysError, BorderLayout.EAST);
-        errorLabels.put(weekdaysList, weekdaysError);
+        // Location
+        JPanel locationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        locationPanel.add(new JLabel("Location:"));
+        locationPanel.add(locationField);
+        formPanel.add(locationPanel);
 
-        // Occurrences/Until date selection
-        JPanel occurrencesPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        occurrencesPanel.add(new JLabel("Number of occurrences:"));
-        occurrencesPanel.add(occurrencesSpinner);
-        occurrencesPanel.add(new JLabel("Until date:"));
-        occurrencesPanel.add(untilDateSpinner);
+        // Recurring checkbox
+        JPanel recurringPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        recurringPanel.add(recurringCheckBox);
+        formPanel.add(recurringPanel);
 
-        recurringPanel.add(weekdaysPanel);
-        recurringPanel.add(occurrencesPanel);
+        // Recurring options
+        formPanel.add(recurringOptionsPanel);
 
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
 
-        // Add all components to the main panel
-        add(formPanel, BorderLayout.NORTH);
-        add(recurringPanel, BorderLayout.CENTER);
+        // Add to main panel with scroll support
+        JScrollPane scrollPane = new JScrollPane(formPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // Set preferred sizes for spinners to prevent stretching
+        Dimension spinnerSize = new Dimension(120, 25);
+        dateSpinner.setPreferredSize(spinnerSize);
+        startTimeSpinner.setPreferredSize(spinnerSize);
+        endTimeSpinner.setPreferredSize(spinnerSize);
     }
 
-    /**
-     * Sets up event listeners.
-     */
     private void setupListeners() {
-        // Recurring checkbox listener
         recurringCheckBox.addActionListener(e -> {
-            recurringPanel.setVisible(recurringCheckBox.isSelected());
-            validateForm();
+            recurringOptionsPanel.setVisible(recurringCheckBox.isSelected());
+            revalidate();
+            repaint();
         });
 
-        // Time validation
-        startTimeSpinner.addChangeListener(e -> validateForm());
-        endTimeSpinner.addChangeListener(e -> validateForm());
-
-        // Weekdays selection listener
-        weekdaysList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                validateForm();
-            }
-        });
-
-        // Occurrences/Until date validation
-        occurrencesSpinner.addChangeListener(e -> validateForm());
-        untilDateSpinner.addChangeListener(e -> validateForm());
-
-        // Save button listener
         saveButton.addActionListener(e -> {
             if (validateForm()) {
-                EventData data = createEventDataFromForm();
-                if (data != null) {
-                    String[] args = createEventArgs(data);
-                    if (args != null) {
-                        listener.onEventSaved(args, data.isRecurring);
+                if (listener != null) {
+                    String[] eventArgs;
+                    boolean isRecurring = recurringCheckBox.isSelected();
+                    
+                    // Get date and time from spinners
+                    Date selectedDate = (Date) dateSpinner.getValue();
+                    Date startTime = (Date) startTimeSpinner.getValue();
+                    Date endTime = (Date) endTimeSpinner.getValue();
+
+                    // Combine date and time
+                    LocalDateTime startDateTime = selectedDate.toInstant()
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDateTime()
+                        .withHour(startTime.toInstant().atZone(ZoneOffset.UTC).getHour())
+                        .withMinute(startTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
+
+                    LocalDateTime endDateTime = selectedDate.toInstant()
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDateTime()
+                        .withHour(endTime.toInstant().atZone(ZoneOffset.UTC).getHour())
+                        .withMinute(endTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
+
+                    String subject = subjectField.getText().trim();
+                    String location = locationField.getText().trim();
+                    String description = descriptionArea.getText().trim();
+
+                    if (isRecurring) {
+                        Set<DayOfWeek> weekdays = weekdayCheckboxes.stream()
+                            .filter(JCheckBox::isSelected)
+                            .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1)))
+                            .collect(java.util.stream.Collectors.toSet());
+                        int occurrences = (Integer) occurrencesSpinner.getValue();
+                        LocalDate untilDate = ((Date) untilDateSpinner.getValue()).toInstant()
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate();
+
+                        eventArgs = new String[]{"series_from_date", "create", 
+                            subject, 
+                            startDateTime.toString(),
+                            String.format("%s,%s,%s,%s,%d,%s,%s", 
+                                subject,
+                                startDateTime,
+                                endDateTime,
+                                location,
+                                occurrences,
+                                weekdays,
+                                untilDate)
+                        };
+                    } else {
+                        eventArgs = new String[]{"single", "create",
+                            subject,
+                            startDateTime.toString(),
+                            String.format("%s,%s,%s,%s",
+                                subject,
+                                startDateTime,
+                                endDateTime,
+                                location)
+                        };
                     }
+                    listener.onEventSaved(eventArgs, isRecurring);
                 }
             }
         });
 
-        // Cancel button listener
         cancelButton.addActionListener(e -> {
             if (listener != null) {
                 listener.onEventCancelled();
@@ -258,11 +309,6 @@ public class GUIEventPanel extends JPanel {
         });
     }
 
-    /**
-     * Validates the form data.
-     *
-     * @return true if the form is valid, false otherwise
-     */
     private boolean validateForm() {
         boolean isValid = true;
         clearErrorLabels();
@@ -273,32 +319,29 @@ public class GUIEventPanel extends JPanel {
             isValid = false;
         }
 
-        // Validate time
+        // Validate date and times
         Date startTime = (Date) startTimeSpinner.getValue();
         Date endTime = (Date) endTimeSpinner.getValue();
-        if (startTime.after(endTime)) {
-            showError(startTimeSpinner, "Start time must be before end time");
+        if (endTime.before(startTime)) {
             showError(endTimeSpinner, "End time must be after start time");
             isValid = false;
         }
 
-        // Validate recurring event options if enabled
+        // Validate recurring event options
         if (recurringCheckBox.isSelected()) {
-            if (weekdaysList.getSelectedValuesList().isEmpty()) {
-                showError(weekdaysList, "Select at least one weekday");
+            boolean anyWeekdaySelected = weekdayCheckboxes.stream().anyMatch(JCheckBox::isSelected);
+            if (!anyWeekdaySelected) {
+                showError(weekdayCheckboxes.get(0), "Select at least one weekday");
                 isValid = false;
             }
 
-            // Validate occurrences/until date
             Date untilDate = (Date) untilDateSpinner.getValue();
-            if (untilDate.before(startTime)) {
+            Date selectedDate = (Date) dateSpinner.getValue();
+            if (untilDate.before(selectedDate)) {
                 showError(untilDateSpinner, "Until date must be after start date");
                 isValid = false;
             }
         }
-
-        // Update save button state
-        saveButton.setEnabled(isValid);
 
         return isValid;
     }
@@ -306,173 +349,13 @@ public class GUIEventPanel extends JPanel {
     private void showError(JComponent component, String message) {
         JLabel errorLabel = errorLabels.get(component);
         if (errorLabel != null) {
-            errorLabel.setToolTipText(message);
+            errorLabel.setText(message);
             errorLabel.setVisible(true);
         }
     }
 
     private void clearErrorLabels() {
-        for (JLabel label : errorLabels.values()) {
-            label.setVisible(false);
-            label.setToolTipText(null);
-        }
-    }
-
-    /**
-     * Creates event data from the form.
-     *
-     * @return the event data, or null if validation fails
-     */
-    private EventData createEventDataFromForm() {
-        if (!validateForm()) {
-            return null;
-        }
-
-        EventData data = new EventData();
-        data.subject = subjectField.getText().trim();
-        data.location = locationField.getText().trim();
-        data.description = descriptionField.getText().trim();
-
-        // Get date and time from spinners
-        Date selectedDate = (Date) dateSpinner.getValue();
-        Date startTime = (Date) startTimeSpinner.getValue();
-        Date endTime = (Date) endTimeSpinner.getValue();
-
-        // Combine date and time
-        LocalDateTime startDateTime = selectedDate.toInstant()
-            .atZone(ZoneOffset.UTC)
-            .toLocalDateTime()
-            .withHour(startTime.toInstant().atZone(ZoneOffset.UTC).getHour())
-            .withMinute(startTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
-
-        LocalDateTime endDateTime = selectedDate.toInstant()
-            .atZone(ZoneOffset.UTC)
-            .toLocalDateTime()
-            .withHour(endTime.toInstant().atZone(ZoneOffset.UTC).getHour())
-            .withMinute(endTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
-
-        data.date = startDateTime.toLocalDate();
-        data.startTime = startDateTime.toLocalTime();
-        data.endTime = endDateTime.toLocalTime();
-
-        // Set recurring event data
-        data.isRecurring = recurringCheckBox.isSelected();
-        if (data.isRecurring) {
-            data.weekdays = Set.copyOf(weekdaysList.getSelectedValuesList());
-            data.occurrences = (Integer) occurrencesSpinner.getValue();
-            data.untilDate = ((Date) untilDateSpinner.getValue()).toInstant()
-                    .atZone(ZoneOffset.UTC)
-                    .toLocalDate();
-        }
-
-        return data;
-    }
-
-    /**
-     * Creates an EventData object from the form fields.
-     *
-     * @return the created EventData object
-     */
-    private EventData createEventData() {
-        EventData data = new EventData();
-        data.subject = subjectField.getText();
-        data.location = locationField.getText();
-        data.description = descriptionField.getText();
-        data.startTime = LocalTime.of(
-            ((java.util.Date) startTimeSpinner.getValue()).getHours(),
-            ((java.util.Date) startTimeSpinner.getValue()).getMinutes()
-        );
-        data.endTime = LocalTime.of(
-            ((java.util.Date) endTimeSpinner.getValue()).getHours(),
-            ((java.util.Date) endTimeSpinner.getValue()).getMinutes()
-        );
-        data.isRecurring = recurringCheckBox.isSelected();
-        data.date = currentDate;
-        
-        if (data.isRecurring) {
-            data.weekdays = Set.copyOf(weekdaysList.getSelectedValuesList());
-            data.occurrences = (Integer) occurrencesSpinner.getValue();
-            data.untilDate = LocalDate.ofEpochDay(((java.util.Date) untilDateSpinner.getValue()).getTime());
-        }
-
-        return data;
-    }
-
-    /**
-     * Creates event arguments based on the event data.
-     *
-     * @param data the event data
-     * @return the event arguments
-     */
-    private String[] createEventArgs(EventData data) {
-        if (data.isRecurring) {
-            return new String[]{"series_from_date", "create", 
-                data.subject, 
-                data.date.atTime(data.startTime).toString(),
-                String.format("%s,%s,%s,%s,%d,%s,%s", 
-                    data.subject,
-                    data.date.atTime(data.startTime),
-                    data.date.atTime(data.endTime),
-                    data.location,
-                    data.occurrences,
-                    data.weekdays,
-                    data.untilDate)
-            };
-        } else {
-            return new String[]{"single", "create",
-                data.subject,
-                data.date.atTime(data.startTime).toString(),
-                String.format("%s,%s,%s,%s",
-                    data.subject,
-                    data.date.atTime(data.startTime),
-                    data.date.atTime(data.endTime),
-                    data.location)
-            };
-        }
-    }
-
-    /**
-     * Creates update event arguments based on the event data.
-     *
-     * @param data the event data
-     * @param property the property to update
-     * @param newValue the new value
-     * @return the event arguments
-     */
-    private String[] createUpdateEventArgs(EventData data, String property, String newValue) {
-        if (data.isRecurring) {
-            return new String[]{"series_from_date", property,
-                data.subject,
-                data.date.atTime(data.startTime).toString(),
-                newValue
-            };
-        } else {
-            return new String[]{"single", property,
-                data.subject,
-                data.date.atTime(data.startTime).toString(),
-                newValue
-            };
-        }
-    }
-
-    /**
-     * Creates delete event arguments based on the event data.
-     *
-     * @param data the event data
-     * @return the event arguments
-     */
-    private String[] createDeleteEventArgs(EventData data) {
-        if (data.isRecurring) {
-            return new String[]{"series_from_date", "delete",
-                data.subject,
-                data.date.atTime(data.startTime).toString()
-            };
-        } else {
-            return new String[]{"single", "delete",
-                data.subject,
-                data.date.atTime(data.startTime).toString()
-            };
-        }
+        errorLabels.values().forEach(label -> label.setVisible(false));
     }
 
     /**
@@ -483,12 +366,12 @@ public class GUIEventPanel extends JPanel {
     public void displayEvent(Event event) {
         subjectField.setText(event.getSubject());
         locationField.setText(event.getLocation());
-        descriptionField.setText(event.getDescription());
+        descriptionArea.setText(event.getDescription());
         dateSpinner.setValue(Date.from(event.getStartDateTime().toInstant(ZoneOffset.UTC)));
         startTimeSpinner.setValue(Date.from(event.getStartDateTime().toInstant(ZoneOffset.UTC)));
         endTimeSpinner.setValue(Date.from(event.getEndDateTime().toInstant(ZoneOffset.UTC)));
         recurringCheckBox.setSelected(false);
-        recurringPanel.setVisible(false);
+        recurringOptionsPanel.setVisible(false);
     }
 
     /**
@@ -499,7 +382,7 @@ public class GUIEventPanel extends JPanel {
     public void displayRecurringEvent(RecurringEvent event) {
         displayEvent(event);
         recurringCheckBox.setSelected(true);
-        recurringPanel.setVisible(true);
+        recurringOptionsPanel.setVisible(true);
         
         // Get the weekdays from the event
         Set<DayOfWeek> weekdays = event.getRepeatDays();
@@ -507,13 +390,16 @@ public class GUIEventPanel extends JPanel {
         // Find indices of the weekdays in the list
         int[] indices = new int[weekdays.size()];
         int index = 0;
-        for (int i = 0; i < weekdaysList.getModel().getSize(); i++) {
-            if (weekdays.contains(weekdaysList.getModel().getElementAt(i))) {
+        for (int i = 0; i < weekdayCheckboxes.size(); i++) {
+            if (weekdays.contains(DayOfWeek.of(i + 1))) {
                 indices[index++] = i;
             }
         }
         
-        weekdaysList.setSelectedIndices(indices);
+        weekdayCheckboxes.forEach(cb -> cb.setSelected(false));
+        for (int i : indices) {
+            weekdayCheckboxes.get(i).setSelected(true);
+        }
         occurrencesSpinner.setValue(event.getOccurrences());
         untilDateSpinner.setValue(Date.from(event.getEndDate().atStartOfDay().toInstant(ZoneOffset.UTC)));
     }
@@ -545,17 +431,14 @@ public class GUIEventPanel extends JPanel {
      */
     public void clearForm() {
         subjectField.setText("");
+        descriptionArea.setText("");
         locationField.setText("");
-        descriptionField.setText("");
-        dateSpinner.setValue(Date.from(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)));
-        startTimeSpinner.setValue(Date.from(LocalTime.of(9, 0).atDate(LocalDate.now()).toInstant(ZoneOffset.UTC)));
-        endTimeSpinner.setValue(Date.from(LocalTime.of(10, 0).atDate(LocalDate.now()).toInstant(ZoneOffset.UTC)));
         recurringCheckBox.setSelected(false);
-        recurringPanel.setVisible(false);
-        weekdaysList.clearSelection();
+        recurringOptionsPanel.setVisible(false);
+        weekdayCheckboxes.forEach(cb -> cb.setSelected(false));
         occurrencesSpinner.setValue(1);
-        untilDateSpinner.setValue(Date.from(LocalDate.now().plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
-        clearErrorLabels();
+        revalidate();
+        repaint();
     }
 
     /**
@@ -580,44 +463,66 @@ public class GUIEventPanel extends JPanel {
      * @param event the event to update
      */
     public void updateEvent(Event event) {
-        EventData data = createEventData();
-        if (event instanceof RecurringEvent) {
-            RecurringEvent recurringEvent = (RecurringEvent) event;
-            data.isRecurring = true;
-            data.weekdays = recurringEvent.getRepeatDays();
-            data.occurrences = recurringEvent.getOccurrences();
-            data.untilDate = recurringEvent.getEndDate();
-        }
-        
-        // Update each property using the strategy pattern
-        String[] args = createUpdateEventArgs(data, "subject", data.subject);
-        listener.onEventUpdated(args, data.isRecurring);
-        
-        args = createUpdateEventArgs(data, "startDateTime", data.date.atTime(data.startTime).toString());
-        listener.onEventUpdated(args, data.isRecurring);
-        
-        args = createUpdateEventArgs(data, "endDateTime", data.date.atTime(data.endTime).toString());
-        listener.onEventUpdated(args, data.isRecurring);
-        
-        args = createUpdateEventArgs(data, "location", data.location);
-        listener.onEventUpdated(args, data.isRecurring);
-        
-        args = createUpdateEventArgs(data, "description", data.description);
-        listener.onEventUpdated(args, data.isRecurring);
-    }
+        // Get date and time from spinners
+        Date selectedDate = (Date) dateSpinner.getValue();
+        Date startTime = (Date) startTimeSpinner.getValue();
+        Date endTime = (Date) endTimeSpinner.getValue();
 
-    /**
-     * Deletes an event.
-     *
-     * @param event the event to delete
-     */
-    public void deleteEvent(Event event) {
-        EventData data = createEventData();
-        if (event instanceof RecurringEvent) {
-            data.isRecurring = true;
+        // Combine date and time
+        LocalDateTime startDateTime = selectedDate.toInstant()
+            .atZone(ZoneOffset.UTC)
+            .toLocalDateTime()
+            .withHour(startTime.toInstant().atZone(ZoneOffset.UTC).getHour())
+            .withMinute(startTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
+
+        LocalDateTime endDateTime = selectedDate.toInstant()
+            .atZone(ZoneOffset.UTC)
+            .toLocalDateTime()
+            .withHour(endTime.toInstant().atZone(ZoneOffset.UTC).getHour())
+            .withMinute(endTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
+
+        String subject = subjectField.getText().trim();
+        String location = locationField.getText().trim();
+        String description = descriptionArea.getText().trim();
+        boolean isRecurring = recurringCheckBox.isSelected();
+
+        String[] args;
+        if (isRecurring) {
+            Set<DayOfWeek> weekdays = weekdayCheckboxes.stream()
+                .filter(JCheckBox::isSelected)
+                .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1)))
+                .collect(java.util.stream.Collectors.toSet());
+            int occurrences = (Integer) occurrencesSpinner.getValue();
+            LocalDate untilDate = ((Date) untilDateSpinner.getValue()).toInstant()
+                    .atZone(ZoneOffset.UTC)
+                    .toLocalDate();
+
+            args = new String[]{"series_from_date", "edit", 
+                subject, 
+                startDateTime.toString(),
+                String.format("%s,%s,%s,%s,%d,%s,%s", 
+                    subject,
+                    startDateTime,
+                    endDateTime,
+                    location,
+                    occurrences,
+                    weekdays,
+                    untilDate)
+            };
+        } else {
+            args = new String[]{"single", "edit",
+                subject,
+                startDateTime.toString(),
+                String.format("%s,%s,%s,%s",
+                    subject,
+                    startDateTime,
+                    endDateTime,
+                    location)
+            };
         }
         
-        String[] args = createDeleteEventArgs(data);
-        listener.onEventDeleted(args, data.isRecurring);
+        if (listener != null) {
+            listener.onEventUpdated(args, isRecurring);
+        }
     }
 } 

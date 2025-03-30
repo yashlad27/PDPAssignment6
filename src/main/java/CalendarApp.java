@@ -1,23 +1,22 @@
+import javax.swing.*;
+
 import controller.CalendarController;
+import controller.GUIController;
 import controller.ICommandFactory;
 import model.calendar.Calendar;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
+import model.exceptions.CalendarNotFoundException;
 import model.factory.CalendarFactory;
 import utilities.TimeZoneHandler;
-import view.ConsoleView;
 import view.GUIView;
 import view.ICalendarView;
-import controller.GUIController;
-import model.exceptions.CalendarNotFoundException;
-import javax.swing.SwingUtilities;
 
 /**
  * Main entry point for the Calendar Application. This class handles both interactive and headless
  * modes of operation.
  */
 public class CalendarApp {
-  private static CalendarFactory factory;
   private static CalendarManager calendarManager;
   private static ICalendarView view;
   private static CalendarController controller;
@@ -27,7 +26,8 @@ public class CalendarApp {
    *
    * @param args Command line arguments:
    *             --mode interactive : Starts the application in interactive mode
-   *             --mode headless file : Starts the application in headless mode with the specified command file
+   *             --mode headless file : Starts the application in headless mode
+   *                with the specified command file
    *             --mode gui : Starts the application in GUI mode
    */
   public static void main(String[] args) {
@@ -39,20 +39,22 @@ public class CalendarApp {
    * Initializes the core components of the application.
    */
   private static void initializeApplication() {
-    factory = new CalendarFactory();
+    CalendarFactory factory = new CalendarFactory();
     TimeZoneHandler timezoneHandler = factory.createTimeZoneHandler();
     calendarManager = factory.createCalendarManager(timezoneHandler);
     ICalendar calendar = new Calendar();
 
     // Create controller with null command factories first
-    controller = factory.createController(null, null, calendarManager, null);
+    controller = factory.createController(null,
+            null, calendarManager, null);
 
     // Create view
     view = factory.createView("gui", controller);
 
     // Now create command factories with the view
     ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
-    ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager, view);
+    ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
+            view);
 
     // Update controller with the command factories
     controller.setEventCommandFactory(eventCommandFactory);
@@ -91,7 +93,7 @@ public class CalendarApp {
    * Starts the appropriate mode based on the command line arguments.
    *
    * @param modeValue The mode to start
-   * @param args The full command line arguments
+   * @param args      The full command line arguments
    */
   private static void startMode(String modeValue, String[] args) {
     switch (modeValue) {
@@ -124,7 +126,8 @@ public class CalendarApp {
    */
   private static void startHeadlessMode(String[] args) {
     if (args.length < 3) {
-      view.displayError("Headless mode requires a filename. Usage: --mode headless filename");
+      view.displayError("Headless mode requires a filename."
+              + " Usage: --mode headless filename");
       return;
     }
     String filename = args[2];

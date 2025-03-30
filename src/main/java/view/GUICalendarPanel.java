@@ -162,13 +162,21 @@ public class GUICalendarPanel extends JPanel {
     // Add day headers
     String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     for (String day : dayNames) {
-      calendarGrid.add(new JLabel(day, SwingConstants.CENTER));
+      JLabel dayLabel = new JLabel(day, SwingConstants.CENTER);
+      dayLabel.setFont(dayLabel.getFont().deriveFont(Font.BOLD));
+      calendarGrid.add(dayLabel);
     }
 
+    // Calculate the first day of the month (0 = Sunday, 6 = Saturday)
+    LocalDate firstDay = currentMonth.atDay(1);
+    int firstDayOfWeek = firstDay.getDayOfWeek().getValue();
+    int offset = (firstDayOfWeek == 7) ? 0 : firstDayOfWeek;
+
     // Add empty cells for days before the first day of the month
-    int firstDayOfMonth = currentMonth.atDay(1).getDayOfWeek().getValue() % 7;
-    for (int i = 0; i < firstDayOfMonth; i++) {
-      calendarGrid.add(new JLabel(""));
+    for (int i = 0; i < offset; i++) {
+      JLabel emptyLabel = new JLabel("");
+      emptyLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      calendarGrid.add(emptyLabel);
     }
 
     // Add day buttons
@@ -177,6 +185,15 @@ public class GUICalendarPanel extends JPanel {
       LocalDate date = currentMonth.atDay(day);
       JButton button = createDateButton(date);
       calendarGrid.add(button);
+    }
+
+    // Add empty cells for remaining days to maintain grid structure
+    int totalCells = 42; // 6 rows × 7 columns
+    int remainingCells = totalCells - (offset + daysInMonth);
+    for (int i = 0; i < remainingCells; i++) {
+      JLabel emptyLabel = new JLabel("");
+      emptyLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      calendarGrid.add(emptyLabel);
     }
 
     // Refresh the panel
@@ -315,24 +332,15 @@ public class GUICalendarPanel extends JPanel {
    */
   public void updateCalendar(ICalendar calendar) {
     try {
-      // Use strategy pattern to get events
-      String[] args = new String[]{"all", "get_all"};
-      EventEditor editor = EventEditor.forType("all", args);
-      editor.executeEdit(calendar);
-
-      // Update events display
+      // Get events directly from calendar
       List<Event> events = calendar.getAllEvents();
       updateEvents(events);
 
-      // Update recurring events display
-      args = new String[]{"series_from_date", "get_all"};
-      editor = EventEditor.forType("series_from_date", args);
-      editor.executeEdit(calendar);
-
+      // Get recurring events directly from calendar
       List<RecurringEvent> recurringEvents = calendar.getAllRecurringEvents();
       updateRecurringEvents(recurringEvents);
     } catch (Exception e) {
-      // Handle error appropriately
+      // Handle any errors appropriately
       System.err.println("Error updating calendar: " + e.getMessage());
     }
   }
@@ -502,15 +510,17 @@ public class GUICalendarPanel extends JPanel {
   }
 
   /**
-   * Updates the status button text with the busy/available status.
+   * Updates the status display.
    *
    * @param isBusy whether the selected date is busy
    */
   public void updateStatus(boolean isBusy) {
-    statusButton.setText(isBusy ? "Status: Busy" : "Status: Available");
-    statusButton.setBackground(isBusy ? new Color(255, 200, 200) : new Color(200, 255, 200));
-    statusButton.setOpaque(true);
-    statusButton.setBorder(BorderFactory.createLineBorder(
-        isBusy ? new Color(200, 100, 100) : new Color(100, 200, 100)));
+    String status = isBusy ? "Busy" : "Available";
+    JOptionPane.showMessageDialog(
+        this,
+        "Status: " + status,
+        "Calendar Status",
+        JOptionPane.INFORMATION_MESSAGE
+    );
   }
 } 

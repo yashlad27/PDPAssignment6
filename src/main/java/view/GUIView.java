@@ -112,12 +112,17 @@ public class GUIView extends JFrame implements IGUIView,
     rightPanel.add(eventPanel, BorderLayout.CENTER);
     rightPanel.setPreferredSize(new Dimension(300, 0));
 
-    // Add panels to main panel
-    mainPanel.add(leftPanel, BorderLayout.WEST);
-    mainPanel.add(centerPanel, BorderLayout.CENTER);
-    mainPanel.add(rightPanel, BorderLayout.EAST);
+    // Create split panes for resizable panels
+    JSplitPane leftSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, centerPanel);
+    leftSplitPane.setResizeWeight(0.2);
+    leftSplitPane.setOneTouchExpandable(true);
 
-    // Add main panel to frame
+    JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplitPane, rightPanel);
+    mainSplitPane.setResizeWeight(0.8);
+    mainSplitPane.setOneTouchExpandable(true);
+
+    // Add main split pane to frame
+    mainPanel.add(mainSplitPane, BorderLayout.CENTER);
     add(mainPanel);
   }
 

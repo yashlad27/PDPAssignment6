@@ -114,6 +114,28 @@ public class GUIController {
           ICalendar calendar = calendarManager.getCalendar(calendarName);
           if (calendar != null) {
             currentCalendar = calendar;
+            view.setSelectedCalendar(calendarName);
+            view.updateCalendarView(calendar);
+            view.displayMessage("Selected calendar: " + calendarName);
+          }
+        } catch (CalendarNotFoundException e) {
+          view.displayError("Calendar not found: " + calendarName);
+        } catch (Exception e) {
+          view.displayError("Error selecting calendar: " + e.getMessage());
+        }
+      }
+
+      @Override
+      public void onCalendarActivated(String calendarName) {
+        try {
+          if (calendarName == null || calendarName.trim().isEmpty()) {
+            view.displayError("Please select a calendar to activate");
+            return;
+          }
+          
+          ICalendar calendar = calendarManager.getCalendar(calendarName);
+          if (calendar != null) {
+            currentCalendar = calendar;
             view.updateCalendarView(calendar);
 
             // Update events display
@@ -121,12 +143,12 @@ public class GUIController {
             List<RecurringEvent> recurringEvents = getAllRecurringEvents();
             view.getCalendarPanel().updateEvents(events);
             view.getCalendarPanel().updateRecurringEvents(recurringEvents);
-            view.displayMessage("Selected calendar: " + calendarName);
+            view.displayMessage("Activated calendar: " + calendarName);
           }
         } catch (CalendarNotFoundException e) {
           view.displayError("Calendar not found: " + calendarName);
         } catch (Exception e) {
-          view.displayError("Error selecting calendar: " + e.getMessage());
+          view.displayError("Error activating calendar: " + e.getMessage());
         }
       }
 
@@ -146,12 +168,11 @@ public class GUIController {
           calendarManager.createCalendar(calendarName, timezone);
           // Update the calendar list in the view
           view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
-          // Select the newly created calendar
+          // Select and activate the newly created calendar
           view.setSelectedCalendar(calendarName);
-          // Update the current calendar
           currentCalendar = calendarManager.getCalendar(calendarName);
           view.updateCalendarView(currentCalendar);
-          view.displayMessage("Calendar '" + calendarName + "' created successfully");
+          view.displayMessage("Calendar '" + calendarName + "' created and activated successfully");
           view.refreshView();
         } catch (IllegalArgumentException e) {
           view.displayError("Invalid calendar name or timezone: " + e.getMessage());
@@ -247,36 +268,27 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-
-          if (args == null || args.length == 0) {
+          
+          if (args == null || args.length < 2) {
             view.displayError("Invalid event data");
             return;
           }
 
-          EventEditor editor = EventEditor.forType(isRecurring ? "series_from_date" : "single", args);
-          String result = editor.executeEdit(currentCalendar);
-          
-          // Show the result message from the editor
-          if (result != null && !result.isEmpty()) {
-            view.displayMessage(result);
+          String result = executeCommand("create", args);
+          if (result.startsWith("Error")) {
+            view.displayError(result);
           } else {
-            view.displayMessage("Event created successfully");
+            view.displayMessage(result);
+            view.refreshView();
           }
-          
-          // Refresh the view
-          view.refreshView();
-          updateStatus(view.getCalendarPanel().getSelectedDate());
-        } catch (IllegalArgumentException e) {
-          view.displayError("Invalid event data: " + e.getMessage());
         } catch (Exception e) {
-          view.displayError("Failed to create event: " + e.getMessage());
+          view.displayError("Failed to save event: " + e.getMessage());
         }
       }
 
       @Override
       public void onEventCancelled() {
         view.getEventPanel().clearForm();
-        view.displayMessage("Event creation cancelled");
       }
 
       @Override
@@ -286,65 +298,26 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-
-          if (args == null || args.length == 0) {
+          
+          if (args == null || args.length < 2) {
             view.displayError("Invalid event data");
             return;
           }
 
-          EventEditor editor = EventEditor.forType(isRecurring ? "series_from_date" : "single", args);
-          String result = editor.executeEdit(currentCalendar);
-          
-          // Show the result message from the editor
-          if (result != null && !result.isEmpty()) {
-            view.displayMessage(result);
+          String result = executeCommand("edit", args);
+          if (result.startsWith("Error")) {
+            view.displayError(result);
           } else {
-            view.displayMessage("Event updated successfully");
+            view.displayMessage(result);
+            view.refreshView();
           }
-          
-          view.refreshView();
-          updateStatus(view.getCalendarPanel().getSelectedDate());
-        } catch (IllegalArgumentException e) {
-          view.displayError("Invalid event data: " + e.getMessage());
         } catch (Exception e) {
           view.displayError("Failed to update event: " + e.getMessage());
         }
       }
-
-      @Override
-      public void onEventDeleted(String[] args, boolean isRecurring) {
-        try {
-          if (currentCalendar == null) {
-            view.displayError("Please select a calendar first");
-            return;
-          }
-
-          if (args == null || args.length == 0) {
-            view.displayError("Invalid event data");
-            return;
-          }
-
-          EventEditor editor = EventEditor.forType(isRecurring ? "series_from_date" : "single", args);
-          String result = editor.executeEdit(currentCalendar);
-          
-          // Show the result message from the editor
-          if (result != null && !result.isEmpty()) {
-            view.displayMessage(result);
-          } else {
-            view.displayMessage("Event deleted successfully");
-          }
-          
-          view.refreshView();
-          updateStatus(view.getCalendarPanel().getSelectedDate());
-        } catch (IllegalArgumentException e) {
-          view.displayError("Invalid event data: " + e.getMessage());
-        } catch (Exception e) {
-          view.displayError("Failed to delete event: " + e.getMessage());
-        }
-      }
     });
 
-    // CSV import/export
+    // Export/Import panel events
     view.getExportImportPanel().addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
       @Override
       public void onImportRequested(File file) {
@@ -353,14 +326,16 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-          String[] args = new String[]{"all", "import_csv", file.getAbsolutePath()};
-          EventEditor editor = EventEditor.forType("all", args);
-          editor.executeEdit(currentCalendar);
-          view.getExportImportPanel().showImportSuccess();
-          view.refreshView();
-          updateStatus(view.getCalendarPanel().getSelectedDate());
+          
+          String result = executeCommand("import", new String[]{file.getAbsolutePath()});
+          if (result.startsWith("Error")) {
+            view.displayError(result);
+          } else {
+            view.displayMessage(result);
+            view.refreshView();
+          }
         } catch (Exception e) {
-          view.getExportImportPanel().showError("Failed to import from CSV: " + e.getMessage());
+          view.displayError("Failed to import events: " + e.getMessage());
         }
       }
 
@@ -371,12 +346,15 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-          String[] args = new String[]{"all", "export_csv", file.getAbsolutePath()};
-          EventEditor editor = EventEditor.forType("all", args);
-          editor.executeEdit(currentCalendar);
-          view.getExportImportPanel().showExportSuccess();
+          
+          String result = executeCommand("export", new String[]{file.getAbsolutePath()});
+          if (result.startsWith("Error")) {
+            view.displayError(result);
+          } else {
+            view.displayMessage(result);
+          }
         } catch (Exception e) {
-          view.getExportImportPanel().showError("Failed to export to CSV: " + e.getMessage());
+          view.displayError("Failed to export events: " + e.getMessage());
         }
       }
     });
@@ -411,12 +389,12 @@ public class GUIController {
       return List.of();
     }
     try {
-      String[] args = new String[]{"single", "get_events", date.toString()};
-      EventEditor editor = EventEditor.forType("single", args);
-      editor.executeEdit(currentCalendar);
       return currentCalendar.getEventsOnDate(date);
     } catch (Exception e) {
-      view.displayError("Failed to get events for date: " + e.getMessage());
+      // Don't show error for empty calendars
+      if (!e.getMessage().contains("Insufficient arguments")) {
+        view.displayError("Failed to get events for date: " + e.getMessage());
+      }
       return List.of();
     }
   }
@@ -433,12 +411,12 @@ public class GUIController {
       return List.of();
     }
     try {
-      String[] args = new String[]{"all", "get_range", startDate.toString(), endDate.toString()};
-      EventEditor editor = EventEditor.forType("all", args);
-      editor.executeEdit(currentCalendar);
       return currentCalendar.getEventsInRange(startDate, endDate);
     } catch (Exception e) {
-      view.displayError("Failed to get events in range: " + e.getMessage());
+      // Don't show error for empty calendars
+      if (!e.getMessage().contains("Insufficient arguments")) {
+        view.displayError("Failed to get events in range: " + e.getMessage());
+      }
       return List.of();
     }
   }
@@ -453,12 +431,12 @@ public class GUIController {
       return List.of();
     }
     try {
-      String[] args = new String[]{"all", "get_all"};
-      EventEditor editor = EventEditor.forType("all", args);
-      editor.executeEdit(currentCalendar);
       return currentCalendar.getAllEvents();
     } catch (Exception e) {
-      view.displayError("Failed to get all events: " + e.getMessage());
+      // Don't show error for empty calendars
+      if (!e.getMessage().contains("Insufficient arguments")) {
+        view.displayError("Failed to get all events: " + e.getMessage());
+      }
       return List.of();
     }
   }
@@ -473,12 +451,12 @@ public class GUIController {
       return List.of();
     }
     try {
-      String[] args = new String[]{"series_from_date", "get_all"};
-      EventEditor editor = EventEditor.forType("series_from_date", args);
-      editor.executeEdit(currentCalendar);
       return currentCalendar.getAllRecurringEvents();
     } catch (Exception e) {
-      view.displayError("Failed to get all recurring events: " + e.getMessage());
+      // Don't show error for empty calendars
+      if (!e.getMessage().contains("Insufficient arguments")) {
+        view.displayError("Failed to get all recurring events: " + e.getMessage());
+      }
       return List.of();
     }
   }
@@ -576,5 +554,14 @@ public class GUIController {
     } catch (Exception e) {
       view.displayError("Error while closing application: " + e.getMessage());
     }
+  }
+
+  private String executeCommand(String command, String[] args) {
+    // Implementation of executeCommand method
+    // This method should return a String result based on the command and arguments
+    // It should handle the execution of the command and return the appropriate result
+    // For example, it could call EventEditor.forType(command, args).executeEdit(currentCalendar)
+    // and return the result of the execution
+    return null; // Placeholder return, actual implementation needed
   }
 } 

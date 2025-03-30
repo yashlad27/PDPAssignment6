@@ -96,10 +96,8 @@ public class CalendarViewModel implements IViewModel {
    */
   public void setCurrentCalendar(ICalendar calendar) throws ConflictingEventException, InvalidEventException, EventNotFoundException {
     this.currentCalendar = calendar;
-    // Use EventEditor factory to get the calendar name
-    String[] args = new String[]{"single", "get_name", calendar.toString(), "2024-01-01T00:00", ""};
-    EventEditor editor = EventEditor.forType("single", args);
-    this.selectedCalendarName = editor.executeEdit(calendar);
+    // Get calendar name from toString
+    this.selectedCalendarName = calendar != null ? calendar.toString() : "None";
     notifyCalendarChanged();
   }
 
@@ -122,15 +120,8 @@ public class CalendarViewModel implements IViewModel {
   private void updateEventsForDate(LocalDate date) {
     if (currentCalendar != null) {
       try {
-        // Use EventEditor factory to get events
-        String[] args = new String[]{"single", "get_events", date.toString()};
-        EventEditor editor = EventEditor.forType("single", args);
-        editor.executeEdit(currentCalendar);
+        // Get events directly from calendar
         events = currentCalendar.getEventsOnDate(date);
-
-        args = new String[]{"series_from_date", "get_events", date.toString()};
-        editor = EventEditor.forType("series_from_date", args);
-        editor.executeEdit(currentCalendar);
         recurringEvents = currentCalendar.getAllRecurringEvents().stream()
                 .filter(event -> event.getStartDateTime().toLocalDate().equals(date))
                 .collect(java.util.stream.Collectors.toList());

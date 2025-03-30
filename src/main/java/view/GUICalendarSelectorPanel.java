@@ -14,8 +14,10 @@ public class GUICalendarSelectorPanel extends JPanel {
     private final JTextField newCalendarNameField;
     private final JComboBox<String> timezoneComboBox;
     private final JButton createButton;
+    private final JButton activateButton;
     private final JLabel currentCalendarLabel;
     private CalendarSelectionListener listener;
+    private String activeCalendar;
 
     /**
      * Interface for calendar selection events.
@@ -23,6 +25,7 @@ public class GUICalendarSelectorPanel extends JPanel {
     public interface CalendarSelectionListener {
         void onCalendarSelected(String calendarName);
         void onCalendarCreated(String calendarName, String timezone);
+        void onCalendarActivated(String calendarName);
     }
 
     /**
@@ -36,9 +39,26 @@ public class GUICalendarSelectorPanel extends JPanel {
         DefaultListModel<String> listModel = new DefaultListModel<>();
         calendarList = new JList<>(listModel);
         calendarList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        calendarList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value != null && value.equals(activeCalendar)) {
+                    setFont(getFont().deriveFont(Font.BOLD));
+                    setForeground(new Color(0, 100, 200));
+                }
+                return c;
+            }
+        });
         
         currentCalendarLabel = new JLabel("Currently using: None");
         currentCalendarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        currentCalendarLabel.setFont(currentCalendarLabel.getFont().deriveFont(Font.BOLD));
+        currentCalendarLabel.setForeground(new Color(0, 100, 200));
+        
+        activateButton = new JButton("Activate Selected Calendar");
+        activateButton.setEnabled(false);
         
         newCalendarNameField = new JTextField(20);
         createButton = new JButton("Create Calendar");
@@ -59,25 +79,21 @@ public class GUICalendarSelectorPanel extends JPanel {
      */
     private void setupLayout() {
         // Current calendar indicator
-        JPanel currentCalendarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        currentCalendarPanel.add(currentCalendarLabel);
-        currentCalendarPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+        JPanel currentCalendarPanel = new JPanel(new BorderLayout());
+        currentCalendarPanel.add(currentCalendarLabel, BorderLayout.CENTER);
+        currentCalendarPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Calendar list
-        JPanel listPanel = new JPanel(new BorderLayout());
+        // Calendar list with activate button
+        JPanel listPanel = new JPanel(new BorderLayout(5, 5));
         listPanel.setBorder(BorderFactory.createTitledBorder("Available Calendars"));
         listPanel.add(new JScrollPane(calendarList), BorderLayout.CENTER);
+        listPanel.add(activateButton, BorderLayout.SOUTH);
 
         // Calendar creation panel
-        JPanel createPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+        JPanel createPanel = new JPanel(new GridLayout(4, 2, 5, 5));
         createPanel.setBorder(BorderFactory.createTitledBorder("Create New Calendar"));
-        
-        // Add instruction label
-        JLabel instructionLabel = new JLabel("Enter a name and select timezone to create a new calendar");
-        instructionLabel.setForeground(Color.GRAY);
-        createPanel.add(instructionLabel, "span 2");
 
-        createPanel.add(new JLabel("Calendar Name:"));
+        createPanel.add(new JLabel("Name:"));
         createPanel.add(newCalendarNameField);
         createPanel.add(new JLabel("Timezone:"));
         createPanel.add(timezoneComboBox);
@@ -95,11 +111,22 @@ public class GUICalendarSelectorPanel extends JPanel {
      */
     private void setupListeners() {
         calendarList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && listener != null) {
+            if (!e.getValueIsAdjusting()) {
                 String selectedCalendar = calendarList.getSelectedValue();
-                if (selectedCalendar != null) {
+                activateButton.setEnabled(selectedCalendar != null);
+                if (selectedCalendar != null && listener != null) {
                     listener.onCalendarSelected(selectedCalendar);
                 }
+            }
+        });
+
+        activateButton.addActionListener(e -> {
+            String selectedCalendar = calendarList.getSelectedValue();
+            if (selectedCalendar != null && listener != null) {
+                activeCalendar = selectedCalendar;
+                currentCalendarLabel.setText("Currently using: " + selectedCalendar);
+                listener.onCalendarActivated(selectedCalendar);
+                calendarList.repaint();
             }
         });
 
@@ -110,6 +137,12 @@ public class GUICalendarSelectorPanel extends JPanel {
                     String timezone = (String) timezoneComboBox.getSelectedItem();
                     listener.onCalendarCreated(calendarName, timezone);
                     newCalendarNameField.setText("");
+                    
+                    // Automatically activate the newly created calendar
+                    activeCalendar = calendarName;
+                    currentCalendarLabel.setText("Currently using: " + calendarName);
+                    listener.onCalendarActivated(calendarName);
+                    calendarList.repaint();
                 }
             }
         });
@@ -157,6 +190,7 @@ public class GUICalendarSelectorPanel extends JPanel {
      */
     public void setSelectedCalendar(String calendarName) {
         if (calendarName != null) {
+            activeCalendar = calendarName;
             currentCalendarLabel.setText("Currently using: " + calendarName);
             // Find and select the calendar in the list
             DefaultListModel<String> model = (DefaultListModel<String>) calendarList.getModel();
@@ -167,6 +201,7 @@ public class GUICalendarSelectorPanel extends JPanel {
                     break;
                 }
             }
+            calendarList.repaint();
         }
     }
 
