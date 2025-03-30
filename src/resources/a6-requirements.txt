@@ -1,0 +1,70 @@
+New Files to Create:
+
+GUIView.java
+
+Implement the ICalendarView interface
+Build a Swing-based GUI with month view of calendar
+Include panels for event creation, editing, viewing
+
+
+GUICalendarPanel.java
+
+Component for displaying the month view of the calendar
+Include navigation for changing months
+
+
+GUIEventPanel.java
+
+Form panel for creating and editing events
+Include fields for all event properties
+
+
+GUICalendarSelectorPanel.java
+
+Component for selecting and managing calendars
+Display timezone information
+
+
+GUIExportImportPanel.java
+
+UI components for importing/exporting calendar data to CSV
+
+
+
+Modifications to Existing Files:
+
+CalendarApp.java
+
+Update the main method to handle the new command-line arguments:
+
+No args: Launch GUI mode
+--interactive: Launch text mode
+--headless <filename>: Run headless mode
+
+
+
+
+CalendarFactory.java
+
+Modify createView() to return the appropriate view based on mode
+Add logic to determine which view type to create
+
+
+model/factory/CalendarFactory.java
+
+Add methods to support GUI mode
+
+
+utilities/CSVExporter.java
+
+Add methods for importing CSV data
+
+
+
+Implementation Approach:
+
+Create a basic GUI framework first (month view, navigation)
+Implement calendar and timezone selection
+Add event creation/editing functionality
+Add import/export capabilities
+Connect everything to the existing model through controllers
