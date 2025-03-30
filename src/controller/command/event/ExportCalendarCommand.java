@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import controller.command.ICommand;
 import model.calendar.ICalendar;
+import model.export.CSVExporter;
 
 /**
  * Command for exporting the calendar to a CSV file.
@@ -11,6 +12,7 @@ import model.calendar.ICalendar;
 public class ExportCalendarCommand implements ICommand {
 
   private final ICalendar calendar;
+  private final CSVExporter csvExporter;
 
   /**
    * Constructs a new ExportCalendarCommand.
@@ -22,6 +24,7 @@ public class ExportCalendarCommand implements ICommand {
       throw new IllegalArgumentException("Calendar cannot be null");
     }
     this.calendar = calendar;
+    this.csvExporter = new CSVExporter();
   }
 
   @Override
@@ -33,7 +36,7 @@ public class ExportCalendarCommand implements ICommand {
     String filePath = args[0];
 
     try {
-      String absolutePath = calendar.exportToCSV(filePath);
+      String absolutePath = calendar.exportData(filePath, csvExporter);
       return "Calendar exported successfully to: " + absolutePath;
     } catch (IOException e) {
       return "Failed to export calendar: " + e.getMessage();

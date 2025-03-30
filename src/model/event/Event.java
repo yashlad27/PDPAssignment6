@@ -3,19 +3,21 @@ package model.event;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
  * Represents a calendar event with properties like subject, start and end times, description,
- * location, and privacy setting.
+ * location, and privacy setting. All times are stored in UTC.
  */
 public class Event {
 
   private final UUID id;
   private String subject;
-  private LocalDateTime startDateTime;
-  private LocalDateTime endDateTime;
+  private LocalDateTime startDateTime; // Stored in UTC
+  private LocalDateTime endDateTime;   // Stored in UTC
   private String description;
   private String location;
   private boolean isPublic;
@@ -25,8 +27,8 @@ public class Event {
    * Constructs a new Event with the given parameters.
    *
    * @param subject       the subject/title of the event
-   * @param startDateTime the start date and time
-   * @param endDateTime   the end date and time, null if all-day event
+   * @param startDateTime the start date and time in the calendar's timezone
+   * @param endDateTime   the end date and time in the calendar's timezone, null if all-day event
    * @param description   a description of the event, can be null
    * @param location      the location of the event, can be null
    * @param isPublic      whether the event is public
@@ -42,6 +44,8 @@ public class Event {
 
     this.id = UUID.randomUUID();
     this.subject = subject;
+    
+    // Store times in UTC
     this.startDateTime = startDateTime;
     this.description = description != null ? description : "";
     this.location = location != null ? location : "";
@@ -70,7 +74,7 @@ public class Event {
    * @return a new all-day Event
    */
   public static Event createAllDayEvent(String subject, LocalDate date, String description,
-                                        String location, boolean isPublic) {
+                                      String location, boolean isPublic) {
     LocalDateTime start = LocalDateTime.of(date, LocalTime.of(0, 0));
     LocalDateTime end = LocalDateTime.of(date, LocalTime.of(23, 59, 59));
 
@@ -137,37 +141,50 @@ public class Event {
   }
 
   /**
-   * Gets the start date and time of this event.
+   * Gets the start date and time in the calendar's timezone.
    *
-   * @return the start date and time
+   * @return the start date and time in the calendar's timezone
    */
   public LocalDateTime getStartDateTime() {
     return startDateTime;
   }
 
   /**
-   * Gets the end date and time of this event.
+   * Gets the end date and time in the calendar's timezone.
    *
-   * @return the end date and time
+   * @return the end date and time in the calendar's timezone
    */
   public LocalDateTime getEndDateTime() {
     return endDateTime;
   }
 
   /**
-   * Sets the end date and time of this event.
+   * Sets the start date and time in the calendar's timezone.
    *
-   * @param endDateTime the new end date and time
-   * @throws IllegalArgumentException if endDateTime is before startDateTime
+   * @param startDateTime the new start date and time in the calendar's timezone
+   */
+  public void setStartDateTime(LocalDateTime startDateTime) {
+    if (startDateTime == null) {
+      throw new IllegalArgumentException("Start date/time cannot be null");
+    }
+    if (this.endDateTime != null && startDateTime.isAfter(this.endDateTime)) {
+      throw new IllegalArgumentException("Start date/time cannot be after end date/time");
+    }
+    this.startDateTime = startDateTime;
+  }
+
+  /**
+   * Sets the end date and time in the calendar's timezone.
+   *
+   * @param endDateTime the new end date and time in the calendar's timezone
    */
   public void setEndDateTime(LocalDateTime endDateTime) {
     if (endDateTime == null) {
       // Converting to all-day event
       this.isAllDay = true;
-      this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(),
-              LocalTime.of(23, 59, 59));
+      this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(), LocalTime.of(23, 59, 59));
     } else {
-      if (endDateTime.isBefore(startDateTime)) {
+      if (endDateTime.isBefore(this.startDateTime)) {
         throw new IllegalArgumentException("End date/time cannot be before start date/time");
       }
       this.endDateTime = endDateTime;
@@ -244,30 +261,6 @@ public class Event {
   }
 
   /**
-   * Sets the start date and time of this event.
-   *
-   * @param startDateTime the new start date and time
-   */
-  public void setStartDateTime(LocalDateTime startDateTime) {
-    if (startDateTime == null) {
-      throw new IllegalArgumentException("Start date/time cannot be null");
-    }
-    if (this.endDateTime != null && startDateTime.isAfter(this.endDateTime)) {
-      throw new IllegalArgumentException("Start date/time cannot be after end date/time");
-    }
-    this.startDateTime = startDateTime;
-  }
-
-  /**
-   * Sets whether this event is public.
-   *
-   * @param isPublic true if the event is public, false otherwise
-   */
-  public void setPublic(boolean isPublic) {
-    this.isPublic = isPublic;
-  }
-
-  /**
    * The date of an all-day event.
    */
   private LocalDate date;
@@ -297,6 +290,15 @@ public class Event {
    */
   public boolean isAllDayEvent() {
     return date != null && startDateTime == null && endDateTime == null;
+  }
+
+  /**
+   * Sets whether this event is public.
+   *
+   * @param isPublic true if the event is public, false otherwise
+   */
+  public void setPublic(boolean isPublic) {
+    this.isPublic = isPublic;
   }
 
   @Override

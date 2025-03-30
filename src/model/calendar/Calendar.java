@@ -16,9 +16,10 @@ import java.util.stream.Collectors;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
-import utilities.CSVExporter;
+import model.export.IDataExporter;
 import utilities.DateTimeUtil;
 import utilities.EventPropertyUpdater;
+import utilities.TimeZoneHandler;
 
 /**
  * Implementation of the ICalendar interface that manages a calendar's events and operations. This
@@ -41,6 +42,7 @@ public class Calendar implements ICalendar {
   private String name;
   private String timezone;
   private final Map<String, EventPropertyUpdater> propertyUpdaters;
+  private final TimeZoneHandler timezoneHandler;
 
   /**
    * Constructs a new Calendar instance with default settings. Initializes empty event collections
@@ -58,21 +60,16 @@ public class Calendar implements ICalendar {
 
     this.propertyUpdaters = new HashMap<>();
     initializePropertyUpdaters();
+    this.timezoneHandler = new TimeZoneHandler();
   }
 
   /**
-   * Adds a single event to the calendar with conflict checking.
-   * <p> The method performs the following steps:
-   * 1. Validates the event is not null 2. Checks for conflicts with existing events 3. If
-   * autoDecline is true, throws exception on conflict 4. If autoDecline is false, returns false on
-   * conflict 5. Adds the event to both the events list and ID mapping
-   * </p>
+   * Adds an event to the calendar.
    *
-   * @param event       The event to add, must not be null
-   * @param autoDecline If true, throws exception on conflict; if false, returns false
-   * @return true If event was added successfully, false otherwise
-   * @throws ConflictingEventException if autoDecline is true and event conflicts with existing
-   *                                   events
+   * @param event         the event to add
+   * @param autoDecline   whether to automatically decline conflicting events
+   * @return true if the event was added successfully
+   * @throws ConflictingEventException if there is a conflict and autoDecline is false
    */
   @Override
   public boolean addEvent(Event event, boolean autoDecline) throws ConflictingEventException {
@@ -80,16 +77,30 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Event cannot be null");
     }
 
-    if (hasConflict(event)) {
-      if (autoDecline) {
-        throw new ConflictingEventException(
-            "Cannot add event '" + event.getSubject() + "' due to conflict with an existing event");
+    // Convert event times to UTC for storage
+    LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(), timezone);
+    LocalDateTime endUTC = timezoneHandler.convertToUTC(event.getEndDateTime(), timezone);
+
+    Event utcEvent = new Event(
+        event.getSubject(),
+        startUTC,
+        endUTC,
+        event.getDescription(),
+        event.getLocation(),
+        event.isPublic()
+    );
+
+    // Check for conflicts using UTC times
+    if (!autoDecline) {
+      for (Event existingEvent : events) {
+        if (existingEvent.getStartDateTime().isBefore(utcEvent.getEndDateTime()) &&
+            utcEvent.getStartDateTime().isBefore(existingEvent.getEndDateTime())) {
+          throw new ConflictingEventException("Event conflicts with existing event");
+        }
       }
-      return false;
     }
 
-    events.add(event);
-    eventById.put(event.getId(), event);
+    events.add(utcEvent);
     return true;
   }
 
@@ -115,8 +126,25 @@ public class Calendar implements ICalendar {
 
     List<Event> occurrences = recurringEvent.getAllOccurrences();
 
+    // Convert each occurrence's times to UTC before checking conflicts
+    List<Event> utcOccurrences = new ArrayList<>();
     for (Event occurrence : occurrences) {
-      if (hasConflict(occurrence)) {
+      LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone);
+      LocalDateTime endUTC = timezoneHandler.convertToUTC(occurrence.getEndDateTime(), timezone);
+      Event utcOccurrence = new Event(
+          occurrence.getSubject(),
+          startUTC,
+          endUTC,
+          occurrence.getDescription(),
+          occurrence.getLocation(),
+          occurrence.isPublic()
+      );
+      utcOccurrences.add(utcOccurrence);
+    }
+
+    // Check for conflicts using UTC times
+    for (Event utcOccurrence : utcOccurrences) {
+      if (hasConflict(utcOccurrence)) {
         if (autoDecline) {
           throw new ConflictingEventException(
               "Cannot add recurring event '" + recurringEvent.getSubject()
@@ -129,9 +157,10 @@ public class Calendar implements ICalendar {
     recurringEvents.add(recurringEvent);
     recurringEventById.put(recurringEvent.getId(), recurringEvent);
 
-    for (Event occurrence : occurrences) {
-      events.add(occurrence);
-      eventById.put(occurrence.getId(), occurrence);
+    // Add UTC occurrences to events list
+    for (Event utcOccurrence : utcOccurrences) {
+      events.add(utcOccurrence);
+      eventById.put(utcOccurrence.getId(), utcOccurrence);
     }
 
     return true;
@@ -211,13 +240,9 @@ public class Calendar implements ICalendar {
   /**
    * Finds an event by its subject and start date/time.
    *
-   * <p>This method searches through all events (both single and recurring occurrences)
-   * to find an exact match of both subject and start date/time.
-   *
    * @param subject       The event subject to search for
-   * @param startDateTime The exact start date and time to match
+   * @param startDateTime The exact start date and time to match (in calendar's timezone)
    * @return The matching Event object, or null if no match is found
-   * @throws IllegalArgumentException if either subject or startDateTime is null
    */
   @Override
   public Event findEvent(String subject, LocalDateTime startDateTime) {
@@ -225,9 +250,34 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Subject and start date/time cannot be null");
     }
 
-    return events.stream()
-        .filter(e -> e.getSubject().equals(subject) && e.getStartDateTime().equals(startDateTime))
-        .findFirst().orElse(null);
+    // Convert input time to UTC for comparison
+    LocalDateTime utcStartTime = timezoneHandler.convertToUTC(startDateTime, timezone);
+
+    // First try to find in regular events
+    Event event = events.stream()
+        .filter(e -> e.getSubject().equals(subject) && 
+                    e.getStartDateTime().equals(utcStartTime))
+        .findFirst()
+        .orElse(null);
+
+    if (event != null) {
+      return event;
+    }
+
+    // If not found in regular events, check recurring events
+    for (RecurringEvent recurringEvent : recurringEvents) {
+      if (recurringEvent.getSubject().equals(subject)) {
+        // Get all occurrences and compare UTC times
+        List<Event> occurrences = recurringEvent.getAllOccurrences();
+        for (Event occurrence : occurrences) {
+          if (occurrence.getStartDateTime().equals(utcStartTime)) {
+            return occurrence;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -244,8 +294,8 @@ public class Calendar implements ICalendar {
    * Edits a specific event in calendar.
    *
    * @param subject       the subject of the event to edit
-   * @param startDateTime the start date/time of the event to edit
-   * @param property      the property to edit (name, startTime, endTime, etc.)
+   * @param startDateTime the start date/time of the event to edit (in calendar's timezone)
+   * @param property      the property to edit
    * @param newValue      the new value for the property
    * @return true if the operation is successful
    */
@@ -329,8 +379,14 @@ public class Calendar implements ICalendar {
    * @throws IOException if an I/O error occurs
    */
   @Override
-  public String exportToCSV(String filePath) throws IOException {
-    return CSVExporter.exportToCSV(filePath, events);
+  public String exportData(String filePath, IDataExporter exporter) throws IOException {
+    if (filePath == null || filePath.trim().isEmpty()) {
+      throw new IllegalArgumentException("File path cannot be null or empty");
+    }
+    if (exporter == null) {
+      throw new IllegalArgumentException("Exporter cannot be null");
+    }
+    return exporter.export(filePath, events);
   }
 
   /**
@@ -344,64 +400,78 @@ public class Calendar implements ICalendar {
   }
 
   /**
-   * Updates a specific property of an event.
+   * Updates a property of an event.
    *
-   * @param event    the event to update
-   * @param property the property to update
-   * @param newValue the new value for the property
-   * @return true if the update was successful, otherwise false
+   * @param event     the event to update
+   * @param property  the property to update
+   * @param newValue  the new value
+   * @return true if the update was successful
    */
   private boolean updateEventProperty(Event event, String property, String newValue) {
-    if (property == null || newValue == null) {
+    EventPropertyUpdater updater = propertyUpdaters.get(property.toLowerCase());
+    if (updater == null) {
       return false;
     }
 
-    EventPropertyUpdater updater = propertyUpdaters.get(property.toLowerCase());
-    return updater != null && updater.update(event, newValue);
+    try {
+      return updater.update(event, newValue);
+    } catch (Exception e) {
+      return false;
+    }
   }
 
+  /**
+   * Gets all events on a specific date.
+   *
+   * @param date the date to get events for
+   * @return a list of events on the specified date
+   */
   @Override
-  public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
-    if (startDate == null || endDate == null) {
-      throw new IllegalArgumentException("Start date and end date cannot be null");
+  public List<Event> getEventsOnDate(LocalDate date) {
+    if (date == null) {
+      throw new IllegalArgumentException("Date cannot be null");
     }
 
     return getFilteredEvents(event -> {
       if (event.getStartDateTime() != null) {
         LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
-        LocalDate eventEndDate =
-            (event.getEndDateTime() != null) ? event.getEndDateTime().toLocalDate()
-                : eventStartDate;
 
-        return !(eventEndDate.isBefore(startDate) || eventStartDate.isAfter(endDate));
+        if (event.getEndDateTime() != null) {
+          LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
+          return !date.isBefore(eventStartDate) && !date.isAfter(eventEndDate);
+        } else {
+          return eventStartDate.equals(date);
+        }
       } else if (event.getDate() != null) {
-        return !event.getDate().isBefore(startDate) && !event.getDate().isAfter(endDate);
+        return event.getDate().equals(date);
       }
       return false;
     });
   }
 
+  /**
+   * Gets all events in a date range.
+   *
+   * @param startDate the start date of the range
+   * @param endDate   the end date of the range
+   * @return a list of events within the date range
+   */
   @Override
-  public boolean isBusy(LocalDateTime dateTime) {
-    if (dateTime == null) {
-      throw new IllegalArgumentException("DateTime cannot be null");
+  public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
+    if (startDate == null || endDate == null) {
+      throw new IllegalArgumentException("Start and end dates cannot be null");
     }
 
-    EventFilter busyFilter = event -> {
-      if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
-        return !dateTime.isBefore(event.getStartDateTime()) && !dateTime.isAfter(
-            event.getEndDateTime());
+    return getFilteredEvents(event -> {
+      if (event.getStartDateTime() != null) {
+        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
+        LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
+        return !eventStartDate.isAfter(endDate) && !eventEndDate.isBefore(startDate);
+      } else if (event.getDate() != null) {
+        return !event.getDate().isBefore(startDate) && !event.getDate().isAfter(endDate);
       }
-
-      if (event.getDate() != null) {
-        LocalDate targetDate = dateTime.toLocalDate();
-        return event.getDate().equals(targetDate);
-      }
-
       return false;
-    };
-
-    return events.stream().anyMatch(busyFilter::matches);
+    });
   }
 
   /**
@@ -531,25 +601,25 @@ public class Calendar implements ICalendar {
   }
 
   @Override
-  public List<Event> getEventsOnDate(LocalDate date) {
-    if (date == null) {
-      throw new IllegalArgumentException("Date cannot be null");
+  public boolean isBusy(LocalDateTime dateTime) {
+    if (dateTime == null) {
+      throw new IllegalArgumentException("DateTime cannot be null");
     }
 
-    return getFilteredEvents(event -> {
-      if (event.getStartDateTime() != null) {
-        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
-
-        if (event.getEndDateTime() != null) {
-          LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
-          return !date.isBefore(eventStartDate) && !date.isAfter(eventEndDate);
-        } else {
-          return eventStartDate.equals(date);
-        }
-      } else if (event.getDate() != null) {
-        return event.getDate().equals(date);
+    EventFilter busyFilter = event -> {
+      if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
+        return !dateTime.isBefore(event.getStartDateTime()) && !dateTime.isAfter(
+            event.getEndDateTime());
       }
+
+      if (event.getDate() != null) {
+        LocalDate targetDate = dateTime.toLocalDate();
+        return event.getDate().equals(targetDate);
+      }
+
       return false;
-    });
+    };
+
+    return events.stream().anyMatch(busyFilter::matches);
   }
 }

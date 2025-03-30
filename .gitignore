@@ -36,3 +36,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+/work_events.csv
+/travel_events.csv
+/family_events.csv
+/health_events.csv
+/personal_events.csv

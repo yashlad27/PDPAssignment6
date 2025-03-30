@@ -22,4 +22,23 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.9.0</version>
+                <configuration>
+                    <targetClasses>
+                        <param>controller.*</param>
+                        <param>model.*</param>
+                        <param>utilities.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>*Test</param>
+                    </targetTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

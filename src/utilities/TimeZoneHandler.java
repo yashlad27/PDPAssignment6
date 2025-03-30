@@ -7,11 +7,12 @@ import java.time.ZonedDateTime;
 /**
  * Handles timezone operations for the calendar application.
  * Provides methods for converting times between different timezones
- * and validating timezone formats.
+ * and validating timezone formats. All internal storage is in UTC.
  */
 public class TimeZoneHandler {
 
   private static final String DEFAULT_TIMEZONE = "America/New_York";
+  private static final String UTC_TIMEZONE = "UTC";
 
   /**
    * Validates if the provided timezone string is valid.
@@ -43,32 +44,68 @@ public class TimeZoneHandler {
   }
 
   /**
+   * Converts a LocalDateTime from a specific timezone to UTC.
+   *
+   * @param dateTime     the LocalDateTime to convert
+   * @param fromTimezone the source timezone
+   * @return the UTC LocalDateTime
+   */
+  public LocalDateTime convertToUTC(LocalDateTime dateTime, String fromTimezone) {
+    if (dateTime == null || !isValidTimezone(fromTimezone)) {
+      throw new IllegalArgumentException("Invalid parameters for time conversion");
+    }
+
+    ZonedDateTime sourceZoned = dateTime.atZone(ZoneId.of(fromTimezone));
+    ZonedDateTime utcZoned = sourceZoned.withZoneSameInstant(ZoneId.of(UTC_TIMEZONE));
+    return utcZoned.toLocalDateTime();
+  }
+
+  /**
+   * Converts a UTC LocalDateTime to a specific timezone.
+   *
+   * @param dateTime   the UTC LocalDateTime to convert
+   * @param toTimezone the target timezone
+   * @return the LocalDateTime in the target timezone
+   */
+  public LocalDateTime convertFromUTC(LocalDateTime dateTime, String toTimezone) {
+    if (dateTime == null || !isValidTimezone(toTimezone)) {
+      throw new IllegalArgumentException("Invalid parameters for time conversion");
+    }
+
+    ZonedDateTime utcZoned = dateTime.atZone(ZoneId.of(UTC_TIMEZONE));
+    ZonedDateTime targetZoned = utcZoned.withZoneSameInstant(ZoneId.of(toTimezone));
+    return targetZoned.toLocalDateTime();
+  }
+
+  /**
    * Converts a LocalDateTime from one timezone to another.
+   * This method first converts to UTC, then to the target timezone.
    *
    * @param dateTime     the LocalDateTime to convert
    * @param fromTimezone the source timezone
    * @param toTimezone   the target timezone
    * @return the converted LocalDateTime
-   * @throws IllegalArgumentException if parameters are invalid
    */
   public LocalDateTime convertTime(LocalDateTime dateTime, String fromTimezone, String toTimezone) {
     if (dateTime == null || !isValidTimezone(fromTimezone) || !isValidTimezone(toTimezone)) {
       throw new IllegalArgumentException("Invalid parameters for time conversion");
     }
 
-    ZonedDateTime sourceZoned = dateTime.atZone(ZoneId.of(fromTimezone));
-    ZonedDateTime targetZoned = sourceZoned.withZoneSameInstant(ZoneId.of(toTimezone));
-    return targetZoned.toLocalDateTime();
+    // First convert to UTC
+    LocalDateTime utcTime = convertToUTC(dateTime, fromTimezone);
+    // Then convert from UTC to target timezone
+    return convertFromUTC(utcTime, toTimezone);
   }
 
   /**
-   * Get a timezone converter for converting between two timezones.
+   * Gets a timezone converter for converting between two timezones.
+   * The converter will first convert to UTC, then to the target timezone.
    *
    * @param fromTimezone the source timezone
    * @param toTimezone   the target timezone
    * @return a TimezoneConverter for the specified conversion
    */
   public TimezoneConverter getConverter(String fromTimezone, String toTimezone) {
-    return TimezoneConverter.between(fromTimezone, toTimezone, this);
+    return dateTime -> convertTime(dateTime, fromTimezone, toTimezone);
   }
 }

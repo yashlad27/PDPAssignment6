@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- Main Background -->
+  <rect width="800" height="600" fill="#f0f0f0" />
+  
+  <!-- Window Border -->
+  <rect x="10" y="10" width="780" height="580" rx="5" fill="white" stroke="#333" stroke-width="2" />
+  
+  <!-- Title Bar -->
+  <rect x="10" y="10" width="780" height="30" rx="5" fill="#4a86e8" />
+  <text x="25" y="30" font-family="Arial" font-size="14" fill="white">Calendar Application</text>
+  
+  <!-- Main Layout -->
+  <g>
+    <!-- Left Sidebar -->
+    <rect x="10" y="40" width="180" height="550" fill="#f8f8f8" stroke="#ccc" />
+    
+    <!-- Calendar Selector Area -->
+    <rect x="20" y="50" width="160" height="120" rx="3" fill="white" stroke="#ddd" />
+    <text x="25" y="65" font-family="Arial" font-size="12" font-weight="bold" fill="#333">Calendars</text>
+    
+    <rect x="25" y="75" width="150" height="20" rx="3" fill="#e6f2ff" stroke="#4a86e8" />
+    <text x="30" y="90" font-family="Arial" font-size="11" fill="#333">Work (America/New_York)</text>
+    
+    <rect x="25" y="100" width="150" height="20" rx="3" fill="white" stroke="#ddd" />
+    <text x="30" y="115" font-family="Arial" font-size="11" fill="#333">Personal (Europe/London)</text>
+    
+    <rect x="25" y="125" width="150" height="20" rx="3" fill="white" stroke="#ddd" />
+    <text x="30" y="140" font-family="Arial" font-size="11" fill="#333">Travel (Asia/Tokyo)</text>
+    
+    <rect x="25" y="150" width="150" height="15" rx="3" fill="#f0f0f0" stroke="#ccc" />
+    <text x="85" y="162" font-family="Arial" font-size="10" fill="#333">[+] Add Calendar</text>
+    
+    <!-- Import/Export Controls -->
+    <rect x="20" y="460" width="160" height="120" rx="3" fill="white" stroke="#ddd" />
+    <text x="25" y="475" font-family="Arial" font-size="12" font-weight="bold" fill="#333">Import/Export</text>
+    
+    <rect x="25" y="485" width="150" height="25" rx="3" fill="#e6f2ff" stroke="#4a86e8" />
+    <text x="60" y="502" font-family="Arial" font-size="11" fill="#333">Import from CSV</text>
+    
+    <rect x="25" y="520" width="150" height="25" rx="3" fill="#e6f2ff" stroke="#4a86e8" />
+    <text x="60" y="537" font-family="Arial" font-size="11" fill="#333">Export to CSV</text>
+  </g>
+  
+  <!-- Main Calendar Area -->
+  <g>
+    <!-- Calendar Navigation -->
+    <rect x="200" y="40" width="590" height="40" fill="white" stroke="#ccc" />
+    <text x="490" y="65" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">March 2025</text>
+    
+    <!-- Navigation Buttons -->
+    <rect x="320" y="50" width="30" height="20" rx="3" fill="#e6f2ff" stroke="#4a86e8" />
+    <text x="330" y="65" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#4a86e8">&lt;</text>
+    
+    <rect x="630" y="50" width="30" height="20" rx="3" fill="#e6f2ff" stroke="#4a86e8" />
+    <text x="640" y="65" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#4a86e8">&gt;</text>
+    
+    <!-- Calendar Grid - Headers -->
+    <g>
+      <rect x="200" y="85" width="590" height="25" fill="#e6f2ff" stroke="#ccc" />
+      <text x="230" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Sun</text>
+      <text x="312" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Mon</text>
+      <text x="394" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Tue</text>
+      <text x="476" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Wed</text>
+      <text x="558" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Thu</text>
+      <text x="640" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Fri</text>
+      <text x="722" y="102" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Sat</text>
+    </g>
+    
+    <!-- Calendar Grid - Week 1 -->
+    <g>
+      <rect x="200" y="110" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="210" y="130" font-family="Arial" font-size="14" fill="#ccc">23</text>
+      
+      <rect x="284" y="110" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="294" y="130" font-family="Arial" font-size="14" fill="#333">24</text>
+      
+      <rect x="368" y="110" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="378" y="130" font-family="Arial" font-size="14" fill="#333">25</text>
+      <!-- Event example -->
+      <rect x="374" y="140" width="72" height="15" rx="2" fill="#4a86e8" stroke="#3a76d8" />
+      <text x="378" y="151" font-family="Arial" font-size="9" fill="white">Team Meeting</text>
+      
+      <rect x="452" y="110" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="462" y="130" font-family="Arial" font-size="14" fill="#333">26</text>
+      
+      <rect x="536" y="110" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="546" y="130" font-family="Arial" font-size="14" fill="#333">27</text>
+      
+      <rect x="620" y="110" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="630" y="130" font-family="Arial" font-size="14" fill="#333">28</text>
+      
+      <rect x="704" y="110" width="86" height="80" fill="white" stroke="#ccc" />
+      <text x="714" y="130" font-family="Arial" font-size="14" fill="#333">29</text>
+    </g>
+    
+    <!-- Calendar Grid - Week 2 -->
+    <g>
+      <rect x="200" y="190" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="210" y="210" font-family="Arial" font-size="14" fill="#333">1</text>
+      
+      <rect x="284" y="190" width="84" height="80" fill="#e6f2ff" stroke="#4a86e8" stroke-width="2" />
+      <text x="294" y="210" font-family="Arial" font-size="14" font-weight="bold" fill="#4a86e8">2</text>
+      
+      <rect x="368" y="190" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="378" y="210" font-family="Arial" font-size="14" fill="#333">3</text>
+      
+      <rect x="452" y="190" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="462" y="210" font-family="Arial" font-size="14" fill="#333">4</text>
+      
+      <rect x="536" y="190" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="546" y="210" font-family="Arial" font-size="14" fill="#333">5</text>
+      
+      <rect x="620" y="190" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="630" y="210" font-family="Arial" font-size="14" fill="#333">6</text>
+      
+      <rect x="704" y="190" width="86" height="80" fill="white" stroke="#ccc" />
+      <text x="714" y="210" font-family="Arial" font-size="14" fill="#333">7</text>
+    </g>
+    
+    <!-- Additional weeks would continue... -->
+    <!-- Week 3, 4, 5 cells would go here -->
+    
+    <!-- Calendar Grid - Partial Week 3 -->
+    <g>
+      <rect x="200" y="270" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="210" y="290" font-family="Arial" font-size="14" fill="#333">8</text>
+      
+      <rect x="284" y="270" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="294" y="290" font-family="Arial" font-size="14" fill="#333">9</text>
+      
+      <rect x="368" y="270" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="378" y="290" font-family="Arial" font-size="14" fill="#333">10</text>
+      
+      <rect x="452" y="270" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="462" y="290" font-family="Arial" font-size="14" fill="#333">11</text>
+      
+      <rect x="536" y="270" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="546" y="290" font-family="Arial" font-size="14" fill="#333">12</text>
+      
+      <rect x="620" y="270" width="84" height="80" fill="white" stroke="#ccc" />
+      <text x="630" y="290" font-family="Arial" font-size="14" fill="#333">13</text>
+      
+      <rect x="704" y="270" width="86" height="80" fill="white" stroke="#ccc" />
+      <text x="714" y="290" font-family="Arial" font-size="14" fill="#333">14</text>
+    </g>
+  </g>
+  
+  <!-- Event Details/Creation Area -->
+  <g>
+    <rect x="200" y="450" width="590" height="140" fill="white" stroke="#ccc" />
+    <text x="210" y="470" font-family="Arial" font-size="14" font-weight="bold" fill="#333">Event Details</text>
+    
+    <!-- Input fields -->
+    <rect x="210" y="480" width="570" height="20" fill="white" stroke="#ccc" />
+    <text x="215" y="495" font-family="Arial" font-size="12" fill="#333">Subject: Team Meeting</text>
+    
+    <rect x="210" y="505" width="250" height="20" fill="white" stroke="#ccc" />
+    <text x="215" y="520" font-family="Arial" font-size="12" fill="#333">Date: 2025-03-25</text>
+    
+    <rect x="470" y="505" width="150" height="20" fill="white" stroke="#ccc" />
+    <text x="475" y="520" font-family="Arial" font-size="12" fill="#333">Start: 10:00</text>
+    
+    <rect x="630" y="505" width="150" height="20" fill="white" stroke="#ccc" />
+    <text x="635" y="520" font-family="Arial" font-size="12" fill="#333">End: 11:00</text>
+    
+    <rect x="210" y="530" width="570" height="20" fill="white" stroke="#ccc" />
+    <text x="215" y="545" font-family="Arial" font-size="12" fill="#333">Location: Conference Room A</text>
+    
+    <rect x="210" y="555" width="570" height="20" fill="white" stroke="#ccc" />
+    <text x="215" y="570" font-family="Arial" font-size="12" fill="#333">Description: Weekly team sync</text>
+    
+    <!-- Action Buttons -->
+    <rect x="580" y="585" width="80" height="25" rx="3" fill="#4a86e8" stroke="#3a76d8" />
+    <text x="620" y="602" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Save</text>
+    
+    <rect x="670" y="585" width="80" height="25" rx="3" fill="#f0f0f0" stroke="#ccc" />
+    <text x="710" y="602" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Cancel</text>
+  </g>
+</svg>
