@@ -51,14 +51,7 @@ public interface IGUIView {
    * @param calendarNames the list of calendar names
    */
   void updateCalendarList(List<String> calendarNames);
-
-  /**
-   * Sets the selected calendar.
-   *
-   * @param calendarName the name of the calendar to select
-   */
-  void setSelectedCalendar(String calendarName);
-
+  
   /**
    * Gets the currently selected calendar.
    *

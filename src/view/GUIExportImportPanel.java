@@ -18,6 +18,12 @@ public class GUIExportImportPanel extends JPanel {
     private static final FileNameExtensionFilter CSV_FILTER = 
         new FileNameExtensionFilter("CSV Files (*.csv)", "csv");
 
+    public void addImportListener(Object eventsImportedSuccessfully) {
+    }
+
+    public void addExportListener(Object eventsExportedSuccessfully) {
+    }
+
     /**
      * Interface for listening to export/import events.
      */

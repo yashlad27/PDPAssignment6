@@ -8,6 +8,8 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -58,8 +60,10 @@ public class GUIEventPanel extends JPanel {
      * Interface for event panel events.
      */
     public interface EventPanelListener {
-        void onEventSaved(EventData eventData);
+        void onEventSaved(String[] args, boolean isRecurring);
         void onEventCancelled();
+        void onEventUpdated(String[] args, boolean isRecurring);
+        void onEventDeleted(String[] args, boolean isRecurring);
     }
 
     /**
@@ -140,7 +144,8 @@ public class GUIEventPanel extends JPanel {
         saveButton.addActionListener(e -> {
             if (listener != null) {
                 EventData eventData = createEventData();
-                listener.onEventSaved(eventData);
+                String[] args = createEventArgs(eventData);
+                listener.onEventSaved(args, eventData.isRecurring);
             }
         });
 
@@ -182,6 +187,83 @@ public class GUIEventPanel extends JPanel {
     }
 
     /**
+     * Creates event arguments based on the event data.
+     *
+     * @param data the event data
+     * @return the event arguments
+     */
+    private String[] createEventArgs(EventData data) {
+        if (data.isRecurring) {
+            return new String[]{"series_from_date", "create", 
+                data.subject, 
+                data.date.atTime(data.startTime).toString(),
+                String.format("%s,%s,%s,%s,%d,%s,%s", 
+                    data.subject,
+                    data.date.atTime(data.startTime),
+                    data.date.atTime(data.endTime),
+                    data.location,
+                    data.occurrences,
+                    data.weekdays,
+                    data.untilDate)
+            };
+        } else {
+            return new String[]{"single", "create",
+                data.subject,
+                data.date.atTime(data.startTime).toString(),
+                String.format("%s,%s,%s,%s",
+                    data.subject,
+                    data.date.atTime(data.startTime),
+                    data.date.atTime(data.endTime),
+                    data.location)
+            };
+        }
+    }
+
+    /**
+     * Creates update event arguments based on the event data.
+     *
+     * @param data the event data
+     * @param property the property to update
+     * @param newValue the new value
+     * @return the event arguments
+     */
+    private String[] createUpdateEventArgs(EventData data, String property, String newValue) {
+        if (data.isRecurring) {
+            return new String[]{"series_from_date", property,
+                data.subject,
+                data.date.atTime(data.startTime).toString(),
+                newValue
+            };
+        } else {
+            return new String[]{"single", property,
+                data.subject,
+                data.date.atTime(data.startTime).toString(),
+                newValue
+            };
+        }
+    }
+
+    /**
+     * Creates delete event arguments based on the event data.
+     *
+     * @param data the event data
+     * @return the event arguments
+     */
+    private String[] createDeleteEventArgs(EventData data) {
+        if (data.isRecurring) {
+            return new String[]{"series_from_date", "delete",
+                data.subject,
+                data.date.atTime(data.startTime).toString()
+            };
+        } else {
+            return new String[]{"single", "delete",
+                data.subject,
+                data.date.atTime(data.startTime).toString()
+            };
+        }
+    }
+
+    /**
      * Displays an event in the form.
      *
      * @param event the event to display
@@ -190,8 +272,8 @@ public class GUIEventPanel extends JPanel {
         subjectField.setText(event.getSubject());
         locationField.setText(event.getLocation());
         descriptionField.setText(event.getDescription());
-        startTimeSpinner.setValue(java.util.Date.from(event.getStartDateTime().toInstant(java.time.ZoneOffset.UTC)));
-        endTimeSpinner.setValue(java.util.Date.from(event.getEndDateTime().toInstant(java.time.ZoneOffset.UTC)));
+        startTimeSpinner.setValue(Date.from(event.getStartDateTime().toInstant(ZoneOffset.UTC)));
+        endTimeSpinner.setValue(Date.from(event.getEndDateTime().toInstant(ZoneOffset.UTC)));
         recurringCheckBox.setSelected(false);
         recurringPanel.setVisible(false);
     }
@@ -205,9 +287,22 @@ public class GUIEventPanel extends JPanel {
         displayEvent(event);
         recurringCheckBox.setSelected(true);
         recurringPanel.setVisible(true);
-        weekdaysList.setSelectedValues(event.getWeekdays().toArray(new DayOfWeek[0]), true);
+        
+        // Get the weekdays from the event
+        Set<DayOfWeek> weekdays = event.getRepeatDays();
+        
+        // Find indices of the weekdays in the list
+        int[] indices = new int[weekdays.size()];
+        int index = 0;
+        for (int i = 0; i < weekdaysList.getModel().getSize(); i++) {
+            if (weekdays.contains(weekdaysList.getModel().getElementAt(i))) {
+                indices[index++] = i;
+            }
+        }
+        
+        weekdaysList.setSelectedIndices(indices);
         occurrencesSpinner.setValue(event.getOccurrences());
-        untilDateSpinner.setValue(java.util.Date.from(event.getUntilDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC)));
+        untilDateSpinner.setValue(Date.from(event.getEndDate().atStartOfDay().toInstant(ZoneOffset.UTC)));
     }
 
     /**
@@ -236,13 +331,13 @@ public class GUIEventPanel extends JPanel {
         subjectField.setText("");
         locationField.setText("");
         descriptionField.setText("");
-        startTimeSpinner.setValue(java.util.Date.from(LocalTime.of(9, 0).atDate(LocalDate.now()).toInstant(java.time.ZoneOffset.UTC)));
-        endTimeSpinner.setValue(java.util.Date.from(LocalTime.of(10, 0).atDate(LocalDate.now()).toInstant(java.time.ZoneOffset.UTC)));
+        startTimeSpinner.setValue(Date.from(LocalTime.of(9, 0).atDate(LocalDate.now()).toInstant(ZoneOffset.UTC)));
+        endTimeSpinner.setValue(Date.from(LocalTime.of(10, 0).atDate(LocalDate.now()).toInstant(ZoneOffset.UTC)));
         recurringCheckBox.setSelected(false);
         recurringPanel.setVisible(false);
         weekdaysList.clearSelection();
         occurrencesSpinner.setValue(1);
-        untilDateSpinner.setValue(java.util.Date.from(LocalDate.now().plusMonths(1).atStartOfDay().toInstant(java.time.ZoneOffset.UTC)));
+        untilDateSpinner.setValue(Date.from(LocalDate.now().plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
     }
 
     /**
@@ -259,5 +354,52 @@ public class GUIEventPanel extends JPanel {
      */
     public void refresh() {
         clearForm();
+    }
+
+    /**
+     * Updates an event in the form.
+     *
+     * @param event the event to update
+     */
+    public void updateEvent(Event event) {
+        EventData data = createEventData();
+        if (event instanceof RecurringEvent) {
+            RecurringEvent recurringEvent = (RecurringEvent) event;
+            data.isRecurring = true;
+            data.weekdays = recurringEvent.getRepeatDays();
+            data.occurrences = recurringEvent.getOccurrences();
+            data.untilDate = recurringEvent.getEndDate();
+        }
+        
+        // Update each property using the strategy pattern
+        String[] args = createUpdateEventArgs(data, "subject", data.subject);
+        listener.onEventUpdated(args, data.isRecurring);
+        
+        args = createUpdateEventArgs(data, "startDateTime", data.date.atTime(data.startTime).toString());
+        listener.onEventUpdated(args, data.isRecurring);
+        
+        args = createUpdateEventArgs(data, "endDateTime", data.date.atTime(data.endTime).toString());
+        listener.onEventUpdated(args, data.isRecurring);
+        
+        args = createUpdateEventArgs(data, "location", data.location);
+        listener.onEventUpdated(args, data.isRecurring);
+        
+        args = createUpdateEventArgs(data, "description", data.description);
+        listener.onEventUpdated(args, data.isRecurring);
+    }
+
+    /**
+     * Deletes an event.
+     *
+     * @param event the event to delete
+     */
+    public void deleteEvent(Event event) {
+        EventData data = createEventData();
+        if (event instanceof RecurringEvent) {
+            data.isRecurring = true;
+        }
+        
+        String[] args = createDeleteEventArgs(data);
+        listener.onEventDeleted(args, data.isRecurring);
     }
 } 

@@ -6,29 +6,50 @@ import java.util.List;
 
 import javax.swing.*;
 
+import controller.CalendarController;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
+import viewmodel.CalendarViewModel;
+import viewmodel.EventViewModel;
+import viewmodel.ExportImportViewModel;
+import model.exceptions.ConflictingEventException;
+import model.exceptions.InvalidEventException;
+import model.exceptions.EventNotFoundException;
 
 /**
  * Main GUI view class that integrates all GUI components and implements the IGUIView interface.
  * This class provides the main window and layout for the calendar application.
  */
-public class GUIView extends JFrame implements IGUIView {
+public class GUIView extends JFrame implements IGUIView,
+        CalendarViewModel.CalendarViewModelListener,
+        EventViewModel.EventViewModelListener,
+        ExportImportViewModel.ExportImportViewModelListener,
+        ICalendarView {
   private final GUICalendarPanel calendarPanel;
   private final GUIEventPanel eventPanel;
   private final GUICalendarSelectorPanel calendarSelectorPanel;
   private final GUIExportImportPanel exportImportPanel;
   private final JTextArea messageArea;
+  private final CalendarViewModel calendarViewModel;
+  private final EventViewModel eventViewModel;
+  private final ExportImportViewModel exportImportViewModel;
 
   /**
    * Constructs a new GUIView.
+   *
+   * @param controller the calendar controller
    */
-  public GUIView() {
+  public GUIView(CalendarController controller) {
     setTitle("Calendar Application");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(1200, 800);
     setLocationRelativeTo(null);
+
+    // Initialize ViewModels
+    calendarViewModel = new CalendarViewModel();
+    eventViewModel = new EventViewModel(controller);
+    exportImportViewModel = new ExportImportViewModel();
 
     // Initialize components
     calendarPanel = new GUICalendarPanel();
@@ -40,11 +61,27 @@ public class GUIView extends JFrame implements IGUIView {
     messageArea.setLineWrap(true);
     messageArea.setWrapStyleWord(true);
 
+    // Set up listeners
+    setupListeners();
+
     // Set up layout
     setupLayout();
+  }
 
-    // Make the window visible
+  /**
+   * Shows the GUI window.
+   */
+  public void displayGUI() {
     setVisible(true);
+  }
+
+  /**
+   * Sets up the listeners for all ViewModels.
+   */
+  private void setupListeners() {
+    calendarViewModel.addListener(this);
+    eventViewModel.addListener(this);
+    exportImportViewModel.addListener(this);
   }
 
   /**
@@ -116,9 +153,40 @@ public class GUIView extends JFrame implements IGUIView {
     return exportImportPanel;
   }
 
+  /**
+   * Gets the calendar view model.
+   *
+   * @return the calendar view model
+   */
+  public CalendarViewModel getCalendarViewModel() {
+    return calendarViewModel;
+  }
+
+  /**
+   * Gets the event view model.
+   *
+   * @return the event view model
+   */
+  public EventViewModel getEventViewModel() {
+    return eventViewModel;
+  }
+
+  /**
+   * Gets the export/import view model.
+   *
+   * @return the export/import view model
+   */
+  public ExportImportViewModel getExportImportViewModel() {
+    return exportImportViewModel;
+  }
+
   @Override
   public void updateCalendarView(ICalendar calendar) {
-    calendarPanel.updateCalendar(calendar);
+    try {
+      calendarViewModel.setCurrentCalendar(calendar);
+    } catch (ConflictingEventException | InvalidEventException | EventNotFoundException e) {
+      displayError("Failed to update calendar view: " + e.getMessage());
+    }
   }
 
   @Override
@@ -133,7 +201,7 @@ public class GUIView extends JFrame implements IGUIView {
 
   @Override
   public void showEventDetails(Event event) {
-    eventPanel.displayEvent(event);
+    eventViewModel.setSelectedEvent(event);
   }
 
   @Override
@@ -143,35 +211,40 @@ public class GUIView extends JFrame implements IGUIView {
 
   @Override
   public void updateCalendarList(List<String> calendarNames) {
-    calendarSelectorPanel.updateCalendars(calendarNames);
+    calendarViewModel.updateCalendarList(calendarNames);
   }
 
-  @Override
   public void setSelectedCalendar(String calendarName) {
-    calendarSelectorPanel.setSelectedCalendar(calendarName);
+    calendarViewModel.setSelectedCalendarName(calendarName);
   }
 
   @Override
   public String getSelectedCalendar() {
-    return calendarSelectorPanel.getSelectedCalendar();
+    return calendarViewModel.getSelectedCalendarName();
   }
 
   @Override
   public LocalDate getSelectedDate() {
-    return calendarPanel.getSelectedDate();
+    return calendarViewModel.getSelectedDate();
   }
 
   @Override
   public void setSelectedDate(LocalDate date) {
-    calendarPanel.setSelectedDate(date);
+    calendarViewModel.setSelectedDate(date);
   }
 
   @Override
   public void refreshView() {
-    calendarPanel.refresh();
-    eventPanel.refresh();
-    calendarSelectorPanel.refresh();
-    exportImportPanel.refresh();
+    calendarViewModel.refresh();
+    eventViewModel.refresh();
+    exportImportViewModel.refresh();
+  }
+
+  @Override
+  public String readCommand() {
+    // This method is not used in GUI mode
+    // It's required by ICalendarView interface but not needed for GUI
+    return "";
   }
 
   @Override
@@ -184,5 +257,78 @@ public class GUIView extends JFrame implements IGUIView {
   public void displayError(String error) {
     messageArea.append("Error: " + error + "\n");
     messageArea.setCaretPosition(messageArea.getDocument().getLength());
+  }
+
+  // CalendarViewModelListener implementation
+  @Override
+  public void onCalendarChanged(ICalendar calendar) {
+    calendarPanel.updateCalendar(calendar);
+    exportImportViewModel.setCurrentCalendar(calendar);
+  }
+
+  @Override
+  public void onDateSelected(LocalDate date) {
+    calendarPanel.setSelectedDate(date);
+  }
+
+  @Override
+  public void onEventsUpdated(List<Event> events) {
+    calendarPanel.updateEvents(events);
+  }
+
+  @Override
+  public void onRecurringEventsUpdated(List<RecurringEvent> recurringEvents) {
+    calendarPanel.updateRecurringEvents(recurringEvents);
+  }
+
+  @Override
+  public void onCalendarListUpdated(List<String> calendarNames) {
+    calendarSelectorPanel.updateCalendars(calendarNames);
+  }
+
+  @Override
+  public void onError(String error) {
+    displayError(error);
+  }
+
+  // EventViewModelListener implementation
+  @Override
+  public void onEventSelected(Event event) {
+    eventPanel.displayEvent(event);
+  }
+
+  @Override
+  public void onRecurringEventSelected(RecurringEvent event) {
+    eventPanel.displayRecurringEvent(event);
+  }
+
+  @Override
+  public void onEventCreated(Event event) {
+    displayMessage("Event created successfully");
+  }
+
+  @Override
+  public void onRecurringEventCreated(RecurringEvent event) {
+    displayMessage("Recurring event created successfully");
+  }
+
+  @Override
+  public void onEventUpdated(Event event) {
+    displayMessage("Event updated successfully");
+  }
+
+  @Override
+  public void onRecurringEventUpdated(RecurringEvent event) {
+    displayMessage("Recurring event updated successfully");
+  }
+
+  @Override
+  public void onImportSuccess() {
+    displayMessage("Calendar imported successfully");
+  }
+
+  @Override
+  public void onExportSuccess() {
+    displayMessage("Calendar exported successfully");
   }
 } 

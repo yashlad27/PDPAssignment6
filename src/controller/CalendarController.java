@@ -36,9 +36,9 @@ import view.ICalendarView;
  */
 public class CalendarController {
 
-  private final ICalendarView view;
+  private ICalendarView view;
   private CommandParser parser;
-  private final ICommandFactory calendarCommandFactory;
+  private ICommandFactory calendarCommandFactory;
   private final CalendarManager calendarManager;
   private ICommandFactory commandFactory;
   private static final String EXIT_COMMAND = "exit";
@@ -56,28 +56,62 @@ public class CalendarController {
    * @param calendarCommandFactory Factory for creating calendar-related commands
    * @param calendarManager        Manager for calendar operations
    * @param view                   View component for user interaction
-   * @throws IllegalArgumentException if any parameter is null
+   * @throws IllegalArgumentException if calendarManager is null
    */
   public CalendarController(ICommandFactory commandFactory, ICommandFactory calendarCommandFactory,
                             CalendarManager calendarManager, ICalendarView view) {
-    if (commandFactory == null) {
-      throw new IllegalArgumentException("CommandFactory cannot be null");
-    }
-    if (calendarCommandFactory == null) {
-      throw new IllegalArgumentException("CalendarCommandFactory cannot be null");
-    }
     if (calendarManager == null) {
       throw new IllegalArgumentException("CalendarManager cannot be null");
     }
+
+    this.calendarManager = calendarManager;
+    this.commandFactory = commandFactory;
+    this.calendarCommandFactory = calendarCommandFactory;
+    this.view = view;
+    if (commandFactory != null) {
+      this.parser = new CommandParser(commandFactory);
+    }
+  }
+
+  /**
+   * Sets the event command factory.
+   *
+   * @param commandFactory the command factory to set
+   */
+  public void setEventCommandFactory(ICommandFactory commandFactory) {
+    this.commandFactory = commandFactory;
+    this.parser = new CommandParser(commandFactory);
+  }
+
+  /**
+   * Sets the calendar command factory.
+   *
+   * @param calendarCommandFactory the calendar command factory to set
+   */
+  public void setCalendarCommandFactory(ICommandFactory calendarCommandFactory) {
+    this.calendarCommandFactory = calendarCommandFactory;
+  }
+
+  /**
+   * Sets the view.
+   *
+   * @param view the view to set
+   */
+  public void setView(ICalendarView view) {
     if (view == null) {
       throw new IllegalArgumentException("View cannot be null");
     }
-
     this.view = view;
-    this.calendarCommandFactory = calendarCommandFactory;
-    this.calendarManager = calendarManager;
-    this.commandFactory = commandFactory;
-    this.parser = new CommandParser(commandFactory);
+  }
+
+  /**
+   * Gets the currently active calendar.
+   *
+   * @return the currently active calendar
+   * @throws CalendarNotFoundException if no calendar is currently active
+   */
+  public ICalendar getCurrentCalendar() throws CalendarNotFoundException {
+    return calendarManager.getActiveCalendar();
   }
 
   /**

@@ -14,35 +14,41 @@ import view.ICalendarView;
  * modes of operation.
  */
 public class CalendarApp {
-
   /**
    * Main method that serves as the entry point for the application.
    *
-   * @param args Command line arguments: 
+   * @param args Command line arguments:
    *             --mode interactive : Starts the application in interactive mode
    *             --mode headless file : Starts the application in headless mode with the specified command file
    *             --mode gui : Starts the application in GUI mode
    */
   public static void main(String[] args) {
     CalendarFactory factory = new CalendarFactory();
-    ICalendarView view = factory.createView(args.length > 0 ? args[0] : "gui");
     TimeZoneHandler timezoneHandler = factory.createTimeZoneHandler();
     CalendarManager calendarManager = factory.createCalendarManager(timezoneHandler);
-
     ICalendar calendar = new Calendar();
-    ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
-    ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
-        view);
 
-    CalendarController controller = factory.createController(eventCommandFactory,
-        calendarCommandFactory, calendarManager, view);
+    // Create controller with null command factories first
+    CalendarController controller = factory.createController(null, null, calendarManager, null);
+
+    // Create view
+    ICalendarView view = factory.createView(args.length > 0 ? args[0] : "gui", controller);
+
+    // Now create command factories with the view
+    ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
+    ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager, view);
+
+    // Update controller with the command factories
+    controller.setEventCommandFactory(eventCommandFactory);
+    controller.setCalendarCommandFactory(calendarCommandFactory);
+    controller.setView(view);
 
     try {
       // Process command line arguments
       if (args.length == 0) {
         // No arguments means GUI mode
         if (view instanceof GUIView) {
-          ((GUIView) view).show();
+          ((GUIView) view).displayGUI();
         }
         controller.startInteractiveMode();
         return;
@@ -77,7 +83,7 @@ public class CalendarApp {
 
         case "gui":
           if (view instanceof GUIView) {
-            ((GUIView) view).show();
+            ((GUIView) view).displayGUI();
           }
           controller.startInteractiveMode();
           break;

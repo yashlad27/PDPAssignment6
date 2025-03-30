@@ -3,8 +3,6 @@ package model.event;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -44,7 +42,7 @@ public class Event {
 
     this.id = UUID.randomUUID();
     this.subject = subject;
-    
+
     // Store times in UTC
     this.startDateTime = startDateTime;
     this.description = description != null ? description : "";
@@ -74,7 +72,7 @@ public class Event {
    * @return a new all-day Event
    */
   public static Event createAllDayEvent(String subject, LocalDate date, String description,
-                                      String location, boolean isPublic) {
+                                        String location, boolean isPublic) {
     LocalDateTime start = LocalDateTime.of(date, LocalTime.of(0, 0));
     LocalDateTime end = LocalDateTime.of(date, LocalTime.of(23, 59, 59));
 
@@ -96,8 +94,8 @@ public class Event {
       return false;
     }
 
-    return !this.endDateTime.isBefore(other.startDateTime) && 
-           !other.endDateTime.isBefore(this.startDateTime);
+    return !this.endDateTime.isBefore(other.startDateTime) &&
+            !other.endDateTime.isBefore(this.startDateTime);
   }
 
   /**

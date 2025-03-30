@@ -3,12 +3,14 @@ package view;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.*;
 
+import controller.command.edit.strategy.EventEditor;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -32,6 +34,8 @@ public class GUICalendarPanel extends JPanel {
     void onDateSelected(LocalDate date);
 
     void onEventSelected(Event event);
+
+    void onRecurringEventSelected(RecurringEvent event);
   }
 
   /**
@@ -131,6 +135,22 @@ public class GUICalendarPanel extends JPanel {
     if (eventsByDate.containsKey(date)) {
       button.setBackground(new Color(200, 255, 200));
       button.setOpaque(true);
+
+      // Add mouse listener to show event details on hover
+      button.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent evt) {
+          List<Event> events = eventsByDate.get(date);
+          if (!events.isEmpty()) {
+            StringBuilder tooltip = new StringBuilder("<html>Events:<br>");
+            for (Event event : events) {
+              tooltip.append("- ").append(event.getSubject()).append("<br>");
+            }
+            tooltip.append("</html>");
+            button.setToolTipText(tooltip.toString());
+          }
+        }
+      });
     }
 
     // Set button appearance based on whether it's selected
@@ -144,6 +164,18 @@ public class GUICalendarPanel extends JPanel {
       updateCalendarDisplay();
       if (listener != null) {
         listener.onDateSelected(date);
+
+        // Notify about events on the selected date
+        if (eventsByDate.containsKey(date)) {
+          List<Event> events = eventsByDate.get(date);
+          for (Event event : events) {
+            if (event instanceof RecurringEvent) {
+              listener.onRecurringEventSelected((RecurringEvent) event);
+            } else {
+              listener.onEventSelected(event);
+            }
+          }
+        }
       }
     });
 
@@ -157,8 +189,27 @@ public class GUICalendarPanel extends JPanel {
    * @param calendar the calendar to display
    */
   public void updateCalendar(ICalendar calendar) {
-    // This method will be called when the calendar data changes
-    // The actual update of events will be handled by updateEvents and updateRecurringEvents
+    try {
+      // Use strategy pattern to get events
+      String[] args = new String[]{"all", "get_all"};
+      EventEditor editor = EventEditor.forType("all", args);
+      editor.executeEdit(calendar);
+
+      // Update events display
+      List<Event> events = calendar.getAllEvents();
+      updateEvents(events);
+
+      // Update recurring events display
+      args = new String[]{"series_from_date", "get_all"};
+      editor = EventEditor.forType("series_from_date", args);
+      editor.executeEdit(calendar);
+
+      List<RecurringEvent> recurringEvents = calendar.getAllRecurringEvents();
+      updateRecurringEvents(recurringEvents);
+    } catch (Exception e) {
+      // Handle error appropriately
+      System.err.println("Error updating calendar: " + e.getMessage());
+    }
   }
 
   /**
@@ -170,7 +221,7 @@ public class GUICalendarPanel extends JPanel {
     eventsByDate.clear();
     for (Event event : events) {
       LocalDate date = event.getStartDateTime().toLocalDate();
-      eventsByDate.computeIfAbsent(date, k -> List.of()).add(event);
+      eventsByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(event);
     }
     updateCalendarDisplay();
   }
@@ -184,11 +235,11 @@ public class GUICalendarPanel extends JPanel {
     // Add recurring events to the eventsByDate map
     for (RecurringEvent event : recurringEvents) {
       LocalDate startDate = event.getStartDateTime().toLocalDate();
-      LocalDate endDate = event.getUntilDate();
+      LocalDate endDate = event.getEndDate();
 
       for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-        if (event.getWeekdays().contains(date.getDayOfWeek())) {
-          eventsByDate.computeIfAbsent(date, k -> List.of()).add(event);
+        if (event.getRepeatDays().contains(date.getDayOfWeek())) {
+          eventsByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(event);
         }
       }
     }

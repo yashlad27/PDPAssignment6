@@ -21,12 +21,13 @@ public class CalendarFactory {
   /**
    * Creates a view implementation based on the specified mode.
    *
-   * @param mode the mode to create the view for ("gui" or "console")
+   * @param mode       the mode to create the view for ("gui" or "console")
+   * @param controller the calendar controller to use for GUI mode
    * @return an implementation of ICalendarView
    */
-  public ICalendarView createView(String mode) {
+  public ICalendarView createView(String mode, CalendarController controller) {
     if ("gui".equalsIgnoreCase(mode)) {
-      return new GUIView();
+      return new GUIView(controller);
     }
     return new ConsoleView();
   }
