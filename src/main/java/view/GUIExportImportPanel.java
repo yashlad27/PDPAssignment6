@@ -18,12 +18,6 @@ public class GUIExportImportPanel extends JPanel {
     private static final FileNameExtensionFilter CSV_FILTER = 
         new FileNameExtensionFilter("CSV Files (*.csv)", "csv");
 
-    public void addImportListener(Object eventsImportedSuccessfully) {
-    }
-
-    public void addExportListener(Object eventsExportedSuccessfully) {
-    }
-
     /**
      * Interface for listening to export/import events.
      */
@@ -66,7 +60,9 @@ public class GUIExportImportPanel extends JPanel {
             int result = fileChooser.showOpenDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
-                notifyImportRequested(selectedFile);
+                if (selectedFile != null) {
+                    notifyImportRequested(selectedFile);
+                }
             }
         });
         
@@ -78,11 +74,13 @@ public class GUIExportImportPanel extends JPanel {
             int result = fileChooser.showSaveDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
-                // Ensure the file has a .csv extension
-                if (!selectedFile.getName().toLowerCase().endsWith(".csv")) {
-                    selectedFile = new File(selectedFile.getAbsolutePath() + ".csv");
+                if (selectedFile != null) {
+                    // Ensure the file has a .csv extension
+                    if (!selectedFile.getName().toLowerCase().endsWith(".csv")) {
+                        selectedFile = new File(selectedFile.getAbsolutePath() + ".csv");
+                    }
+                    notifyExportRequested(selectedFile);
                 }
-                notifyExportRequested(selectedFile);
             }
         });
     }
@@ -118,31 +116,22 @@ public class GUIExportImportPanel extends JPanel {
      * Shows a success message for an import operation.
      */
     public void showImportSuccess() {
-        JOptionPane.showMessageDialog(this,
-            "Calendar data imported successfully!",
-            "Import Success",
-            JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Calendar imported successfully");
     }
 
     /**
      * Shows a success message for an export operation.
      */
     public void showExportSuccess() {
-        JOptionPane.showMessageDialog(this,
-            "Calendar data exported successfully!",
-            "Export Success",
-            JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Calendar exported successfully");
     }
 
     /**
-     * Shows an error message for an import/export operation.
+     * Shows an error message.
      *
      * @param message the error message to display
      */
     public void showError(String message) {
-        JOptionPane.showMessageDialog(this,
-            "Error: " + message,
-            "Error",
-            JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 } 

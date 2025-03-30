@@ -41,6 +41,7 @@ public class GUIView extends JFrame implements IGUIView,
    * @param controller the calendar controller
    */
   public GUIView(CalendarController controller) {
+    System.out.println("Creating GUIView...");
     setTitle("Calendar Application");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(1200, 800);
@@ -66,12 +67,15 @@ public class GUIView extends JFrame implements IGUIView,
 
     // Set up layout
     setupLayout();
+    System.out.println("GUIView created successfully.");
   }
 
   /**
    * Shows the GUI window.
    */
   public void displayGUI() {
+    System.out.println("Displaying GUI window...");
+    pack();
     setVisible(true);
   }
 

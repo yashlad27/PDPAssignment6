@@ -97,8 +97,8 @@ public class CalendarViewModel implements IViewModel {
   public void setCurrentCalendar(ICalendar calendar) throws ConflictingEventException, InvalidEventException, EventNotFoundException {
     this.currentCalendar = calendar;
     // Use EventEditor factory to get the calendar name
-    String[] args = new String[]{"all", "get_name", calendar.toString()};
-    EventEditor editor = EventEditor.forType("all", args);
+    String[] args = new String[]{"single", "get_name", calendar.toString(), "2024-01-01T00:00", ""};
+    EventEditor editor = EventEditor.forType("single", args);
     this.selectedCalendarName = editor.executeEdit(calendar);
     notifyCalendarChanged();
   }

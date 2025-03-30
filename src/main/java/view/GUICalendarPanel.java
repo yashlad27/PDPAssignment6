@@ -23,6 +23,10 @@ public class GUICalendarPanel extends JPanel {
   private final JPanel calendarGrid;
   private final Map<LocalDate, JButton> dateButtons;
   private final Map<LocalDate, List<Event>> eventsByDate;
+  private final JButton statusButton;
+  private final JEditorPane eventListArea;
+  private final JSpinner startDateSpinner;
+  private final JSpinner endDateSpinner;
   private YearMonth currentMonth;
   private LocalDate selectedDate;
   private CalendarPanelListener listener;
@@ -36,6 +40,12 @@ public class GUICalendarPanel extends JPanel {
     void onEventSelected(Event event);
 
     void onRecurringEventSelected(RecurringEvent event);
+
+    void onStatusRequested(LocalDate date);
+
+    void onEventsListRequested(LocalDate date);
+
+    void onDateRangeSelected(LocalDate startDate, LocalDate endDate);
   }
 
   /**
@@ -50,6 +60,12 @@ public class GUICalendarPanel extends JPanel {
     calendarGrid = new JPanel(new GridLayout(7, 7, 5, 5));
     dateButtons = new HashMap<>();
     eventsByDate = new HashMap<>();
+    statusButton = new JButton("Check Status");
+    eventListArea = new JEditorPane();
+    eventListArea.setEditable(false);
+    eventListArea.setContentType("text/html");
+    startDateSpinner = new JSpinner(new SpinnerDateModel());
+    endDateSpinner = new JSpinner(new SpinnerDateModel());
     currentMonth = YearMonth.now();
     selectedDate = LocalDate.now();
 
@@ -80,9 +96,56 @@ public class GUICalendarPanel extends JPanel {
     // Calendar grid
     calendarGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
+    // Status and event list panel
+    JPanel statusPanel = new JPanel(new BorderLayout());
+    statusPanel.setBorder(BorderFactory.createTitledBorder("Status and Events"));
+    
+    statusButton.addActionListener(e -> {
+      if (listener != null) {
+        listener.onStatusRequested(selectedDate);
+      }
+    });
+    
+    JButton listEventsButton = new JButton("List Events");
+    listEventsButton.addActionListener(e -> {
+      if (listener != null) {
+        listener.onEventsListRequested(selectedDate);
+      }
+    });
+
+    // Date range selector
+    JPanel dateRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    dateRangePanel.add(new JLabel("Start Date:"));
+    dateRangePanel.add(startDateSpinner);
+    dateRangePanel.add(new JLabel("End Date:"));
+    dateRangePanel.add(endDateSpinner);
+    
+    JButton showRangeButton = new JButton("Show Range");
+    showRangeButton.addActionListener(e -> {
+      if (listener != null) {
+        LocalDate startDate = ((java.util.Date) startDateSpinner.getValue()).toInstant()
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate();
+        LocalDate endDate = ((java.util.Date) endDateSpinner.getValue()).toInstant()
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate();
+        listener.onDateRangeSelected(startDate, endDate);
+      }
+    });
+    dateRangePanel.add(showRangeButton);
+    
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    buttonPanel.add(statusButton);
+    buttonPanel.add(listEventsButton);
+    
+    statusPanel.add(buttonPanel, BorderLayout.NORTH);
+    statusPanel.add(dateRangePanel, BorderLayout.CENTER);
+    statusPanel.add(new JScrollPane(eventListArea), BorderLayout.SOUTH);
+
     // Add components to panel
     add(navigationPanel, BorderLayout.NORTH);
     add(new JScrollPane(calendarGrid), BorderLayout.CENTER);
+    add(statusPanel, BorderLayout.SOUTH);
   }
 
   /**
@@ -130,34 +193,96 @@ public class GUICalendarPanel extends JPanel {
   private JButton createDateButton(LocalDate date) {
     JButton button = new JButton(String.valueOf(date.getDayOfMonth()));
     button.setToolTipText(date.toString());
+    button.setFocusPainted(false);
+    button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
     // Set button appearance based on whether it has events
     if (eventsByDate.containsKey(date)) {
       button.setBackground(new Color(200, 255, 200));
       button.setOpaque(true);
+      button.setBorder(BorderFactory.createLineBorder(new Color(100, 200, 100)));
 
+      // Add a small dot indicator for busy days
+      JPanel dot = new JPanel();
+      dot.setPreferredSize(new Dimension(6, 6));
+      dot.setBackground(new Color(100, 200, 100));
+      dot.setOpaque(true);
+      dot.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      
+      // Create a custom button with the dot
+      JButton customButton = new JButton() {
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          dot.setBounds(getWidth() - 10, getHeight() - 10, 6, 6);
+          dot.paint(g);
+        }
+      };
+      customButton.setText(String.valueOf(date.getDayOfMonth()));
+      customButton.setToolTipText(date.toString());
+      customButton.setFocusPainted(false);
+      customButton.setBackground(new Color(200, 255, 200));
+      customButton.setOpaque(true);
+      customButton.setBorder(BorderFactory.createLineBorder(new Color(100, 200, 100)));
+      
       // Add mouse listener to show event details on hover
-      button.addMouseListener(new java.awt.event.MouseAdapter() {
+      customButton.addMouseListener(new java.awt.event.MouseAdapter() {
         @Override
         public void mouseEntered(java.awt.event.MouseEvent evt) {
           List<Event> events = eventsByDate.get(date);
           if (!events.isEmpty()) {
             StringBuilder tooltip = new StringBuilder("<html>Events:<br>");
             for (Event event : events) {
-              tooltip.append("- ").append(event.getSubject()).append("<br>");
+              tooltip.append("- ").append(event.getSubject())
+                    .append(" (").append(event.getStartDateTime().toLocalTime())
+                    .append(" - ").append(event.getEndDateTime().toLocalTime())
+                    .append(")<br>");
             }
             tooltip.append("</html>");
-            button.setToolTipText(tooltip.toString());
+            customButton.setToolTipText(tooltip.toString());
           }
         }
+
+        @Override
+        public void mouseExited(java.awt.event.MouseEvent evt) {
+          customButton.setToolTipText(date.toString());
+        }
       });
+
+      button = customButton;
     }
 
     // Set button appearance based on whether it's selected
     if (date.equals(selectedDate)) {
       button.setBackground(new Color(150, 200, 255));
       button.setOpaque(true);
+      button.setBorder(BorderFactory.createLineBorder(new Color(50, 150, 255), 2));
+      button.setFont(button.getFont().deriveFont(Font.BOLD));
     }
+
+    // Add hover effect
+    final JButton finalButton = button;
+    button.addMouseListener(new java.awt.event.MouseAdapter() {
+      @Override
+      public void mouseEntered(java.awt.event.MouseEvent evt) {
+        if (!date.equals(selectedDate)) {
+          finalButton.setBackground(new Color(220, 240, 255));
+          finalButton.setOpaque(true);
+        }
+      }
+
+      @Override
+      public void mouseExited(java.awt.event.MouseEvent evt) {
+        if (!date.equals(selectedDate)) {
+          if (eventsByDate.containsKey(date)) {
+            finalButton.setBackground(new Color(200, 255, 200));
+          } else {
+            finalButton.setBackground(new JButton().getBackground());
+            finalButton.setOpaque(false);
+          }
+        }
+      }
+    });
 
     button.addActionListener(e -> {
       selectedDate = date;
@@ -306,5 +431,86 @@ public class GUICalendarPanel extends JPanel {
    */
   public void refresh() {
     updateCalendarDisplay();
+  }
+
+  /**
+   * Updates the event list area with events for a specific date.
+   *
+   * @param date the date to show events for
+   */
+  public void updateEventList(LocalDate date) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html><b>Events for ").append(date).append(":</b><br><br>");
+    
+    if (eventsByDate.containsKey(date)) {
+      List<Event> events = eventsByDate.get(date);
+      for (Event event : events) {
+        sb.append("• ").append(event.getSubject())
+          .append(" <i>(").append(event.getStartDateTime().toLocalTime())
+          .append(" - ").append(event.getEndDateTime().toLocalTime())
+          .append(")</i><br>");
+        if (event.getLocation() != null && !event.getLocation().isEmpty()) {
+          sb.append("  Location: ").append(event.getLocation()).append("<br>");
+        }
+        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+          sb.append("  ").append(event.getDescription()).append("<br>");
+        }
+        sb.append("<br>");
+      }
+    } else {
+      sb.append("<i>No events scheduled for this date.</i>");
+    }
+    
+    sb.append("</html>");
+    eventListArea.setContentType("text/html");
+    eventListArea.setText(sb.toString());
+  }
+
+  /**
+   * Updates the event list area with events in a date range.
+   *
+   * @param startDate the start date
+   * @param endDate the end date
+   * @param events the list of events in the range
+   */
+  public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html><b>Events from ").append(startDate).append(" to ").append(endDate).append(":</b><br><br>");
+    
+    if (!events.isEmpty()) {
+      for (Event event : events) {
+        sb.append("• ").append(event.getSubject())
+          .append(" <i>(").append(event.getStartDateTime().toLocalDate())
+          .append(" ").append(event.getStartDateTime().toLocalTime())
+          .append(" - ").append(event.getEndDateTime().toLocalTime())
+          .append(")</i><br>");
+        if (event.getLocation() != null && !event.getLocation().isEmpty()) {
+          sb.append("  Location: ").append(event.getLocation()).append("<br>");
+        }
+        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+          sb.append("  ").append(event.getDescription()).append("<br>");
+        }
+        sb.append("<br>");
+      }
+    } else {
+      sb.append("<i>No events scheduled in this date range.</i>");
+    }
+    
+    sb.append("</html>");
+    eventListArea.setContentType("text/html");
+    eventListArea.setText(sb.toString());
+  }
+
+  /**
+   * Updates the status button text with the busy/available status.
+   *
+   * @param isBusy whether the selected date is busy
+   */
+  public void updateStatus(boolean isBusy) {
+    statusButton.setText(isBusy ? "Status: Busy" : "Status: Available");
+    statusButton.setBackground(isBusy ? new Color(255, 200, 200) : new Color(200, 255, 200));
+    statusButton.setOpaque(true);
+    statusButton.setBorder(BorderFactory.createLineBorder(
+        isBusy ? new Color(200, 100, 100) : new Color(100, 200, 100)));
   }
 } 
