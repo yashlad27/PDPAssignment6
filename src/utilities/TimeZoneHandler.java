@@ -44,6 +44,15 @@ public class TimeZoneHandler {
   }
 
   /**
+   * Gets the system's default timezone.
+   *
+   * @return the system's default timezone ID
+   */
+  public String getSystemDefaultTimezone() {
+    return java.util.TimeZone.getDefault().getID();
+  }
+
+  /**
    * Converts a LocalDateTime from a specific timezone to UTC.
    *
    * @param dateTime     the LocalDateTime to convert

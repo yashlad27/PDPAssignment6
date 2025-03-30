@@ -185,4 +185,22 @@ public class CalendarManager {
   public TimeZoneHandler getTimezoneHandler() {
     return timezoneHandler;
   }
+
+  /**
+   * Gets the number of calendars.
+   *
+   * @return the number of calendars
+   */
+  public int getCalendarCount() {
+    return calendarRegistry.getCalendarCount();
+  }
+
+  /**
+   * Gets the calendar registry.
+   *
+   * @return the calendar registry
+   */
+  public CalendarRegistry getCalendarRegistry() {
+    return calendarRegistry;
+  }
 }
