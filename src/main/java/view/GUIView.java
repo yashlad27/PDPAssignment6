@@ -5,11 +5,15 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
 import controller.CalendarController;
+import controller.command.edit.strategy.EventEditor;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -95,29 +99,152 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     calendarSelectorPanel.addCalendarSelectorListener(new GUICalendarSelectorPanel.CalendarSelectorListener() {
       @Override
       public void onCalendarSelected(ICalendar calendar) {
+        System.out.println("[DEBUG] Calendar selected: " + (calendar != null ? calendar.toString() : "null"));
         if (calendar != null) {
           controller.setSelectedCalendar(calendar);
           eventPanel.clearForm();
+          refreshView();
         }
       }
 
       @Override
       public void onCalendarSelected(String calendarName) {
+        System.out.println("[DEBUG] Calendar selected by name: " + calendarName);
         if (calendarName != null) {
           controller.setSelectedCalendarByName(calendarName);
           eventPanel.clearForm();
+          refreshView();
         }
       }
 
       @Override
       public void onCalendarCreated(String name, String timezone) {
-        // Handle calendar creation through the controller
+        System.out.println("[DEBUG] Attempting to create calendar: " + name + " with timezone: " + timezone);
         try {
-          controller.createCalendar(name, timezone);
-          // Update the calendar list after creation
-          controller.updateCalendarList();
+          boolean success = controller.createCalendar(name, timezone);
+          System.out.println("[DEBUG] Calendar creation result: " + (success ? "success" : "failed"));
+          if (success) {
+            controller.updateCalendarList();
+            controller.setSelectedCalendarByName(name);
+            displayMessage("Calendar created successfully: " + name);
+            refreshView();
+          } else {
+            showError("Failed to create calendar");
+          }
         } catch (Exception ex) {
+          System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
           showError("Could not create calendar: " + ex.getMessage());
+        }
+      }
+    });
+
+    // Set up event panel listener
+    eventPanel.addEventPanelListener(new GUIEventPanel.EventPanelListener() {
+      @Override
+      public void onEventSaved(String[] args, boolean isRecurring) {
+        System.out.println("[DEBUG] Attempting to save event. Recurring: " + isRecurring);
+        if (args != null) {
+          System.out.println("[DEBUG] Event args: " + String.join(", ", args));
+        }
+        
+        if (args != null && args.length >= 2) {
+          try {
+            ICalendar currentCalendar = controller.getCurrentCalendar();
+            System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
+            
+            if (currentCalendar == null) {
+              showError("Please select a calendar first");
+              return;
+            }
+
+            if (isRecurring) {
+              System.out.println("[DEBUG] Creating recurring event");
+              EventEditor editor = EventEditor.forType("series_from_date", args);
+              String result = editor.executeEdit(currentCalendar);
+              System.out.println("[DEBUG] Recurring event creation result: " + result);
+              handleEventResult(result);
+            } else {
+              System.out.println("[DEBUG] Creating single event");
+              EventEditor editor = EventEditor.forType("single", args);
+              String result = editor.executeEdit(currentCalendar);
+              System.out.println("[DEBUG] Single event creation result: " + result);
+              handleEventResult(result);
+            }
+          } catch (Exception e) {
+            System.out.println("[DEBUG] Event creation error: " + e.getMessage());
+            showError("Error creating event: " + e.getMessage());
+          }
+        }
+      }
+
+      @Override
+      public void onEventCancelled() {
+        System.out.println("[DEBUG] Event creation cancelled");
+        eventPanel.clearForm();
+      }
+
+      @Override
+      public void onEventUpdated(String[] args, boolean isRecurring) {
+        System.out.println("[DEBUG] Attempting to update event. Recurring: " + isRecurring);
+        if (args != null) {
+          System.out.println("[DEBUG] Update args: " + String.join(", ", args));
+        }
+        
+        if (args != null && args.length >= 2) {
+          try {
+            ICalendar currentCalendar = controller.getCurrentCalendar();
+            System.out.println("[DEBUG] Current calendar for update: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
+            
+            if (currentCalendar == null) {
+              showError("Please select a calendar first");
+              return;
+            }
+
+            if (isRecurring) {
+              EventEditor editor = EventEditor.forType("series_from_date", args);
+              String result = editor.executeEdit(currentCalendar);
+              System.out.println("[DEBUG] Recurring event update result: " + result);
+              handleEventResult(result);
+            } else {
+              EventEditor editor = EventEditor.forType("single", args);
+              String result = editor.executeEdit(currentCalendar);
+              System.out.println("[DEBUG] Single event update result: " + result);
+              handleEventResult(result);
+            }
+          } catch (Exception e) {
+            System.out.println("[DEBUG] Event update error: " + e.getMessage());
+            showError("Error updating event: " + e.getMessage());
+          }
+        }
+      }
+
+      private void handleEventResult(String result) {
+        System.out.println("[DEBUG] Handling event result: " + result);
+        if (result.startsWith("Error")) {
+          showError(result);
+        } else {
+          displayMessage(result);
+          refreshView();
+          // Update the event list for the selected date
+          LocalDate selectedDate = calendarPanel.getSelectedDate();
+          System.out.println("[DEBUG] Selected date for refresh: " + selectedDate);
+          if (selectedDate != null) {
+            try {
+              ICalendar currentCalendar = controller.getCurrentCalendar();
+              System.out.println("[DEBUG] Current calendar for refresh: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
+              if (currentCalendar != null) {
+                List<Event> events = currentCalendar.getEventsOnDate(selectedDate);
+                System.out.println("[DEBUG] Events found for date: " + events.size());
+                calendarPanel.updateEvents(currentCalendar.getAllEvents());
+                calendarPanel.updateRecurringEvents(currentCalendar.getAllRecurringEvents());
+                calendarPanel.updateEventList(selectedDate);
+                System.out.println("[DEBUG] View updated with events");
+              }
+            } catch (Exception e) {
+              System.out.println("[DEBUG] Error updating event list: " + e.getMessage());
+              showError("Error updating event list: " + e.getMessage());
+            }
+          }
         }
       }
     });
@@ -368,7 +495,8 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   @Override
   public void updateEventList(List<Event> events) {
     if (events != null) {
-      eventPanel.setEvents(events);
+      calendarPanel.updateEvents(events);
+      calendarPanel.updateEventList(LocalDate.now());
     }
   }
 
@@ -525,5 +653,12 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       calendarPanel.setSelectedDate(date);
       eventPanel.setDate(date);
     }
+  }
+
+  /**
+   * Updates the calendar display.
+   */
+  public void updateCalendarDisplay() {
+    calendarPanel.refresh();
   }
 } 

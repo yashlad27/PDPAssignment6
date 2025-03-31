@@ -200,12 +200,6 @@ public class GUICalendarPanel extends JPanel {
     JPanel controlPanel = new JPanel(new BorderLayout(10, 10));
     controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-    // Buttons panel
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-    buttonPanel.add(createStyledButton("Check Status"));
-    buttonPanel.add(createStyledButton("List Events"));
-    buttonPanel.add(createStyledButton("Show Range"));
-
     // Event list area
     eventListArea.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xDDDDDD)),
@@ -214,7 +208,6 @@ public class GUICalendarPanel extends JPanel {
     JScrollPane eventScroll = new JScrollPane(eventListArea);
     eventScroll.setPreferredSize(new Dimension(0, 150));
 
-    controlPanel.add(buttonPanel, BorderLayout.NORTH);
     controlPanel.add(eventScroll, BorderLayout.CENTER);
 
     return controlPanel;

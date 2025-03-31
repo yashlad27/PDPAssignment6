@@ -1,9 +1,15 @@
 package controller;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.io.File;
+import java.util.HashSet;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import controller.command.edit.strategy.EventEditor;
 import model.calendar.CalendarManager;
@@ -62,7 +68,10 @@ public class GUIController {
       String defaultCalendar = "Default_Calendar";
       if (calendarManager.getCalendarCount() == 0) {
         System.out.println("Creating default calendar...");
-        calendarManager.createCalendar(defaultCalendar, timezoneHandler.getSystemDefaultTimezone());
+        String timezone = timezoneHandler.getSystemDefaultTimezone();
+        System.out.println("[DEBUG] Using system timezone: " + timezone);
+        calendarManager.createCalendar(defaultCalendar, timezone);
+        System.out.println("[DEBUG] Default calendar created");
       }
 
       // Get the first available calendar
@@ -111,6 +120,7 @@ public class GUIController {
             view.displayError("Please select a valid calendar");
             return;
           }
+          System.out.println("[DEBUG] Calendar selected: " + calendar.toString());
           currentCalendar = calendar;
           view.updateCalendarView(calendar);
           
@@ -121,7 +131,35 @@ public class GUIController {
           view.getCalendarPanel().updateRecurringEvents(recurringEvents);
           view.displayMessage("Selected calendar: " + calendar.toString());
         } catch (Exception e) {
+          System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
           view.displayError("Failed to select calendar: " + e.getMessage());
+        }
+      }
+
+      @Override
+      public void onCalendarCreated(String name, String timezone) {
+        System.out.println("[DEBUG] Calendar creation initiated: " + name + " with timezone: " + timezone);
+        try {
+          // Validate timezone format
+          if (!timezone.contains("/")) {
+            System.out.println("[DEBUG] Invalid timezone format: " + timezone);
+            view.showError("Invalid timezone format. Please use Area/Location format.");
+            return;
+          }
+
+          // Create the calendar
+          calendarManager.createCalendar(name, timezone);
+          System.out.println("[DEBUG] Calendar created");
+          
+          // Update the view
+          view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
+          view.setSelectedCalendar(name);
+          currentCalendar = calendarManager.getCalendar(name);
+          view.displayMessage("Calendar created successfully: " + name);
+          view.refreshView();
+        } catch (Exception ex) {
+          System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
+          view.showError("Could not create calendar: " + ex.getMessage());
         }
       }
     });
@@ -505,19 +543,170 @@ public class GUIController {
     }
   }
 
-  private String executeCommand(String command, String[] args) {
-    // Implementation of executeCommand method
-    // This method should return a String result based on the command and arguments
-    // It should handle the execution of the command and return the appropriate result
-    // For example, it could call EventEditor.forType(command, args).executeEdit(currentCalendar)
-    // and return the result of the execution
-    return null; // Placeholder return, actual implementation needed
+  public String executeCommand(String command, String[] args) {
+    System.out.println("[DEBUG] Executing command: " + command + " with args: " + String.join(", ", args));
+    if (currentCalendar == null) {
+      System.out.println("[DEBUG] No calendar selected!");
+      return "Error: No calendar selected";
+    }
+
+    try {
+      String eventType = null;
+      String subject = null;
+      LocalDateTime startDateTime = null;
+
+      if (args != null && args.length >= 4) {
+        eventType = args[0];
+        subject = args[2];
+        startDateTime = LocalDateTime.parse(args[3]);
+      }
+
+      switch (command.toLowerCase()) {
+        case "create":
+          if (args.length < 4) {
+            System.out.println("[DEBUG] Invalid number of arguments for create command");
+            return "Error: Invalid command arguments";
+          }
+
+          if ("single".equals(eventType)) {
+            System.out.println("[DEBUG] Creating single event: " + subject);
+            String[] eventDetails = args[4].split(",");
+            if (eventDetails.length < 4) {
+              System.out.println("[DEBUG] Invalid event details format");
+              return "Error: Invalid event details format";
+            }
+
+            Event event = new Event(
+                    eventDetails[0], // subject
+                    LocalDateTime.parse(eventDetails[1]), // startDateTime
+                    LocalDateTime.parse(eventDetails[2]), // endDateTime
+                    eventDetails.length > 4 ? eventDetails[4] : "", // description
+                    eventDetails[3], // location
+                    true // isPublic
+            );
+            System.out.println("[DEBUG] Adding event to calendar: " + event);
+            boolean added = currentCalendar.addEvent(event, false);
+            System.out.println("[DEBUG] Event added: " + added);
+            if (added) {
+              updateEventList(startDateTime.toLocalDate());
+              return "Event created successfully";
+            }
+            return "Failed to create event";
+          } else if ("series_from_date".equals(eventType)) {
+            System.out.println("[DEBUG] Creating recurring event: " + subject);
+            String[] eventDetails = args[4].split(",");
+            if (eventDetails.length < 7) {
+              System.out.println("[DEBUG] Invalid recurring event details format");
+              return "Error: Invalid recurring event details format";
+            }
+
+            Set<DayOfWeek> weekdays = Arrays.stream(eventDetails[5].replaceAll("[\\[\\]]", "").split(", "))
+                    .map(DayOfWeek::valueOf)
+                    .collect(Collectors.toSet());
+
+            RecurringEvent recurringEvent = new RecurringEvent(
+                    eventDetails[0], // subject
+                    LocalDateTime.parse(eventDetails[1]), // startDateTime
+                    LocalDateTime.parse(eventDetails[2]), // endDateTime
+                    "", // description
+                    eventDetails[3], // location
+                    true, // isPublic
+                    weekdays, // repeatDays
+                    Integer.parseInt(eventDetails[4]), // occurrences
+                    LocalDate.parse(eventDetails[6]) // untilDate
+            );
+            System.out.println("[DEBUG] Adding recurring event to calendar: " + recurringEvent);
+            boolean added = currentCalendar.addRecurringEvent(recurringEvent, false);
+            System.out.println("[DEBUG] Recurring event added: " + added);
+            if (added) {
+              updateEventList(startDateTime.toLocalDate());
+              return "Recurring event created successfully";
+            }
+            return "Failed to create recurring event";
+          }
+          break;
+
+        case "edit":
+          if (args.length < 4) {
+            System.out.println("[DEBUG] Invalid number of arguments for edit command");
+            return "Error: Invalid command arguments";
+          }
+
+          if ("single".equals(eventType)) {
+            System.out.println("[DEBUG] Editing single event: " + subject);
+            String[] eventDetails = args[4].split(",");
+            if (eventDetails.length < 4) {
+              System.out.println("[DEBUG] Invalid event details format");
+              return "Error: Invalid event details format";
+            }
+
+            Event event = new Event(
+                    eventDetails[0], // subject
+                    LocalDateTime.parse(eventDetails[1]), // startDateTime
+                    LocalDateTime.parse(eventDetails[2]), // endDateTime
+                    eventDetails.length > 4 ? eventDetails[4] : "", // description
+                    eventDetails[3], // location
+                    true // isPublic
+            );
+            System.out.println("[DEBUG] Updating event in calendar: " + event);
+            boolean updated = currentCalendar.addEvent(event, false);
+            System.out.println("[DEBUG] Event updated: " + updated);
+            if (updated) {
+              updateEventList(startDateTime.toLocalDate());
+              return "Event updated successfully";
+            }
+            return "Failed to update event";
+          } else if ("series_from_date".equals(eventType)) {
+            System.out.println("[DEBUG] Editing recurring event: " + subject);
+            String[] eventDetails = args[4].split(",");
+            if (eventDetails.length < 7) {
+              System.out.println("[DEBUG] Invalid recurring event details format");
+              return "Error: Invalid recurring event details format";
+            }
+
+            Set<DayOfWeek> weekdays = Arrays.stream(eventDetails[5].replaceAll("[\\[\\]]", "").split(", "))
+                    .map(DayOfWeek::valueOf)
+                    .collect(Collectors.toSet());
+
+            RecurringEvent recurringEvent = new RecurringEvent(
+                    eventDetails[0], // subject
+                    LocalDateTime.parse(eventDetails[1]), // startDateTime
+                    LocalDateTime.parse(eventDetails[2]), // endDateTime
+                    "", // description
+                    eventDetails[3], // location
+                    true, // isPublic
+                    weekdays, // repeatDays
+                    Integer.parseInt(eventDetails[4]), // occurrences
+                    LocalDate.parse(eventDetails[6]) // untilDate
+            );
+            System.out.println("[DEBUG] Updating recurring event in calendar: " + recurringEvent);
+            boolean updated = currentCalendar.addRecurringEvent(recurringEvent, false);
+            System.out.println("[DEBUG] Recurring event updated: " + updated);
+            if (updated) {
+              updateEventList(startDateTime.toLocalDate());
+              return "Recurring event updated successfully";
+            }
+            return "Failed to update recurring event";
+          }
+          break;
+
+        default:
+          System.out.println("[DEBUG] Unknown command: " + command);
+          return "Error: Unknown command";
+      }
+      return "Error: Invalid command arguments";
+    } catch (Exception e) {
+      System.out.println("[DEBUG] Error executing command: " + e.getMessage());
+      e.printStackTrace();
+      return "Error: " + e.getMessage();
+    }
   }
 
   private void updateEventList(LocalDate date) {
     if (date != null && currentCalendar != null) {
       java.util.List<Event> events = currentCalendar.getEventsOnDate(date);
-      view.getEventPanel().setEvents(events);
+      view.getCalendarPanel().updateEvents(events);
+      view.getCalendarPanel().updateEventList(date);
     }
   }
 
@@ -545,6 +734,16 @@ public class GUIController {
       updateStatus(date);
     } catch (Exception e) {
       view.displayError("Error setting selected date: " + e.getMessage());
+    }
+  }
+
+  private void updateEvents(LocalDate date) {
+    try {
+      List<Event> events = getEventsOnDate(date);
+      view.getCalendarPanel().updateEventList(date);
+      view.getCalendarPanel().updateEvents(events);
+    } catch (Exception e) {
+      view.displayError("Failed to update events: " + e.getMessage());
     }
   }
 } 
