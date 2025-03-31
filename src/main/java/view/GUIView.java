@@ -3,13 +3,11 @@ package view;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.ArrayList;
-import java.io.File;
 
 import javax.swing.*;
-import javax.swing.SwingUtilities;
 
 import controller.CalendarController;
 import model.calendar.ICalendar;
@@ -18,9 +16,6 @@ import model.event.RecurringEvent;
 import viewmodel.CalendarViewModel;
 import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.InvalidEventException;
-import model.exceptions.EventNotFoundException;
 
 /**
  * Main GUI view class that integrates all GUI components and implements both ICalendarView and IGUIView interfaces.
@@ -51,17 +46,17 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public GUIView(CalendarController controller) {
     this.controller = controller;
     System.out.println("Creating GUIView...");
-    
+
     // Initialize view models
     calendarViewModel = new CalendarViewModel();
     eventViewModel = new EventViewModel(controller);
     exportImportViewModel = new ExportImportViewModel();
-    
+
     // Set up the main window
     setTitle("Calendar Application");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setPreferredSize(new Dimension(800, 600));
-    
+
     // Initialize components
     calendarPanel = new GUICalendarPanel();
     eventPanel = new GUIEventPanel();
@@ -71,13 +66,13 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     messageArea.setEditable(false);
     messageArea.setLineWrap(true);
     messageArea.setWrapStyleWord(true);
-    
+
     // Set up layout
     setupLayout();
-    
+
     // Set up listeners
     setupListeners();
-    
+
     pack();
     setLocationRelativeTo(null);
     System.out.println("GUIView created successfully.");
@@ -105,7 +100,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           eventPanel.clearForm();
         }
       }
-      
+
       @Override
       public void onCalendarSelected(String calendarName) {
         if (calendarName != null) {
@@ -113,7 +108,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           eventPanel.clearForm();
         }
       }
-      
+
       @Override
       public void onCalendarCreated(String name, String timezone) {
         // Handle calendar creation through the controller
@@ -126,7 +121,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         }
       }
     });
-    
+
     // Set up event listeners for calendar panel
     calendarPanel.addCalendarPanelListener(new GUICalendarPanel.CalendarPanelListener() {
       @Override
@@ -165,7 +160,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         calendarPanel.updateEventListRange(startDate, endDate, null);
       }
     });
-    
+
     // Set up export/import listeners
     exportImportPanel.addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
       @Override
@@ -179,7 +174,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           }
         }
       }
-      
+
       @Override
       public void onExport(File file) {
         if (file != null) {
@@ -207,76 +202,76 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     titleLabel.setForeground(Color.WHITE);
     titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16));
     titleBar.add(titleLabel);
-    
+
     // Main content panel with proper spacing
     JPanel contentPanel = new JPanel();
     contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     contentPanel.setLayout(new BorderLayout(10, 10));
-    
+
     // Create the split pane with proper settings
     JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     mainSplitPane.setBorder(null);
     mainSplitPane.setDividerSize(5);
     mainSplitPane.setResizeWeight(0.0); // Fix left panel width
     mainSplitPane.setMinimumSize(new Dimension(800, 500));
-    
+
     // Left sidebar with proper constraints
     JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
     leftPanel.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 0));
     leftPanel.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 0));
     leftPanel.setBackground(new Color(0xf8f8f8));
     leftPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER_COLOR));
-    
+
     // Calendar selector at top of left panel
     calendarSelectorPanel.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 200));
     calendarSelectorPanel.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 150));
-    
+
     // Import/Export in the center of left panel (moved up from bottom)
     exportImportPanel.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 200));
     exportImportPanel.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 150));
-    
+
     // Create a vertical panel to hold components in the left sidebar
     JPanel leftComponentsPanel = new JPanel();
     leftComponentsPanel.setLayout(new BoxLayout(leftComponentsPanel, BoxLayout.Y_AXIS));
     leftComponentsPanel.setBackground(new Color(0xf8f8f8));
-    
+
     // Add components to left panel in vertical order
     leftComponentsPanel.add(calendarSelectorPanel);
     leftComponentsPanel.add(Box.createVerticalStrut(10)); // Add spacing
     leftComponentsPanel.add(exportImportPanel);
     leftComponentsPanel.add(Box.createVerticalGlue()); // Push everything up
-    
+
     leftPanel.add(leftComponentsPanel, BorderLayout.CENTER);
-    
+
     // Right side with a horizontal split between calendar and event panel
     JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
-    
+
     // Create a secondary split pane to separate calendar and event panel horizontally
     JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     rightSplitPane.setBorder(null);
     rightSplitPane.setDividerSize(5);
     rightSplitPane.setResizeWeight(0.7); // Give more weight to calendar
-    
+
     // Calendar panel with proper size
     JPanel calendarContainer = new JPanel(new BorderLayout());
     calendarContainer.add(calendarPanel, BorderLayout.CENTER);
     calendarContainer.setPreferredSize(new Dimension(550, 0));
-    
+
     // Event panel with fixed width
     eventPanel.setPreferredSize(new Dimension(350, 0));
     JScrollPane eventScrollPane = new JScrollPane(eventPanel);
     eventScrollPane.setBorder(null);
-    
+
     // Add components to right split pane
     rightSplitPane.setLeftComponent(calendarContainer);
     rightSplitPane.setRightComponent(eventScrollPane);
-    
+
     rightPanel.add(rightSplitPane, BorderLayout.CENTER);
-    
+
     // Set up main split pane
     mainSplitPane.setLeftComponent(leftPanel);
     mainSplitPane.setRightComponent(rightPanel);
-    
+
     // Add components to main window
     contentPanel.add(mainSplitPane, BorderLayout.CENTER);
     add(titleBar, BorderLayout.NORTH);
@@ -444,10 +439,10 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   @Override
   public void displayError(String error) {
     JOptionPane.showMessageDialog(
-        this,
-        error,
-        "Error",
-        JOptionPane.ERROR_MESSAGE
+            this,
+            error,
+            "Error",
+            JOptionPane.ERROR_MESSAGE
     );
   }
 

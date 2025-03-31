@@ -3,17 +3,14 @@ package view;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -79,11 +76,11 @@ public class GUICalendarPanel extends JPanel {
     // Create components
     monthLabel = new JLabel("", SwingConstants.CENTER);
     monthLabel.setFont(new Font("Arial", Font.BOLD, 16));
-    
+
     // Initialize calendar grid with proper constraints
     calendarGrid = new JPanel(new GridLayout(0, 7, 2, 2)); // Set rows to 0 to allow flexible number of rows
     calendarGrid.setBackground(Color.WHITE);
-    
+
     statusButton = new JButton("Check Status");
     eventListArea = new JEditorPane();
     eventListArea.setEditable(false);
@@ -131,13 +128,13 @@ public class GUICalendarPanel extends JPanel {
     // Navigation buttons
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
     buttonPanel.setBackground(Color.WHITE);
-    
+
     JButton prevButton = createNavigationButton("←");
     prevButton.addActionListener(e -> navigateToPreviousMonth());
-    
+
     JButton nextButton = createNavigationButton("→");
     nextButton.addActionListener(e -> navigateToNextMonth());
-    
+
     JButton todayButton = createStyledButton("Today");
     todayButton.addActionListener(e -> navigateToToday());
 
@@ -159,7 +156,7 @@ public class GUICalendarPanel extends JPanel {
     JPanel headerPanel = new JPanel(new GridLayout(1, 7, 0, 0));
     headerPanel.setBackground(HEADER_LIGHT_COLOR);
     headerPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
-    
+
     String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     for (String day : dayNames) {
       JLabel label = new JLabel(day, SwingConstants.CENTER);
@@ -173,29 +170,29 @@ public class GUICalendarPanel extends JPanel {
     calendarGrid.setLayout(new GridLayout(0, 7, 0, 0));
     calendarGrid.setBackground(Color.WHITE);
     calendarGrid.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
-    
+
     // Create a panel to hold both the header and grid
     JPanel calendarView = new JPanel(new BorderLayout());
     calendarView.add(headerPanel, BorderLayout.NORTH);
     calendarView.add(calendarGrid, BorderLayout.CENTER);
     calendarView.setPreferredSize(new Dimension(GRID_WIDTH, GRID_HEIGHT));
-    
+
     mainCalendarPanel.add(calendarView, BorderLayout.CENTER);
-    
+
     // Add action buttons
     JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
     actionPanel.setBackground(Color.WHITE);
-    
+
     JButton checkStatusButton = createStyledButton("Check Status");
     JButton listEventsButton = createStyledButton("List Events");
     JButton showRangeButton = createStyledButton("Show Range");
-    
+
     actionPanel.add(checkStatusButton);
     actionPanel.add(listEventsButton);
     actionPanel.add(showRangeButton);
-    
+
     mainCalendarPanel.add(actionPanel, BorderLayout.SOUTH);
-    
+
     return mainCalendarPanel;
   }
 
@@ -211,8 +208,8 @@ public class GUICalendarPanel extends JPanel {
 
     // Event list area
     eventListArea.setBorder(BorderFactory.createCompoundBorder(
-      BorderFactory.createLineBorder(new Color(0xDDDDDD)),
-      BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            BorderFactory.createLineBorder(new Color(0xDDDDDD)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
     ));
     JScrollPane eventScroll = new JScrollPane(eventListArea);
     eventScroll.setPreferredSize(new Dimension(0, 150));
@@ -293,7 +290,7 @@ public class GUICalendarPanel extends JPanel {
     int totalCells = 42; // 6 weeks × 7 days
     int filledCells = offset + daysInMonth;
     int remainingCells = totalCells - filledCells;
-    
+
     for (int i = 0; i < remainingCells; i++) {
       JPanel emptyCell = createEmptyCell();
       calendarGrid.add(emptyCell);
@@ -315,37 +312,37 @@ public class GUICalendarPanel extends JPanel {
   private JButton createDateButton(LocalDate date) {
     JButton button = new JButton();
     button.setLayout(new BorderLayout());
-    
+
     // Create date label that appears in the top-left corner
     JLabel dateLabel = new JLabel(String.valueOf(date.getDayOfMonth()));
     dateLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     dateLabel.setForeground(TEXT_COLOR);
     dateLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 0, 0));
-    
+
     // Create events panel for displaying event indicators
     JPanel eventsPanel = new JPanel();
     eventsPanel.setLayout(new BoxLayout(eventsPanel, BoxLayout.Y_AXIS));
     eventsPanel.setOpaque(false);
-    
+
     // Style the button
     button.setBackground(Color.WHITE);
     button.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
     button.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
-    
+
     // Add components to button
     button.add(dateLabel, BorderLayout.NORTH);
     button.add(eventsPanel, BorderLayout.CENTER);
-    
+
     // Highlight today's date
     if (date.equals(LocalDate.now())) {
       button.setBackground(HEADER_LIGHT_COLOR);
     }
-    
+
     // Highlight selected date
     if (date.equals(selectedDate)) {
       button.setBorder(BorderFactory.createLineBorder(HEADER_COLOR, 2));
     }
-    
+
     // Add click listener
     button.addActionListener(e -> {
       selectedDate = date;
@@ -354,7 +351,7 @@ public class GUICalendarPanel extends JPanel {
       }
       updateCalendarDisplay();
     });
-    
+
     // If there are events on this date, add indicators
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
@@ -364,7 +361,7 @@ public class GUICalendarPanel extends JPanel {
         eventsPanel.add(eventIndicator);
         eventsPanel.add(Box.createVerticalStrut(2));
       }
-      
+
       // If there are more events, add a "+X more" indicator
       if (events.size() > 2) {
         JLabel moreLabel = new JLabel("+" + (events.size() - 2) + " more");
@@ -373,22 +370,22 @@ public class GUICalendarPanel extends JPanel {
         eventsPanel.add(moreLabel);
       }
     }
-    
+
     return button;
   }
-  
+
   private JPanel createEventIndicator(Event event) {
     JPanel indicator = new JPanel();
     indicator.setBackground(HEADER_COLOR);
     indicator.setPreferredSize(new Dimension(70, 15));
     indicator.setBorder(BorderFactory.createLineBorder(HEADER_COLOR.darker(), 1));
     indicator.setLayout(new BorderLayout());
-    
+
     JLabel titleLabel = new JLabel(event.getSubject());
     titleLabel.setFont(new Font("Arial", Font.PLAIN, 9));
     titleLabel.setForeground(Color.WHITE);
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-    
+
     indicator.add(titleLabel, BorderLayout.CENTER);
     return indicator;
   }
@@ -517,14 +514,14 @@ public class GUICalendarPanel extends JPanel {
   public void updateEventList(LocalDate date) {
     StringBuilder sb = new StringBuilder();
     sb.append("<html><b>Events for ").append(date).append(":</b><br><br>");
-    
+
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
       for (Event event : events) {
         sb.append("• ").append(event.getSubject())
-          .append(" <i>(").append(event.getStartDateTime().toLocalTime())
-          .append(" - ").append(event.getEndDateTime().toLocalTime())
-          .append(")</i><br>");
+                .append(" <i>(").append(event.getStartDateTime().toLocalTime())
+                .append(" - ").append(event.getEndDateTime().toLocalTime())
+                .append(")</i><br>");
         if (event.getLocation() != null && !event.getLocation().isEmpty()) {
           sb.append("  Location: ").append(event.getLocation()).append("<br>");
         }
@@ -536,7 +533,7 @@ public class GUICalendarPanel extends JPanel {
     } else {
       sb.append("<i>No events scheduled for this date.</i>");
     }
-    
+
     sb.append("</html>");
     eventListArea.setContentType("text/html");
     eventListArea.setText(sb.toString());
@@ -546,20 +543,20 @@ public class GUICalendarPanel extends JPanel {
    * Updates the event list area with events in a date range.
    *
    * @param startDate the start date
-   * @param endDate the end date
-   * @param events the list of events in the range
+   * @param endDate   the end date
+   * @param events    the list of events in the range
    */
   public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
     StringBuilder sb = new StringBuilder();
     sb.append("<html><b>Events from ").append(startDate).append(" to ").append(endDate).append(":</b><br><br>");
-    
+
     if (!events.isEmpty()) {
       for (Event event : events) {
         sb.append("• ").append(event.getSubject())
-          .append(" <i>(").append(event.getStartDateTime().toLocalDate())
-          .append(" ").append(event.getStartDateTime().toLocalTime())
-          .append(" - ").append(event.getEndDateTime().toLocalTime())
-          .append(")</i><br>");
+                .append(" <i>(").append(event.getStartDateTime().toLocalDate())
+                .append(" ").append(event.getStartDateTime().toLocalTime())
+                .append(" - ").append(event.getEndDateTime().toLocalTime())
+                .append(")</i><br>");
         if (event.getLocation() != null && !event.getLocation().isEmpty()) {
           sb.append("  Location: ").append(event.getLocation()).append("<br>");
         }
@@ -571,7 +568,7 @@ public class GUICalendarPanel extends JPanel {
     } else {
       sb.append("<i>No events scheduled in this date range.</i>");
     }
-    
+
     sb.append("</html>");
     eventListArea.setContentType("text/html");
     eventListArea.setText(sb.toString());
@@ -585,10 +582,10 @@ public class GUICalendarPanel extends JPanel {
   public void updateStatus(boolean isBusy) {
     String status = isBusy ? "Busy" : "Available";
     JOptionPane.showMessageDialog(
-      this,
-      "Status: " + status,
-      "Calendar Status",
-      JOptionPane.INFORMATION_MESSAGE
+            this,
+            "Status: " + status,
+            "Calendar Status",
+            JOptionPane.INFORMATION_MESSAGE
     );
   }
 
