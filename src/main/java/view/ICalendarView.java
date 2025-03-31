@@ -121,4 +121,11 @@ public interface ICalendarView {
    * Refreshes the view.
    */
   void refreshView();
+
+  /**
+   * Updates the selected date in the view.
+   *
+   * @param date the date to update to
+   */
+  void updateSelectedDate(LocalDate date);
 }

@@ -86,6 +86,11 @@ public class TextView implements ICalendarView {
   }
 
   @Override
+  public void updateSelectedDate(LocalDate date) {
+    // Not used in text mode
+  }
+
+  @Override
   public void refreshView() {
     // Not used in text mode
   }

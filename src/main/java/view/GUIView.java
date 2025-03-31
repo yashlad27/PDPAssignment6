@@ -357,17 +357,23 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     return exportImportViewModel;
   }
 
+  /**
+   * Updates the calendar view.
+   *
+   * @param calendar the calendar to display
+   */
   @Override
   public void updateCalendarView(ICalendar calendar) {
     if (calendar != null) {
       calendarPanel.updateCalendar(calendar);
+      calendarSelectorPanel.setSelectedCalendar(calendar.toString());
     }
   }
 
   @Override
   public void updateEventList(List<Event> events) {
     if (events != null) {
-      calendarPanel.updateEvents(events);
+      eventPanel.setEvents(events);
     }
   }
 
@@ -511,5 +517,18 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
    */
   public void showError(String message) {
     JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+  }
+
+  /**
+   * Updates the selected date in the view.
+   *
+   * @param date the date to update to
+   */
+  @Override
+  public void updateSelectedDate(LocalDate date) {
+    if (date != null) {
+      calendarPanel.setSelectedDate(date);
+      eventPanel.setDate(date);
+    }
   }
 } 

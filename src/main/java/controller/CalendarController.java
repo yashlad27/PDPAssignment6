@@ -3,6 +3,8 @@ package controller;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -16,6 +18,7 @@ import controller.command.event.CommandFactory;
 import controller.parser.CommandParser;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
+import model.event.Event;
 import model.exceptions.CalendarNotFoundException;
 import view.ICalendarView;
 
@@ -524,5 +527,105 @@ public class CalendarController {
       view.displayError("Error exporting calendar: " + e.getMessage());
       return false;
     }
+  }
+
+  /**
+   * Sets the selected date and retrieves events for that date.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param date The date to select
+   */
+  public void setSelectedDate(LocalDate date) {
+    if (date == null) {
+      return;
+    }
+    
+    try {
+      // Get events for the selected date from the model
+      ICalendar activeCalendar = calendarManager.getActiveCalendar();
+      if (activeCalendar != null) {
+        // Update the view with the selected date and its events
+        List<Event> events = activeCalendar.getEventsOnDate(date);
+        view.updateSelectedDate(date);
+        view.updateEventList(events);
+      }
+    } catch (Exception e) {
+      view.displayError("Error setting selected date: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Retrieves events for a specific date from the active calendar.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param date The date to get events for
+   * @return A list of events on the specified date, or an empty list if there are none or an error occurs
+   */
+  public List<Event> getEventsForDate(LocalDate date) {
+    if (date == null) {
+      return new ArrayList<>();
+    }
+    
+    try {
+      ICalendar activeCalendar = calendarManager.getActiveCalendar();
+      if (activeCalendar != null) {
+        return activeCalendar.getEventsOnDate(date);
+      }
+    } catch (Exception e) {
+      view.displayError("Error getting events for date: " + e.getMessage());
+    }
+    
+    return new ArrayList<>();
+  }
+  
+  /**
+   * Retrieves events within a date range from the active calendar.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param startDate The start date of the range (inclusive)
+   * @param endDate The end date of the range (inclusive)
+   * @return A list of events in the specified date range, or an empty list if there are none or an error occurs
+   */
+  public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
+    if (startDate == null || endDate == null) {
+      return new ArrayList<>();
+    }
+    
+    try {
+      ICalendar activeCalendar = calendarManager.getActiveCalendar();
+      if (activeCalendar != null) {
+        return activeCalendar.getEventsInRange(startDate, endDate);
+      }
+    } catch (Exception e) {
+      view.displayError("Error getting events in range: " + e.getMessage());
+    }
+    
+    return new ArrayList<>();
+  }
+  
+  /**
+   * Checks the status of a specific date (busy or free).
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param date The date to check
+   * @return true if the date has events (busy), false otherwise (free)
+   */
+  public boolean isDateBusy(LocalDate date) {
+    if (date == null) {
+      return false;
+    }
+    
+    try {
+      ICalendar activeCalendar = calendarManager.getActiveCalendar();
+      if (activeCalendar != null) {
+        // Check if there are any events on this date
+        List<Event> events = activeCalendar.getEventsOnDate(date);
+        return !events.isEmpty();
+      }
+    } catch (Exception e) {
+      view.displayError("Error checking date status: " + e.getMessage());
+    }
+    
+    return false;
   }
 }

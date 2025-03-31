@@ -136,11 +136,9 @@ public class GUIController {
             return;
           }
           
-          view.getEventPanel().setDate(date);
-          List<Event> events = getEventsOnDate(date);
-          view.getEventPanel().setEvents(events);
-          view.getCalendarPanel().updateEventList(date);
-          updateStatus(date);
+          // Use proper controller methods instead of direct view updates
+          // This ensures all necessary model checks are performed
+          setSelectedDate(date);
         } catch (Exception e) {
           view.displayError("Failed to get events for date: " + e.getMessage());
         }
@@ -179,6 +177,10 @@ public class GUIController {
           view.displayError("Please select a valid date");
           return;
         }
+        
+        // Use proper controller methods to retrieve and update events
+        List<Event> events = getEventsOnDate(date);
+        view.updateEventList(events);
         view.getCalendarPanel().updateEventList(date);
       }
 
@@ -516,6 +518,33 @@ public class GUIController {
     if (date != null && currentCalendar != null) {
       java.util.List<Event> events = currentCalendar.getEventsOnDate(date);
       view.getEventPanel().setEvents(events);
+    }
+  }
+
+  /**
+   * Sets the selected date and updates all relevant views.
+   *
+   * @param date The date to select
+   */
+  public void setSelectedDate(LocalDate date) {
+    if (date == null) {
+      return;
+    }
+    
+    try {
+      // First update the model's knowledge of the selected date
+      view.setSelectedDate(date);
+      
+      // Then get events for this date
+      List<Event> events = getEventsOnDate(date);
+      
+      // Update all relevant view components with a consistent flow
+      view.updateSelectedDate(date);
+      view.updateEventList(events);
+      view.getCalendarPanel().updateEventList(date);
+      updateStatus(date);
+    } catch (Exception e) {
+      view.displayError("Error setting selected date: " + e.getMessage());
     }
   }
 } 

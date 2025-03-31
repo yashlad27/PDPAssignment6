@@ -127,6 +127,18 @@ public class ConsoleView implements ICalendarView {
   }
 
   /**
+   * Updates the selected date in the view.
+   *
+   * @param date the date to update to
+   */
+  @Override
+  public void updateSelectedDate(LocalDate date) {
+    // Console view doesn't track selected date visually
+    // but we can update internal state if needed
+    setSelectedDate(date);
+  }
+
+  /**
    * Closes the scanner when the view is no longer needed.
    * This method should be called when the application is shutting down
    * to properly release system resources associated with the scanner.
