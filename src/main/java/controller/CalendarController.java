@@ -115,6 +115,17 @@ public class CalendarController {
   }
 
   /**
+   * Gets a calendar by name.
+   *
+   * @param name the name of the calendar
+   * @return the calendar with the specified name
+   * @throws CalendarNotFoundException if no calendar with the specified name exists
+   */
+  public ICalendar getCalendar(String name) throws CalendarNotFoundException {
+    return calendarManager.getCalendar(name);
+  }
+
+  /**
    * Processes a single command and returns the result.
    *
    * <p>This method handles both calendar-level and event-level commands by:
@@ -374,5 +385,144 @@ public class CalendarController {
   private String normalizeCommand(String commandString) {
     String[] parts = commandString.trim().split("\\s+");
     return String.join(" ", parts);
+  }
+
+  /**
+   * Creates a new calendar with the specified name and timezone.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param name The name of the calendar to create
+   * @param timezone The timezone for the calendar
+   * @return true if the calendar was created successfully, false otherwise
+   * @throws IllegalArgumentException if the name or timezone is invalid
+   */
+  public boolean createCalendar(String name, String timezone) {
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Calendar name cannot be empty");
+    }
+    if (timezone == null || timezone.trim().isEmpty()) {
+      throw new IllegalArgumentException("Timezone cannot be empty");
+    }
+    
+    try {
+      String command = "create calendar \"" + name + "\" " + timezone;
+      String result = processCommand(command);
+      return !result.startsWith("Error");
+    } catch (Exception e) {
+      view.displayError("Error creating calendar: " + e.getMessage());
+      return false;
+    }
+  }
+  
+  /**
+   * Sets the selected calendar by name.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param calendarName The name of the calendar to select
+   * @return true if the calendar was selected successfully, false otherwise
+   */
+  public boolean setSelectedCalendarByName(String calendarName) {
+    if (calendarName == null || calendarName.trim().isEmpty()) {
+      return false;
+    }
+    
+    try {
+      String command = "use calendar \"" + calendarName + "\"";
+      String result = processCommand(command);
+      updateCommandFactory();
+      return !result.startsWith("Error");
+    } catch (Exception e) {
+      view.displayError("Error selecting calendar: " + e.getMessage());
+      return false;
+    }
+  }
+  
+  /**
+   * Sets the selected calendar.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param calendar The calendar to select
+   * @return true if the calendar was selected successfully, false otherwise
+   */
+  public boolean setSelectedCalendar(ICalendar calendar) {
+    if (calendar == null) {
+      return false;
+    }
+    
+    try {
+      return setSelectedCalendarByName(calendar.toString());
+    } catch (Exception e) {
+      view.displayError("Error selecting calendar: " + e.getMessage());
+      return false;
+    }
+  }
+  
+  /**
+   * Updates the calendar list in the view.
+   * This method is specifically designed for the GUI interaction.
+   */
+  public void updateCalendarList() {
+    try {
+      List<String> calendarNames = new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames());
+      view.updateCalendarList(calendarNames);
+    } catch (Exception e) {
+      view.displayError("Error updating calendar list: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Imports a calendar from a CSV file.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param filePath The path to the CSV file
+   * @return true if the calendar was imported successfully, false otherwise
+   */
+  public boolean importCalendarFromCSV(String filePath) {
+    if (filePath == null || filePath.trim().isEmpty()) {
+      return false;
+    }
+    
+    try {
+      ICalendar activeCalendar = calendarManager.getActiveCalendar();
+      if (activeCalendar == null) {
+        view.displayError("No active calendar to import to");
+        return false;
+      }
+      
+      String command = "import " + filePath;
+      String result = processCommand(command);
+      return !result.startsWith("Error");
+    } catch (Exception e) {
+      view.displayError("Error importing calendar: " + e.getMessage());
+      return false;
+    }
+  }
+  
+  /**
+   * Exports the active calendar to a CSV file.
+   * This method is specifically designed for the GUI interaction.
+   *
+   * @param filePath The path to the CSV file
+   * @return true if the calendar was exported successfully, false otherwise
+   */
+  public boolean exportCalendarToCSV(String filePath) {
+    if (filePath == null || filePath.trim().isEmpty()) {
+      return false;
+    }
+    
+    try {
+      ICalendar activeCalendar = calendarManager.getActiveCalendar();
+      if (activeCalendar == null) {
+        view.displayError("No active calendar to export");
+        return false;
+      }
+      
+      String command = "export " + filePath;
+      String result = processCommand(command);
+      return !result.startsWith("Error");
+    } catch (Exception e) {
+      view.displayError("Error exporting calendar: " + e.getMessage());
+      return false;
+    }
   }
 }

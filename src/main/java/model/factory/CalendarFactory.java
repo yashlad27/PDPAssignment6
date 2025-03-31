@@ -10,6 +10,8 @@ import utilities.TimeZoneHandler;
 import view.ConsoleView;
 import view.GUIView;
 import view.ICalendarView;
+import view.IGUIView;
+import view.TextView;
 
 /**
  * Factory class that creates and provides dependencies for the calendar application.
@@ -19,17 +21,25 @@ import view.ICalendarView;
 public class CalendarFactory {
 
   /**
-   * Creates a view implementation based on the specified mode.
+   * Creates a view based on the specified mode.
    *
-   * @param mode       the mode to create the view for ("gui" or "console")
-   * @param controller the calendar controller to use for GUI mode
-   * @return an implementation of ICalendarView
+   * @param mode       the mode to create the view for
+   * @param controller the controller to use
+   * @return the created view
    */
-  public ICalendarView createView(String mode, CalendarController controller) {
-    if ("gui".equalsIgnoreCase(mode)) {
-      return new GUIView(controller);
+  public static ICalendarView createView(String mode, CalendarController controller) {
+    if (mode == null || mode.trim().isEmpty()) {
+      throw new IllegalArgumentException("Mode cannot be null or empty");
     }
-    return new ConsoleView();
+
+    switch (mode.toLowerCase()) {
+      case "gui":
+        return new GUIView(controller);
+      case "text":
+        return new TextView();
+      default:
+        throw new IllegalArgumentException("Invalid mode: " + mode);
+    }
   }
 
   /**

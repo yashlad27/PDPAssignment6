@@ -1,6 +1,12 @@
 package view;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Scanner;
+
+import model.calendar.ICalendar;
+import model.event.Event;
+import model.event.RecurringEvent;
 
 /**
  * A simple console-based implementation of the ICalendarView interface.
@@ -61,6 +67,63 @@ public class ConsoleView implements ICalendarView {
   @Override
   public void displayError(String errorMessage) {
     System.err.println("ERROR: " + errorMessage);
+  }
+
+  @Override
+  public void updateCalendarView(ICalendar calendar) {
+    // Not used in console mode
+  }
+
+  @Override
+  public void updateEventList(List<Event> events) {
+    // Not used in console mode
+  }
+
+  @Override
+  public void updateRecurringEventList(List<RecurringEvent> recurringEvents) {
+    // Not used in console mode
+  }
+
+  @Override
+  public void showEventDetails(Event event) {
+    // Not used in console mode
+  }
+
+  @Override
+  public void clearEventDetails() {
+    // Not used in console mode
+  }
+
+  @Override
+  public void updateCalendarList(List<String> calendarNames) {
+    // Not used in console mode
+  }
+
+  @Override
+  public void setSelectedCalendar(String calendarName) {
+    // Not used in console mode
+  }
+
+  @Override
+  public String getSelectedCalendar() {
+    // Not used in console mode
+    return null;
+  }
+
+  @Override
+  public LocalDate getSelectedDate() {
+    // Not used in console mode
+    return null;
+  }
+
+  @Override
+  public void setSelectedDate(LocalDate date) {
+    // Not used in console mode
+  }
+
+  @Override
+  public void refreshView() {
+    // Not used in console mode
   }
 
   /**

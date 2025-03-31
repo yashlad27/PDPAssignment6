@@ -75,9 +75,7 @@ public class CalendarManager {
 
     CalendarNameValidator.validateCalendarName(name);
 
-    Calendar calendar = new Calendar();
-    calendar.setName(name);
-    calendar.setTimezone(timezone);
+    Calendar calendar = new Calendar(name, timezone);
 
     try {
       calendarRegistry.registerCalendar(name, calendar);

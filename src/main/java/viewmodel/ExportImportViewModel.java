@@ -145,4 +145,8 @@ public class ExportImportViewModel implements IViewModel {
       listener.onError(error);
     }
   }
+
+  public ICalendar getCurrentCalendar() {
+    return currentCalendar;
+  }
 } 

@@ -1,151 +1,213 @@
 package view;
 
+import model.calendar.ICalendar;
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
-import java.util.TimeZone;
 
 /**
  * Panel class that handles calendar selection and creation.
  */
 public class GUICalendarSelectorPanel extends JPanel {
+    private static final Color THEME_COLOR = new Color(0x4a86e8);
+    private static final Color THEME_LIGHT = new Color(0xe6f2ff);
+    private static final Color BORDER_COLOR = new Color(0xcccccc);
+    
     private final JList<String> calendarList;
-    private final JTextField newCalendarNameField;
-    private final JComboBox<String> timezoneComboBox;
-    private final JButton createButton;
-    private final JButton activateButton;
-    private final JLabel currentCalendarLabel;
-    private CalendarSelectionListener listener;
-    private String activeCalendar;
-
+    private final List<CalendarItem> calendarItems;
+    private CalendarSelectorListener listener;
+    private ICalendar selectedCalendar;
+    
+    private final DefaultListModel<String> calendarListModel;
+    private final JButton addCalendarButton;
+    private final JButton removeCalendarButton;
+    private final JButton selectCalendarButton;
+    private final JLabel timezoneLabel;
+    
     /**
      * Interface for calendar selection events.
      */
-    public interface CalendarSelectionListener {
-        void onCalendarSelected(String calendarName);
-        void onCalendarCreated(String calendarName, String timezone);
-        void onCalendarActivated(String calendarName);
+    public interface CalendarSelectorListener {
+        void onCalendarSelected(ICalendar calendar);
+        
+        /**
+         * Called when a calendar is selected by name.
+         * @param calendarName The name of the selected calendar
+         */
+        default void onCalendarSelected(String calendarName) {
+            // Default implementation does nothing
+        }
+        
+        /**
+         * Called when a new calendar is created.
+         * @param name The name of the new calendar
+         * @param timezone The timezone of the new calendar
+         */
+        default void onCalendarCreated(String name, String timezone) {
+            // Default implementation does nothing
+        }
     }
-
+    
+    private class CalendarItem extends JPanel {
+        private final ICalendar calendar;
+        private final JLabel nameLabel;
+        private final JLabel timezoneLabel;
+        private boolean isSelected;
+        
+        public CalendarItem(ICalendar calendar) {
+            this.calendar = calendar;
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            setBackground(Color.WHITE);
+            
+            JPanel contentPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+            contentPanel.setOpaque(false);
+            
+            nameLabel = new JLabel(calendar.toString());
+            nameLabel.setFont(nameLabel.getFont().deriveFont(11f));
+            
+            timezoneLabel = new JLabel("(" + calendar.getTimeZone().getID() + ")");
+            timezoneLabel.setFont(timezoneLabel.getFont().deriveFont(11f));
+            timezoneLabel.setForeground(Color.GRAY);
+            
+            contentPanel.add(nameLabel);
+            contentPanel.add(timezoneLabel);
+            
+            add(contentPanel, BorderLayout.CENTER);
+            
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    setSelected(true);
+                    if (listener != null) {
+                        listener.onCalendarSelected(calendar);
+                    }
+                }
+                
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    if (!isSelected) {
+                        setBackground(new Color(0xf8f8f8));
+                    }
+                }
+                
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    if (!isSelected) {
+                        setBackground(Color.WHITE);
+                    }
+                }
+            });
+        }
+        
+        public void setSelected(boolean selected) {
+            isSelected = selected;
+            if (selected) {
+                setBackground(THEME_LIGHT);
+                setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(THEME_COLOR),
+                    BorderFactory.createEmptyBorder(4, 4, 4, 4)
+                ));
+                nameLabel.setForeground(THEME_COLOR);
+            } else {
+                setBackground(Color.WHITE);
+                setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(BORDER_COLOR),
+                    BorderFactory.createEmptyBorder(4, 4, 4, 4)
+                ));
+                nameLabel.setForeground(Color.BLACK);
+            }
+        }
+        
+        public ICalendar getCalendar() {
+            return calendar;
+        }
+    }
+    
     /**
      * Constructs a new GUICalendarSelectorPanel.
      */
     public GUICalendarSelectorPanel() {
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createTitledBorder("Calendar Selection"));
-
-        // Initialize components
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        calendarList = new JList<>(listModel);
+        setLayout(new BorderLayout());
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBackground(new Color(0xf8f8f8));
+        
+        // Title
+        JLabel titleLabel = new JLabel("Calendars");
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        
+        // Calendar list
+        calendarListModel = new DefaultListModel<>();
+        calendarList = new JList<>(calendarListModel);
         calendarList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        calendarList.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                    boolean isSelected, boolean cellHasFocus) {
-                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value != null && value.equals(activeCalendar)) {
-                    setFont(getFont().deriveFont(Font.BOLD));
-                    setForeground(new Color(0, 100, 200));
-                }
-                return c;
-            }
-        });
+        calendarList.setVisibleRowCount(5);
+        calendarList.setBorder(BorderFactory.createTitledBorder("Calendars"));
         
-        currentCalendarLabel = new JLabel("Currently using: None");
-        currentCalendarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        currentCalendarLabel.setFont(currentCalendarLabel.getFont().deriveFont(Font.BOLD));
-        currentCalendarLabel.setForeground(new Color(0, 100, 200));
+        // Add Calendar button
+        addCalendarButton = new JButton("Add Calendar");
+        removeCalendarButton = new JButton("Remove Calendar");
+        selectCalendarButton = new JButton("Select Calendar");
+        timezoneLabel = new JLabel("Timezone: ");
         
-        activateButton = new JButton("Activate Selected Calendar");
-        activateButton.setEnabled(false);
+        // Scroll pane for calendar list
+        JScrollPane scrollPane = new JScrollPane(calendarList);
+        scrollPane.setBorder(null);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         
-        newCalendarNameField = new JTextField(20);
-        createButton = new JButton("Create Calendar");
+        add(titleLabel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(addCalendarButton, BorderLayout.SOUTH);
         
-        // Initialize timezone combo box
-        String[] availableZoneIds = TimeZone.getAvailableIDs();
-        Arrays.sort(availableZoneIds);
-        timezoneComboBox = new JComboBox<>(availableZoneIds);
-        timezoneComboBox.setSelectedItem(TimeZone.getDefault().getID());
-
-        // Set up layout
+        calendarItems = new ArrayList<>();
+        
         setupLayout();
         setupListeners();
     }
-
+    
     /**
-     * Sets up the layout of the calendar selector panel.
+     * Sets the list of calendars.
+     *
+     * @param calendars the list of calendars
      */
-    private void setupLayout() {
-        // Current calendar indicator
-        JPanel currentCalendarPanel = new JPanel(new BorderLayout());
-        currentCalendarPanel.add(currentCalendarLabel, BorderLayout.CENTER);
-        currentCalendarPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        // Calendar list with activate button
-        JPanel listPanel = new JPanel(new BorderLayout(5, 5));
-        listPanel.setBorder(BorderFactory.createTitledBorder("Available Calendars"));
-        listPanel.add(new JScrollPane(calendarList), BorderLayout.CENTER);
-        listPanel.add(activateButton, BorderLayout.SOUTH);
-
-        // Calendar creation panel
-        JPanel createPanel = new JPanel(new GridLayout(4, 2, 5, 5));
-        createPanel.setBorder(BorderFactory.createTitledBorder("Create New Calendar"));
-
-        createPanel.add(new JLabel("Name:"));
-        createPanel.add(newCalendarNameField);
-        createPanel.add(new JLabel("Timezone:"));
-        createPanel.add(timezoneComboBox);
-        createPanel.add(new JLabel(""));
-        createPanel.add(createButton);
-
-        // Add all components to the main panel
-        add(currentCalendarPanel, BorderLayout.NORTH);
-        add(listPanel, BorderLayout.CENTER);
-        add(createPanel, BorderLayout.SOUTH);
+    public void setCalendars(List<ICalendar> calendars) {
+        calendarList.removeAll();
+        calendarItems.clear();
+        
+        for (ICalendar calendar : calendars) {
+            CalendarItem item = new CalendarItem(calendar);
+            if (calendar.equals(selectedCalendar)) {
+                item.setSelected(true);
+            }
+            calendarItems.add(item);
+            calendarList.add(item);
+            calendarList.add(Box.createVerticalStrut(5));
+        }
+        
+        revalidate();
+        repaint();
     }
-
+    
     /**
-     * Sets up event listeners.
+     * Sets the selected calendar.
+     *
+     * @param calendar the selected calendar
      */
-    private void setupListeners() {
-        calendarList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                String selectedCalendar = calendarList.getSelectedValue();
-                activateButton.setEnabled(selectedCalendar != null);
-                if (selectedCalendar != null && listener != null) {
-                    listener.onCalendarSelected(selectedCalendar);
-                }
-            }
-        });
-
-        activateButton.addActionListener(e -> {
-            String selectedCalendar = calendarList.getSelectedValue();
-            if (selectedCalendar != null && listener != null) {
-                activeCalendar = selectedCalendar;
-                currentCalendarLabel.setText("Currently using: " + selectedCalendar);
-                listener.onCalendarActivated(selectedCalendar);
-                calendarList.repaint();
-            }
-        });
-
-        createButton.addActionListener(e -> {
-            if (listener != null) {
-                String calendarName = newCalendarNameField.getText().trim();
-                if (!calendarName.isEmpty()) {
-                    String timezone = (String) timezoneComboBox.getSelectedItem();
-                    listener.onCalendarCreated(calendarName, timezone);
-                    newCalendarNameField.setText("");
-                    
-                    // Automatically activate the newly created calendar
-                    activeCalendar = calendarName;
-                    currentCalendarLabel.setText("Currently using: " + calendarName);
-                    listener.onCalendarActivated(calendarName);
-                    calendarList.repaint();
-                }
-            }
-        });
+    public void setSelectedCalendar(ICalendar calendar) {
+        selectedCalendar = calendar;
+        for (CalendarItem item : calendarItems) {
+            item.setSelected(item.getCalendar().equals(calendar));
+        }
+    }
+    
+    /**
+     * Adds a listener for calendar selection events.
+     *
+     * @param listener the listener to add
+     */
+    public void addCalendarSelectorListener(CalendarSelectorListener listener) {
+        this.listener = listener;
     }
 
     /**
@@ -153,72 +215,177 @@ public class GUICalendarSelectorPanel extends JPanel {
      *
      * @param calendarNames the list of calendar names
      */
-    public void updateCalendars(List<String> calendarNames) {
-        DefaultListModel<String> model = (DefaultListModel<String>) calendarList.getModel();
-        model.clear();
+    public void updateCalendarList(List<String> calendarNames) {
+        calendarListModel.clear();
         for (String name : calendarNames) {
-            model.addElement(name);
+            calendarListModel.addElement(name);
         }
     }
 
     /**
-     * Adds a new calendar to the list.
-     *
-     * @param name the name of the calendar
-     * @param timezone the timezone of the calendar
-     */
-    public void addCalendar(String name, String timezone) {
-        DefaultListModel<String> model = (DefaultListModel<String>) calendarList.getModel();
-        if (!model.contains(name)) {
-            model.addElement(name);
-        }
-    }
-
-    /**
-     * Gets the currently selected calendar.
-     *
-     * @return the selected calendar name
-     */
-    public String getSelectedCalendar() {
-        return calendarList.getSelectedValue();
-    }
-
-    /**
-     * Sets the selected calendar.
+     * Sets the selected calendar by name.
      *
      * @param calendarName the name of the calendar to select
      */
     public void setSelectedCalendar(String calendarName) {
         if (calendarName != null) {
-            activeCalendar = calendarName;
-            currentCalendarLabel.setText("Currently using: " + calendarName);
-            // Find and select the calendar in the list
-            DefaultListModel<String> model = (DefaultListModel<String>) calendarList.getModel();
-            for (int i = 0; i < model.getSize(); i++) {
-                if (model.getElementAt(i).equals(calendarName)) {
-                    calendarList.setSelectedIndex(i);
-                    calendarList.ensureIndexIsVisible(i);
-                    break;
-                }
+            int index = calendarListModel.indexOf(calendarName);
+            if (index >= 0) {
+                calendarList.setSelectedIndex(index);
             }
-            calendarList.repaint();
         }
     }
 
     /**
-     * Adds a listener for calendar selection events.
+     * Gets the selected calendar.
      *
-     * @param listener the listener to add
+     * @return the selected calendar, or null if no calendar is selected
      */
-    public void addCalendarSelectionListener(CalendarSelectionListener listener) {
-        this.listener = listener;
+    public ICalendar getSelectedCalendar() {
+        return selectedCalendar;
+    }
+
+    /**
+     * Gets the name of the selected calendar.
+     *
+     * @return the name of the selected calendar, or null if no calendar is selected
+     */
+    public String getSelectedCalendarName() {
+        if (selectedCalendar != null) {
+            return selectedCalendar.toString();
+        }
+        return null;
     }
 
     /**
      * Refreshes the calendar selector panel.
      */
     public void refresh() {
-        calendarList.revalidate();
-        calendarList.repaint();
+        revalidate();
+        repaint();
+    }
+
+    private void setupLayout() {
+        // Implementation of setupLayout method
+    }
+
+    private void setupListeners() {
+        calendarList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int index = calendarList.getSelectedIndex();
+                if (index >= 0) {
+                    String calendarName = calendarListModel.getElementAt(index);
+                    // Notify listener
+                    if (listener != null) {
+                        // Assuming listener has a method to handle selection by name
+                        listener.onCalendarSelected(calendarName);
+                    }
+                }
+            }
+        });
+        
+        addCalendarButton.addActionListener(e -> {
+            // Show dialog to create a new calendar
+            showAddCalendarDialog();
+        });
+    }
+
+    /**
+     * Shows a dialog for adding a new calendar with name and timezone.
+     */
+    private void showAddCalendarDialog() {
+        // Create the dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add Calendar", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setResizable(false);
+        
+        // Create form panel
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        
+        // Calendar name field
+        JLabel nameLabel = new JLabel("Calendar Name:");
+        formPanel.add(nameLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        JTextField nameField = new JTextField(20);
+        formPanel.add(nameField, gbc);
+        
+        // Timezone selector
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        JLabel timezoneLabel = new JLabel("Timezone:");
+        formPanel.add(timezoneLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        
+        // Get all available timezone IDs
+        String[] availableTimezones = java.util.TimeZone.getAvailableIDs();
+        // Sort timezones alphabetically
+        java.util.Arrays.sort(availableTimezones);
+        
+        JComboBox<String> timezoneComboBox = new JComboBox<>(availableTimezones);
+        // Set default to system timezone
+        timezoneComboBox.setSelectedItem(java.util.TimeZone.getDefault().getID());
+        formPanel.add(timezoneComboBox, gbc);
+        
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton addButton = new JButton("Add");
+        JButton cancelButton = new JButton("Cancel");
+        
+        // Style buttons
+        addButton.setBackground(THEME_COLOR);
+        addButton.setForeground(Color.WHITE);
+        addButton.setFocusPainted(false);
+        
+        cancelButton.setFocusPainted(false);
+        
+        buttonPanel.add(addButton);
+        buttonPanel.add(cancelButton);
+        
+        // Event handlers
+        addButton.addActionListener(ae -> {
+            String calendarName = nameField.getText().trim();
+            String selectedTimezone = (String) timezoneComboBox.getSelectedItem();
+            
+            if (calendarName.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, 
+                    "Calendar name cannot be empty.", 
+                    "Invalid Input", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Notify listener about the new calendar
+            if (listener != null) {
+                // Assuming listener has a method to handle calendar creation
+                listener.onCalendarCreated(calendarName, selectedTimezone);
+            }
+            
+            dialog.dispose();
+        });
+        
+        cancelButton.addActionListener(ae -> dialog.dispose());
+        
+        // Add components to dialog
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Set dialog properties
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 } 

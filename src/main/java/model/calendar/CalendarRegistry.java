@@ -7,6 +7,9 @@ import java.util.function.Consumer;
 
 import model.exceptions.CalendarNotFoundException;
 import model.exceptions.DuplicateCalendarException;
+import model.exceptions.ConflictingEventException;
+import model.event.Event;
+import model.event.RecurringEvent;
 
 /**
  * Manages registration and retrieval of calendars by name.
@@ -206,5 +209,44 @@ public class CalendarRegistry {
           throws CalendarNotFoundException {
     Calendar calendar = getActiveCalendar();
     consumer.accept(calendar);
+  }
+
+  public void updateCalendarName(String oldName, String newName) {
+    if (!calendars.containsKey(oldName)) {
+      throw new IllegalArgumentException("Calendar not found: " + oldName);
+    }
+    if (calendars.containsKey(newName)) {
+      throw new IllegalArgumentException("Calendar already exists: " + newName);
+    }
+
+    Calendar calendar = calendars.get(oldName);
+    Calendar newCalendar = new Calendar(newName, calendar.getTimeZone().getID());
+    
+    // Copy all events from the old calendar to the new one
+    for (Event event : calendar.getAllEvents()) {
+      try {
+        newCalendar.addEvent(event, true);
+      } catch (ConflictingEventException e) {
+        // This should not happen since we're copying events one by one
+        throw new RuntimeException("Failed to copy event: " + e.getMessage());
+      }
+    }
+    
+    // Copy all recurring events from the old calendar to the new one
+    for (RecurringEvent event : calendar.getAllRecurringEvents()) {
+      try {
+        newCalendar.addRecurringEvent(event, true);
+      } catch (ConflictingEventException e) {
+        // This should not happen since we're copying events one by one
+        throw new RuntimeException("Failed to copy recurring event: " + e.getMessage());
+      }
+    }
+    
+    calendars.remove(oldName);
+    calendars.put(newName, newCalendar);
+    
+    if (oldName.equals(activeCalendarName)) {
+      activeCalendarName = newName;
+    }
   }
 }

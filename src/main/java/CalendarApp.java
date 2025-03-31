@@ -20,6 +20,8 @@ public class CalendarApp {
   private static CalendarManager calendarManager;
   private static ICalendarView view;
   private static CalendarController controller;
+  private static String currentMode = "gui"; // Default mode
+  private static String[] commandLineArgs; // Store command line arguments
 
   /**
    * Main method that serves as the entry point for the application.
@@ -31,8 +33,10 @@ public class CalendarApp {
    *             --mode gui : Starts the application in GUI mode
    */
   public static void main(String[] args) {
-    initializeApplication();
+    commandLineArgs = args;
     handleCommandLineArguments(args);
+    initializeApplication();
+    startApplication();
   }
 
   /**
@@ -48,8 +52,8 @@ public class CalendarApp {
     controller = factory.createController(null,
             null, calendarManager, null);
 
-    // Create view
-    view = factory.createView("gui", controller);
+    // Create view based on current mode
+    view = factory.createView(currentMode, controller);
 
     // Now create command factories with the view
     ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
@@ -63,52 +67,109 @@ public class CalendarApp {
   }
 
   /**
-   * Handles command line arguments and starts the appropriate mode.
+   * Handles command line arguments and sets the appropriate mode.
    *
    * @param args Command line arguments
    */
   private static void handleCommandLineArguments(String[] args) {
-    try {
-      if (args.length == 0) {
-        startGUIMode();
-        return;
-      }
+    if (args.length == 0) {
+      setGUIMode();
+      return;
+    }
 
-      String modeArg = args[0].toLowerCase();
-      String modeValue = args.length > 1 ? args[1].toLowerCase() : "";
+    validateModeArgument(args[0]);
+    setModeFromArguments(args);
+  }
 
-      if (!modeArg.equals("--mode")) {
-        view.displayError("Invalid argument. Expected: --mode");
-        return;
-      }
-
-      startMode(modeValue, args);
-    } catch (Exception e) {
-      view.displayError("An error occurred: " + e.getMessage());
+  /**
+   * Validates the mode argument format.
+   *
+   * @param modeArg the mode argument to validate
+   */
+  private static void validateModeArgument(String modeArg) {
+    if (!modeArg.toLowerCase().equals("--mode")) {
+      System.err.println("Invalid argument. Expected: --mode");
       System.exit(1);
     }
   }
 
   /**
-   * Starts the appropriate mode based on the command line arguments.
+   * Sets the mode based on command line arguments.
    *
-   * @param modeValue The mode to start
-   * @param args      The full command line arguments
+   * @param args the command line arguments
    */
-  private static void startMode(String modeValue, String[] args) {
+  private static void setModeFromArguments(String[] args) {
+    String modeValue = args.length > 1 ? args[1].toLowerCase() : "";
+    
     switch (modeValue) {
       case "interactive":
-        startInteractiveMode();
+        setInteractiveMode();
         break;
       case "headless":
-        startHeadlessMode(args);
+        setHeadlessMode(args);
+        break;
+      case "gui":
+        setGUIMode();
+        break;
+      default:
+        System.err.println("Invalid mode. Expected: interactive, headless, or gui");
+        System.exit(1);
+    }
+  }
+
+  /**
+   * Sets the application to GUI mode.
+   */
+  private static void setGUIMode() {
+    currentMode = "gui";
+  }
+
+  /**
+   * Sets the application to interactive mode.
+   */
+  private static void setInteractiveMode() {
+    currentMode = "text";
+  }
+
+  /**
+   * Sets the application to headless mode.
+   *
+   * @param args the command line arguments
+   */
+  private static void setHeadlessMode(String[] args) {
+    if (args.length < 3) {
+      System.err.println("Headless mode requires a filename."
+              + " Usage: --mode headless filename");
+      System.exit(1);
+    }
+    currentMode = "text";
+  }
+
+  /**
+   * Starts the application in the appropriate mode.
+   */
+  private static void startApplication() {
+    switch (currentMode) {
+      case "text":
+        startTextMode();
         break;
       case "gui":
         startGUIMode();
         break;
       default:
-        view.displayError("Invalid mode. Expected: interactive, headless, or gui");
-        break;
+        System.err.println("Invalid mode: " + currentMode);
+        System.exit(1);
+    }
+  }
+
+  /**
+   * Starts the application in text mode (interactive or headless).
+   */
+  private static void startTextMode() {
+    if (commandLineArgs.length > 1 && commandLineArgs[1].equals("headless")) {
+      startHeadlessMode(commandLineArgs);
+    } else {
+      startInteractiveMode();
     }
   }
 
@@ -125,15 +186,10 @@ public class CalendarApp {
    * @param args Command line arguments
    */
   private static void startHeadlessMode(String[] args) {
-    if (args.length < 3) {
-      view.displayError("Headless mode requires a filename."
-              + " Usage: --mode headless filename");
-      return;
-    }
     String filename = args[2];
     boolean success = controller.startHeadlessMode(filename);
     if (!success) {
-      view.displayError("Headless mode execution failed.");
+      System.err.println("Headless mode execution failed.");
       System.exit(1);
     }
   }
@@ -150,7 +206,7 @@ public class CalendarApp {
           guiController.initialize();
           guiView.displayGUI();
         } catch (CalendarNotFoundException e) {
-          view.displayError("Failed to initialize GUI: " + e.getMessage());
+          System.err.println("Failed to initialize GUI: " + e.getMessage());
           System.exit(1);
         }
       });

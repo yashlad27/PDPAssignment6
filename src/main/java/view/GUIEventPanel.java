@@ -1,21 +1,16 @@
 package view;
 
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+
 import model.event.Event;
 import model.event.RecurringEvent;
-
-import javax.swing.*;
-import java.awt.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.DayOfWeek;
-import java.time.ZoneOffset;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
+import utilities.DateUtils;
 
 /**
  * Panel class that handles event creation, editing, and display.
@@ -29,7 +24,7 @@ public class GUIEventPanel extends JPanel {
     private final JTextField locationField;
     private final JCheckBox recurringCheckBox;
     private final JPanel recurringOptionsPanel;
-    private final List<JCheckBox> weekdayCheckboxes;
+    private final ArrayList<JCheckBox> weekdayCheckboxes;
     private final JSpinner occurrencesSpinner;
     private final JSpinner untilDateSpinner;
     private final JButton saveButton;
@@ -37,6 +32,19 @@ public class GUIEventPanel extends JPanel {
     private LocalDate currentDate;
     private EventPanelListener listener;
     private final Map<JComponent, JLabel> errorLabels;
+    private final JList<Event> eventList;
+    private final DefaultListModel<Event> eventListModel;
+    private final JLabel eventListLabel;
+    private final JPanel recurringPanel;
+    private final JCheckBox allDayCheckBox;
+    private JCheckBox privateEventCheckBox;
+    private JCheckBox autoDeclineCheckBox;
+
+    // Define consistent colors
+    private static final Color HEADER_COLOR = new Color(0x4a86e8);
+    private static final Color HEADER_LIGHT_COLOR = new Color(0xe6f2ff);
+    private static final Color BORDER_COLOR = new Color(0xcccccc);
+    private static final Color TEXT_COLOR = new Color(0x333333);
 
     /**
      * Data class to hold event information.
@@ -75,167 +83,108 @@ public class GUIEventPanel extends JPanel {
      * Constructs a new GUIEventPanel.
      */
     public GUIEventPanel() {
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createTitledBorder("Event Details"));
-
         // Initialize components
         subjectField = new JTextField(20);
-        descriptionArea = new JTextArea(3, 20);
+        dateSpinner = new JSpinner(new SpinnerDateModel());
+        startTimeSpinner = new JSpinner(new SpinnerDateModel());
+        endTimeSpinner = new JSpinner(new SpinnerDateModel());
+        locationField = new JTextField(20);
+        descriptionArea = new JTextArea(5, 20);
+        allDayCheckBox = new JCheckBox("All Day Event");
+        recurringCheckBox = new JCheckBox("Recurring Event");
+        privateEventCheckBox = new JCheckBox("Private Event");
+        autoDeclineCheckBox = new JCheckBox("Auto-decline");
+        weekdayCheckboxes = new ArrayList<>();
+        occurrencesSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+        untilDateSpinner = new JSpinner(new SpinnerDateModel());
+        saveButton = new JButton("Save");
+        cancelButton = new JButton("Cancel");
+        eventListModel = new DefaultListModel<>();
+        eventList = new JList<>(eventListModel);
+        eventListLabel = new JLabel("Events:");
+        recurringOptionsPanel = new JPanel(new GridLayout(0, 1));
+        recurringPanel = new JPanel(new BorderLayout());
+        errorLabels = new HashMap<>();
+
+        // Configure spinners
+        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "MM/dd/yyyy"));
+        startTimeSpinner.setEditor(new JSpinner.DateEditor(startTimeSpinner, "HH:mm"));
+        endTimeSpinner.setEditor(new JSpinner.DateEditor(endTimeSpinner, "HH:mm"));
+        
+        // Configure text area
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
 
-        // Date and time spinners
-        dateSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
-        dateSpinner.setEditor(dateEditor);
-
-        startTimeSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor startTimeEditor = new JSpinner.DateEditor(startTimeSpinner, "HH:mm");
-        startTimeSpinner.setEditor(startTimeEditor);
-
-        endTimeSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor endTimeEditor = new JSpinner.DateEditor(endTimeSpinner, "HH:mm");
-        endTimeSpinner.setEditor(endTimeEditor);
-
-        locationField = new JTextField(20);
-        recurringCheckBox = new JCheckBox("Recurring Event");
-        
-        // Initialize recurring options
-        recurringOptionsPanel = new JPanel();
-        recurringOptionsPanel.setLayout(new BoxLayout(recurringOptionsPanel, BoxLayout.Y_AXIS));
-        recurringOptionsPanel.setBorder(BorderFactory.createTitledBorder("Recurring Options"));
-        recurringOptionsPanel.setVisible(false);
-
-        // Weekday checkboxes
-        JPanel weekdayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        weekdayPanel.add(new JLabel("Repeat on: "));
-        weekdayCheckboxes = new ArrayList<>();
-        String[] weekdays = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
-        for (String day : weekdays) {
-            JCheckBox checkbox = new JCheckBox(day);
-            weekdayCheckboxes.add(checkbox);
-            weekdayPanel.add(checkbox);
-        }
-        recurringOptionsPanel.add(weekdayPanel);
-
-        // Occurrences spinner
-        JPanel occurrencesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        occurrencesPanel.add(new JLabel("Number of occurrences: "));
-        occurrencesSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 52, 1));
-        occurrencesPanel.add(occurrencesSpinner);
-        recurringOptionsPanel.add(occurrencesPanel);
-
-        // Until date spinner
-        JPanel untilPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        untilPanel.add(new JLabel("Until date: "));
-        untilDateSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor untilDateEditor = new JSpinner.DateEditor(untilDateSpinner, "yyyy-MM-dd");
-        untilDateSpinner.setEditor(untilDateEditor);
-        untilPanel.add(untilDateSpinner);
-        recurringOptionsPanel.add(untilPanel);
-
-        // Buttons
-        saveButton = new JButton("Save");
-        cancelButton = new JButton("Cancel");
-
-        errorLabels = new HashMap<>();
-
+        // Setup components
+        setupComponents();
         setupLayout();
         setupListeners();
     }
 
-    private void setupLayout() {
-        // Main form panel
-        JPanel formPanel = new JPanel();
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    private void setupComponents() {
+        // Configure date spinner
+        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "MM/dd/yyyy"));
+        ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);
 
-        // Subject
-        JPanel subjectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        subjectPanel.add(new JLabel("Subject:"));
-        subjectPanel.add(subjectField);
-        formPanel.add(subjectPanel);
+        // Configure time spinners
+        startTimeSpinner.setEditor(new JSpinner.DateEditor(startTimeSpinner, "HH:mm"));
+        endTimeSpinner.setEditor(new JSpinner.DateEditor(endTimeSpinner, "HH:mm"));
+        ((JSpinner.DefaultEditor) startTimeSpinner.getEditor()).getTextField().setEditable(true);
+        ((JSpinner.DefaultEditor) endTimeSpinner.getEditor()).getTextField().setEditable(true);
 
-        // Description
-        JPanel descriptionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        descriptionPanel.add(new JLabel("Description:"));
-        descriptionPanel.add(new JScrollPane(descriptionArea));
-        formPanel.add(descriptionPanel);
+        // Configure description area
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
 
-        // Date and time - using GridBagLayout for better control
-        JPanel dateTimePanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(2, 2, 2, 5);
+        // Configure event list
+        eventList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        eventList.setVisibleRowCount(5);
 
-        // Date field
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        dateTimePanel.add(new JLabel("Date:"), gbc);
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        dateTimePanel.add(dateSpinner, gbc);
+        // Configure recurring options
+        String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        for (String weekday : weekdays) {
+            JCheckBox checkbox = new JCheckBox(weekday);
+            weekdayCheckboxes.add(checkbox);
+            recurringOptionsPanel.add(checkbox);
+        }
+        
+        JPanel occurrencesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        occurrencesPanel.add(new JLabel("Number of occurrences:"));
+        occurrencesPanel.add(occurrencesSpinner);
+        recurringOptionsPanel.add(occurrencesPanel);
 
-        // Start time field
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0.0;
-        dateTimePanel.add(new JLabel("Start Time:"), gbc);
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        dateTimePanel.add(startTimeSpinner, gbc);
+        JPanel untilPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        untilPanel.add(new JLabel("Until date:"));
+        untilPanel.add(untilDateSpinner);
+        recurringOptionsPanel.add(untilPanel);
 
-        // End time field
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0.0;
-        dateTimePanel.add(new JLabel("End Time:"), gbc);
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        dateTimePanel.add(endTimeSpinner, gbc);
-
-        formPanel.add(dateTimePanel);
-
-        // Location
-        JPanel locationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        locationPanel.add(new JLabel("Location:"));
-        locationPanel.add(locationField);
-        formPanel.add(locationPanel);
-
-        // Recurring checkbox
-        JPanel recurringPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        recurringPanel.add(recurringCheckBox);
-        formPanel.add(recurringPanel);
-
-        // Recurring options
-        formPanel.add(recurringOptionsPanel);
-
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(saveButton);
-        buttonPanel.add(cancelButton);
-
-        // Add to main panel with scroll support
-        JScrollPane scrollPane = new JScrollPane(formPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        add(scrollPane, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        // Set preferred sizes for spinners to prevent stretching
-        Dimension spinnerSize = new Dimension(120, 25);
-        dateSpinner.setPreferredSize(spinnerSize);
-        startTimeSpinner.setPreferredSize(spinnerSize);
-        endTimeSpinner.setPreferredSize(spinnerSize);
+        // Initially hide recurring options
+        recurringOptionsPanel.setVisible(false);
     }
 
     private void setupListeners() {
+        // Event list selection
+        eventList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && eventList.getSelectedValue() != null) {
+                // Populate form with selected event
+            }
+        });
+
+        // All Day checkbox
+        allDayCheckBox.addActionListener(e -> {
+            boolean isAllDay = allDayCheckBox.isSelected();
+            startTimeSpinner.setEnabled(!isAllDay);
+            endTimeSpinner.setEnabled(!isAllDay);
+        });
+
+        // Recurring checkbox
         recurringCheckBox.addActionListener(e -> {
             recurringOptionsPanel.setVisible(recurringCheckBox.isSelected());
             revalidate();
             repaint();
         });
 
+        // Save button
         saveButton.addActionListener(e -> {
             if (validateForm()) {
                 if (listener != null) {
@@ -302,10 +251,20 @@ public class GUIEventPanel extends JPanel {
             }
         });
 
+        // Cancel button
         cancelButton.addActionListener(e -> {
-            if (listener != null) {
-                listener.onEventCancelled();
-            }
+            subjectField.setText("");
+            locationField.setText("");
+            descriptionArea.setText("");
+            dateSpinner.setValue(new java.util.Date());
+            startTimeSpinner.setValue(new java.util.Date());
+            endTimeSpinner.setValue(new java.util.Date());
+            allDayCheckBox.setSelected(false);
+            recurringCheckBox.setSelected(false);
+            privateEventCheckBox.setSelected(false);
+            autoDeclineCheckBox.setSelected(false);
+            recurringOptionsPanel.setVisible(false);
+            eventList.clearSelection();
         });
     }
 
@@ -372,6 +331,9 @@ public class GUIEventPanel extends JPanel {
         endTimeSpinner.setValue(Date.from(event.getEndDateTime().toInstant(ZoneOffset.UTC)));
         recurringCheckBox.setSelected(false);
         recurringOptionsPanel.setVisible(false);
+        allDayCheckBox.setSelected(event.isAllDay());
+        startTimeSpinner.setEnabled(!event.isAllDay());
+        endTimeSpinner.setEnabled(!event.isAllDay());
     }
 
     /**
@@ -421,9 +383,11 @@ public class GUIEventPanel extends JPanel {
      *
      * @param events the list of events
      */
-    public void setEvents(List<Event> events) {
-        // This method can be used to display a list of events for the selected date
-        // Implementation depends on how you want to show the list
+    public void setEvents(java.util.List<Event> events) {
+        eventListModel.clear();
+        if (events != null) {
+            events.forEach(eventListModel::addElement);
+        }
     }
 
     /**
@@ -437,6 +401,9 @@ public class GUIEventPanel extends JPanel {
         recurringOptionsPanel.setVisible(false);
         weekdayCheckboxes.forEach(cb -> cb.setSelected(false));
         occurrencesSpinner.setValue(1);
+        allDayCheckBox.setSelected(false);
+        startTimeSpinner.setEnabled(true);
+        endTimeSpinner.setEnabled(true);
         revalidate();
         repaint();
     }
@@ -524,5 +491,182 @@ public class GUIEventPanel extends JPanel {
         if (listener != null) {
             listener.onEventUpdated(args, isRecurring);
         }
+    }
+
+    private void handleRecurringCheckbox() {
+        recurringPanel.setVisible(recurringCheckBox.isSelected());
+        if (recurringCheckBox.isSelected()) {
+            // Add recurring options
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 5, 5, 5);
+
+            gbc.gridx = 0; gbc.gridy = 0;
+            recurringPanel.add(new JLabel("Repeat every:"), gbc);
+            
+            gbc.gridx = 1;
+            JSpinner repeatSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 99, 1));
+            recurringPanel.add(repeatSpinner, gbc);
+            
+            gbc.gridx = 2;
+            String[] units = {"Day", "Week", "Month", "Year"};
+            JComboBox<String> unitCombo = new JComboBox<>(units);
+            recurringPanel.add(unitCombo, gbc);
+
+            gbc.gridx = 0; gbc.gridy = 1;
+            recurringPanel.add(new JLabel("Until:"), gbc);
+            
+            gbc.gridx = 1; gbc.gridwidth = 2;
+            JSpinner untilSpinner = new JSpinner(new SpinnerDateModel());
+            JSpinner.DateEditor untilEditor = new JSpinner.DateEditor(untilSpinner, "yyyy-MM-dd");
+            untilSpinner.setEditor(untilEditor);
+            recurringPanel.add(untilSpinner, gbc);
+        }
+        revalidate();
+        repaint();
+    }
+
+    private void handleEventSelection() {
+        // Implementation of handleEventSelection method
+    }
+
+    private void saveEvent() {
+        // Implementation of saveEvent method
+    }
+
+    private void setupLayout() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Event Details"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        // Create a main panel with a vertical layout
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        
+        // Event list panel
+        JPanel eventListPanel = new JPanel(new BorderLayout());
+        eventListPanel.setBorder(BorderFactory.createTitledBorder("Events"));
+        
+        eventListLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        
+        eventList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        eventList.addListSelectionListener(e -> handleEventSelection());
+        
+        JScrollPane scrollPane = new JScrollPane(eventList);
+        scrollPane.setPreferredSize(new Dimension(0, 120));
+        
+        eventListPanel.add(eventListLabel, BorderLayout.NORTH);
+        eventListPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Event details form
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(new Color(0xf8f8f8));
+        formPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(3, 3, 3, 3); // Reduced insets for more compact layout
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1.0;
+
+        // Subject field
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 1;
+        formPanel.add(new JLabel("Subject:"), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+        formPanel.add(subjectField, gbc);
+
+        // Date picker
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1;
+        formPanel.add(new JLabel("Date:"), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 3;
+        formPanel.add(dateSpinner, gbc);
+
+        // Time pickers
+        gbc.gridx = 0; gbc.gridy = 4;
+        formPanel.add(new JLabel("Start Time:"), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 5;
+        formPanel.add(startTimeSpinner, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 4;
+        formPanel.add(new JLabel("End Time:"), gbc);
+        
+        gbc.gridx = 1; gbc.gridy = 5;
+        formPanel.add(endTimeSpinner, gbc);
+
+        // Location field
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 1;
+        formPanel.add(new JLabel("Location:"), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 2;
+        formPanel.add(locationField, gbc);
+
+        // Description area
+        gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 2;
+        formPanel.add(new JLabel("Description:"), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 2;
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        descScrollPane.setPreferredSize(new Dimension(0, 60));
+        formPanel.add(descScrollPane, gbc);
+
+        // Checkboxes - two per row for space efficiency
+        gbc.gridx = 0; gbc.gridy = 10; gbc.gridwidth = 1;
+        formPanel.add(styleCheckbox(allDayCheckBox), gbc);
+        
+        gbc.gridx = 1;
+        formPanel.add(styleCheckbox(recurringCheckBox), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 11;
+        formPanel.add(styleCheckbox(privateEventCheckBox), gbc);
+        
+        gbc.gridx = 1;
+        formPanel.add(styleCheckbox(autoDeclineCheckBox), gbc);
+
+        // Recurring options panel
+        gbc.gridx = 0; gbc.gridy = 12; gbc.gridwidth = 2;
+        formPanel.add(recurringOptionsPanel, gbc);
+        recurringOptionsPanel.setVisible(false);
+
+        // Buttons panel
+        gbc.gridx = 0; gbc.gridy = 13; gbc.gridwidth = 2;
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        buttonPanel.setOpaque(false);
+        
+        // Style save button like in the SVG
+        saveButton.setBackground(HEADER_COLOR);
+        saveButton.setForeground(Color.WHITE);
+        saveButton.setBorder(BorderFactory.createLineBorder(HEADER_COLOR.darker()));
+        saveButton.setPreferredSize(new Dimension(60, 25));
+        saveButton.setFocusPainted(false);
+        
+        // Style cancel button like in the SVG
+        cancelButton.setBackground(new Color(0xf0f0f0));
+        cancelButton.setForeground(TEXT_COLOR);
+        cancelButton.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+        cancelButton.setPreferredSize(new Dimension(60, 25));
+        cancelButton.setFocusPainted(false);
+        
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+        formPanel.add(buttonPanel, gbc);
+
+        // Add panels to main panel
+        mainPanel.add(eventListPanel);
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(formPanel);
+        
+        // Add main panel to this panel
+        add(new JScrollPane(mainPanel), BorderLayout.CENTER);
+    }
+    
+    private JCheckBox styleCheckbox(JCheckBox checkbox) {
+        checkbox.setFont(new Font("Arial", Font.PLAIN, 11));
+        checkbox.setForeground(TEXT_COLOR);
+        checkbox.setOpaque(false);
+        return checkbox;
     }
 } 

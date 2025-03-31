@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.TimeZone;
 
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -40,7 +41,7 @@ public class Calendar implements ICalendar {
   private final Map<UUID, Event> eventById;
   private final Map<UUID, RecurringEvent> recurringEventById;
   private String name;
-  private String timezone;
+  private TimeZone timezone;
   private final Map<String, EventPropertyUpdater> propertyUpdaters;
   private final TimeZoneHandler timezoneHandler;
 
@@ -56,7 +57,20 @@ public class Calendar implements ICalendar {
     this.eventById = new HashMap<>();
     this.recurringEventById = new HashMap<>();
     this.name = "Default";
-    this.timezone = "America/New_York";
+    this.timezone = TimeZone.getTimeZone("America/New_York");
+
+    this.propertyUpdaters = new HashMap<>();
+    initializePropertyUpdaters();
+    this.timezoneHandler = new TimeZoneHandler();
+  }
+
+  public Calendar(String name, String timezone) {
+    this.name = name;
+    this.timezone = TimeZone.getTimeZone(timezone);
+    this.events = new ArrayList<>();
+    this.recurringEvents = new ArrayList<>();
+    this.eventById = new HashMap<>();
+    this.recurringEventById = new HashMap<>();
 
     this.propertyUpdaters = new HashMap<>();
     initializePropertyUpdaters();
@@ -78,8 +92,8 @@ public class Calendar implements ICalendar {
     }
 
     // Convert event times to UTC for storage
-    LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(), timezone);
-    LocalDateTime endUTC = timezoneHandler.convertToUTC(event.getEndDateTime(), timezone);
+    LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(), timezone.getID());
+    LocalDateTime endUTC = timezoneHandler.convertToUTC(event.getEndDateTime(), timezone.getID());
 
     Event utcEvent = new Event(
         event.getSubject(),
@@ -129,8 +143,8 @@ public class Calendar implements ICalendar {
     // Convert each occurrence's times to UTC before checking conflicts
     List<Event> utcOccurrences = new ArrayList<>();
     for (Event occurrence : occurrences) {
-      LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone);
-      LocalDateTime endUTC = timezoneHandler.convertToUTC(occurrence.getEndDateTime(), timezone);
+      LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone.getID());
+      LocalDateTime endUTC = timezoneHandler.convertToUTC(occurrence.getEndDateTime(), timezone.getID());
       Event utcOccurrence = new Event(
           occurrence.getSubject(),
           startUTC,
@@ -251,7 +265,7 @@ public class Calendar implements ICalendar {
     }
 
     // Convert input time to UTC for comparison
-    LocalDateTime utcStartTime = timezoneHandler.convertToUTC(startDateTime, timezone);
+    LocalDateTime utcStartTime = timezoneHandler.convertToUTC(startDateTime, timezone.getID());
 
     // First try to find in regular events
     Event event = events.stream()
@@ -484,30 +498,13 @@ public class Calendar implements ICalendar {
   }
 
   /**
-   * Sets the name of this calendar.
-   *
-   * @param name the new name
-   */
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  /**
    * Gets the timezone of this calendar.
    *
    * @return the timezone
    */
-  public String getTimezone() {
+  @Override
+  public TimeZone getTimeZone() {
     return timezone;
-  }
-
-  /**
-   * Sets the timezone of this calendar.
-   *
-   * @param timezone the new timezone
-   */
-  public void setTimezone(String timezone) {
-    this.timezone = timezone;
   }
 
   /**
@@ -621,5 +618,28 @@ public class Calendar implements ICalendar {
     };
 
     return events.stream().anyMatch(busyFilter::matches);
+  }
+
+  @Override
+  public String toString() {
+    return name;
+  }
+
+  /**
+   * Sets the name of the calendar.
+   *
+   * @param name the new name for the calendar
+   */
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  /**
+   * Sets the timezone of the calendar.
+   *
+   * @param timezone the new timezone for the calendar
+   */
+  public void setTimezone(String timezone) {
+    this.timezone = TimeZone.getTimeZone(timezone);
   }
 }

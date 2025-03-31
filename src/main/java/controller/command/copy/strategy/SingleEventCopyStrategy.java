@@ -98,7 +98,7 @@ public class SingleEventCopyStrategy implements CopyStrategy {
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
-    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimezone();
+    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimeZone().getID();
 
     // Find the event using the original time in source calendar's timezone
     Event sourceEvent = sourceCalendar.findEvent(eventName, sourceDateTime);
@@ -108,7 +108,7 @@ public class SingleEventCopyStrategy implements CopyStrategy {
 
     // Get target calendar
     ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
-    String targetTimezone = ((model.calendar.Calendar) targetCalendar).getTimezone();
+    String targetTimezone = ((model.calendar.Calendar) targetCalendar).getTimeZone().getID();
 
     // Convert UTC times to target calendar's timezone
     LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(), targetTimezone);

@@ -21,6 +21,7 @@ import viewmodel.CalendarViewModel;
 import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
 import view.GUIExportImportPanel;
+import model.export.CSVExporter;
 
 /**
  * Controller class that handles GUI-specific logic and coordinates between the model and view.
@@ -102,82 +103,25 @@ public class GUIController {
    */
   private void setupEventListeners() {
     // Calendar selection
-    view.getCalendarSelectorPanel().addCalendarSelectionListener(new GUICalendarSelectorPanel.CalendarSelectionListener() {
+    view.getCalendarSelectorPanel().addCalendarSelectorListener(new GUICalendarSelectorPanel.CalendarSelectorListener() {
       @Override
-      public void onCalendarSelected(String calendarName) {
+      public void onCalendarSelected(ICalendar calendar) {
         try {
-          if (calendarName == null || calendarName.trim().isEmpty()) {
-            view.displayError("Please select a calendar");
+          if (calendar == null) {
+            view.displayError("Please select a valid calendar");
             return;
           }
+          currentCalendar = calendar;
+          view.updateCalendarView(calendar);
           
-          ICalendar calendar = calendarManager.getCalendar(calendarName);
-          if (calendar != null) {
-            currentCalendar = calendar;
-            view.setSelectedCalendar(calendarName);
-            view.updateCalendarView(calendar);
-            view.displayMessage("Selected calendar: " + calendarName);
-          }
-        } catch (CalendarNotFoundException e) {
-          view.displayError("Calendar not found: " + calendarName);
+          // Update events display
+          List<Event> events = getAllEvents();
+          List<RecurringEvent> recurringEvents = getAllRecurringEvents();
+          view.getCalendarPanel().updateEvents(events);
+          view.getCalendarPanel().updateRecurringEvents(recurringEvents);
+          view.displayMessage("Selected calendar: " + calendar.toString());
         } catch (Exception e) {
-          view.displayError("Error selecting calendar: " + e.getMessage());
-        }
-      }
-
-      @Override
-      public void onCalendarActivated(String calendarName) {
-        try {
-          if (calendarName == null || calendarName.trim().isEmpty()) {
-            view.displayError("Please select a calendar to activate");
-            return;
-          }
-          
-          ICalendar calendar = calendarManager.getCalendar(calendarName);
-          if (calendar != null) {
-            currentCalendar = calendar;
-            view.updateCalendarView(calendar);
-
-            // Update events display
-            List<Event> events = getAllEvents();
-            List<RecurringEvent> recurringEvents = getAllRecurringEvents();
-            view.getCalendarPanel().updateEvents(events);
-            view.getCalendarPanel().updateRecurringEvents(recurringEvents);
-            view.displayMessage("Activated calendar: " + calendarName);
-          }
-        } catch (CalendarNotFoundException e) {
-          view.displayError("Calendar not found: " + calendarName);
-        } catch (Exception e) {
-          view.displayError("Error activating calendar: " + e.getMessage());
-        }
-      }
-
-      @Override
-      public void onCalendarCreated(String calendarName, String timezone) {
-        try {
-          if (calendarName == null || calendarName.trim().isEmpty()) {
-            view.displayError("Please enter a calendar name");
-            return;
-          }
-          
-          if (timezone == null || timezone.trim().isEmpty()) {
-            view.displayError("Please select a timezone");
-            return;
-          }
-
-          calendarManager.createCalendar(calendarName, timezone);
-          // Update the calendar list in the view
-          view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
-          // Select and activate the newly created calendar
-          view.setSelectedCalendar(calendarName);
-          currentCalendar = calendarManager.getCalendar(calendarName);
-          view.updateCalendarView(currentCalendar);
-          view.displayMessage("Calendar '" + calendarName + "' created and activated successfully");
-          view.refreshView();
-        } catch (IllegalArgumentException e) {
-          view.displayError("Invalid calendar name or timezone: " + e.getMessage());
-        } catch (Exception e) {
-          view.displayError("Failed to create calendar: " + e.getMessage());
+          view.displayError("Failed to select calendar: " + e.getMessage());
         }
       }
     });
@@ -320,41 +264,44 @@ public class GUIController {
     // Export/Import panel events
     view.getExportImportPanel().addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
       @Override
-      public void onImportRequested(File file) {
+      public void onImport(File file) {
         try {
-          if (currentCalendar == null) {
-            view.displayError("Please select a calendar first");
-            return;
-          }
+          // Import calendar data from CSV file
+          CSVExporter importer = new CSVExporter();
+          List<Event> importedEvents = importer.importEvents(file);
           
-          String result = executeCommand("import", new String[]{file.getAbsolutePath()});
-          if (result.startsWith("Error")) {
-            view.displayError(result);
+          // Add imported events to the current calendar
+          ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
+          if (currentCalendar != null) {
+            for (Event event : importedEvents) {
+              try {
+                currentCalendar.addEvent(event, true);
+              } catch (Exception e) {
+                view.showError("Failed to import event: " + e.getMessage());
+              }
+            }
+            view.getCalendarPanel().updateCalendar(currentCalendar);
           } else {
-            view.displayMessage(result);
-            view.refreshView();
+            view.showError("Please select a calendar first");
           }
         } catch (Exception e) {
-          view.displayError("Failed to import events: " + e.getMessage());
+          view.showError("Failed to import calendar data: " + e.getMessage());
         }
       }
 
       @Override
-      public void onExportRequested(File file) {
+      public void onExport(File file) {
         try {
-          if (currentCalendar == null) {
-            view.displayError("Please select a calendar first");
-            return;
-          }
-          
-          String result = executeCommand("export", new String[]{file.getAbsolutePath()});
-          if (result.startsWith("Error")) {
-            view.displayError(result);
+          // Export current calendar to CSV file
+          ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
+          if (currentCalendar != null) {
+            CSVExporter exporter = new CSVExporter();
+            exporter.exportEvents(currentCalendar.getAllEvents(), file);
           } else {
-            view.displayMessage(result);
+            view.showError("Please select a calendar first");
           }
         } catch (Exception e) {
-          view.displayError("Failed to export events: " + e.getMessage());
+          view.showError("Failed to export calendar data: " + e.getMessage());
         }
       }
     });
@@ -563,5 +510,12 @@ public class GUIController {
     // For example, it could call EventEditor.forType(command, args).executeEdit(currentCalendar)
     // and return the result of the execution
     return null; // Placeholder return, actual implementation needed
+  }
+
+  private void updateEventList(LocalDate date) {
+    if (date != null && currentCalendar != null) {
+      java.util.List<Event> events = currentCalendar.getEventsOnDate(date);
+      view.getEventPanel().setEvents(events);
+    }
   }
 } 

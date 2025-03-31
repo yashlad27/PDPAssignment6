@@ -6,12 +6,68 @@ import java.util.List;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
+import viewmodel.CalendarViewModel;
+import viewmodel.EventViewModel;
+import viewmodel.ExportImportViewModel;
 
 /**
- * Interface for GUI-specific view operations.
- * This interface separates GUI concerns from the general calendar view interface.
+ * Interface for GUI-specific view functionality.
  */
 public interface IGUIView {
+  /**
+   * Displays the GUI window.
+   */
+  void displayGUI();
+
+  /**
+   * Gets the calendar panel.
+   *
+   * @return the calendar panel
+   */
+  GUICalendarPanel getCalendarPanel();
+
+  /**
+   * Gets the event panel.
+   *
+   * @return the event panel
+   */
+  GUIEventPanel getEventPanel();
+
+  /**
+   * Gets the calendar selector panel.
+   *
+   * @return the calendar selector panel
+   */
+  GUICalendarSelectorPanel getCalendarSelectorPanel();
+
+  /**
+   * Gets the export/import panel.
+   *
+   * @return the export/import panel
+   */
+  GUIExportImportPanel getExportImportPanel();
+
+  /**
+   * Gets the calendar view model.
+   *
+   * @return the calendar view model
+   */
+  CalendarViewModel getCalendarViewModel();
+
+  /**
+   * Gets the event view model.
+   *
+   * @return the event view model
+   */
+  EventViewModel getEventViewModel();
+
+  /**
+   * Gets the export/import view model.
+   *
+   * @return the export/import view model
+   */
+  ExportImportViewModel getExportImportViewModel();
+
   /**
    * Updates the calendar view with new data.
    *

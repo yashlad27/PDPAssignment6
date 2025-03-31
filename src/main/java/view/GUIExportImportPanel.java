@@ -3,6 +3,7 @@ package view;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +13,19 @@ import java.util.List;
  * This component provides buttons for importing from and exporting to CSV files.
  */
 public class GUIExportImportPanel extends JPanel {
+    private static final Color THEME_COLOR = new Color(0x4a86e8);
+    private static final Color THEME_LIGHT = new Color(0xe6f2ff);
+    private static final Color BORDER_COLOR = new Color(0xcccccc);
+    
     private final JButton importButton;
     private final JButton exportButton;
+    private final JFileChooser fileChooser;
+    private File importFile;
+    private File exportFile;
+    private JLabel importFileLabel;
+    private JLabel exportFileLabel;
+    private JLabel statusLabel;
+    private ExportImportListener listener;
     private final List<ExportImportListener> listeners;
     private static final FileNameExtensionFilter CSV_FILTER = 
         new FileNameExtensionFilter("CSV Files (*.csv)", "csv");
@@ -22,29 +34,58 @@ public class GUIExportImportPanel extends JPanel {
      * Interface for listening to export/import events.
      */
     public interface ExportImportListener {
-        void onImportRequested(File file);
-        void onExportRequested(File file);
+        void onImport(File file);
+        void onExport(File file);
     }
 
     /**
      * Constructs a new GUIExportImportPanel.
      */
     public GUIExportImportPanel() {
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Import/Export"));
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
+        // Create a panel for import section
+        JPanel importPanel = new JPanel();
+        importPanel.setLayout(new BoxLayout(importPanel, BoxLayout.Y_AXIS));
+        importPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+        JLabel importLabel = new JLabel("Import from CSV");
+        importButton = new JButton("Choose File...");
+        importButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, importButton.getPreferredSize().height));
+        
+        importPanel.add(importLabel);
+        importPanel.add(Box.createVerticalStrut(5));
+        importPanel.add(importButton);
+        
+        // Create a panel for export section
+        JPanel exportPanel = new JPanel();
+        exportPanel.setLayout(new BoxLayout(exportPanel, BoxLayout.Y_AXIS));
+        exportPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+        JLabel exportLabel = new JLabel("Export to CSV");
+        exportButton = new JButton("Export Calendar");
+        exportButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, exportButton.getPreferredSize().height));
+        
+        exportPanel.add(exportLabel);
+        exportPanel.add(Box.createVerticalStrut(5));
+        exportPanel.add(exportButton);
+        
+        // Add panels to main panel
+        add(importPanel);
+        add(Box.createVerticalStrut(10));
+        add(exportPanel);
+        add(Box.createVerticalGlue());
+        
+        // Initialize file chooser
+        fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        // Set minimum and preferred sizes
+        setMinimumSize(new Dimension(160, 200));
+        setPreferredSize(new Dimension(180, 250));
+
         this.listeners = new ArrayList<>();
-        
-        // Create buttons
-        this.importButton = new JButton("Import from CSV");
-        this.exportButton = new JButton("Export to CSV");
-        
-        // Add components
-        add(importButton);
-        add(Box.createVerticalStrut(5));
-        add(exportButton);
-        
-        // Add listeners
         setupListeners();
     }
 
@@ -53,33 +94,42 @@ public class GUIExportImportPanel extends JPanel {
      */
     private void setupListeners() {
         importButton.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileFilter(CSV_FILTER);
-            fileChooser.setDialogTitle("Import Calendar Data");
-            
-            int result = fileChooser.showOpenDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                if (selectedFile != null) {
-                    notifyImportRequested(selectedFile);
+            if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                importFile = fileChooser.getSelectedFile();
+                importFileLabel.setText(importFile.getName());
+                importButton.setEnabled(true);
+            }
+        });
+
+        exportButton.addActionListener(e -> {
+            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                exportFile = fileChooser.getSelectedFile();
+                if (!exportFile.getName().toLowerCase().endsWith(".csv")) {
+                    exportFile = new File(exportFile.getParentFile(), exportFile.getName() + ".csv");
+                }
+                exportFileLabel.setText(exportFile.getName());
+                exportButton.setEnabled(true);
+            }
+        });
+
+        importButton.addActionListener(e -> {
+            if (importFile != null && listener != null) {
+                try {
+                    listener.onImport(importFile);
+                    showStatus("Import successful", true);
+                } catch (Exception ex) {
+                    showStatus("Import failed: " + ex.getMessage(), false);
                 }
             }
         });
-        
+
         exportButton.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileFilter(CSV_FILTER);
-            fileChooser.setDialogTitle("Export Calendar Data");
-            
-            int result = fileChooser.showSaveDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                if (selectedFile != null) {
-                    // Ensure the file has a .csv extension
-                    if (!selectedFile.getName().toLowerCase().endsWith(".csv")) {
-                        selectedFile = new File(selectedFile.getAbsolutePath() + ".csv");
-                    }
-                    notifyExportRequested(selectedFile);
+            if (exportFile != null && listener != null) {
+                try {
+                    listener.onExport(exportFile);
+                    showStatus("Export successful", true);
+                } catch (Exception ex) {
+                    showStatus("Export failed: " + ex.getMessage(), false);
                 }
             }
         });
@@ -91,25 +141,8 @@ public class GUIExportImportPanel extends JPanel {
      * @param listener the listener to add
      */
     public void addExportImportListener(ExportImportListener listener) {
-        listeners.add(listener);
-    }
-
-    /**
-     * Notifies all listeners that an import was requested.
-     */
-    private void notifyImportRequested(File file) {
-        for (ExportImportListener listener : listeners) {
-            listener.onImportRequested(file);
-        }
-    }
-
-    /**
-     * Notifies all listeners that an export was requested.
-     */
-    private void notifyExportRequested(File file) {
-        for (ExportImportListener listener : listeners) {
-            listener.onExportRequested(file);
-        }
+        this.listener = listener;
+        this.listeners.add(listener);
     }
 
     /**
@@ -133,5 +166,35 @@ public class GUIExportImportPanel extends JPanel {
      */
     public void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showStatus(String message, boolean success) {
+        statusLabel.setText(message);
+        statusLabel.setForeground(success ? new Color(46, 125, 50) : new Color(198, 40, 40));
+        Timer timer = new Timer(3000, e -> {
+            statusLabel.setText(" ");
+            statusLabel.setForeground(Color.GRAY);
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    public void addImportListener(ActionListener listener) {
+        importButton.addActionListener(listener);
+    }
+
+    public void addExportListener(ActionListener listener) {
+        exportButton.addActionListener(listener);
+    }
+
+    public File showFileChooser(boolean forImport) {
+        int result = forImport ? 
+            fileChooser.showOpenDialog(this) : 
+            fileChooser.showSaveDialog(this);
+            
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
     }
 } 

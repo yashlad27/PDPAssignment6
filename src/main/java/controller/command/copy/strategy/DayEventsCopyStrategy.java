@@ -3,6 +3,7 @@ package controller.command.copy.strategy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import model.calendar.Calendar;
 import model.calendar.CalendarManager;
@@ -95,9 +96,8 @@ public class DayEventsCopyStrategy implements CopyStrategy {
       return "No events found on " + sourceDate + " to copy.";
     }
 
-    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimezone();
-    String targetTimezone = calendarManager.executeOnCalendar(targetCalendarName,
-        calendar -> ((model.calendar.Calendar) calendar).getTimezone());
+    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimeZone().getID();
+    String targetTimezone = ((model.calendar.Calendar) calendarManager.getCalendar(targetCalendarName)).getTimeZone().getID();
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {

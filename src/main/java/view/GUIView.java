@@ -1,10 +1,15 @@
 package view;
 
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
+import java.io.File;
 
 import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 import controller.CalendarController;
 import model.calendar.ICalendar;
@@ -18,22 +23,25 @@ import model.exceptions.InvalidEventException;
 import model.exceptions.EventNotFoundException;
 
 /**
- * Main GUI view class that integrates all GUI components and implements the IGUIView interface.
+ * Main GUI view class that integrates all GUI components and implements both ICalendarView and IGUIView interfaces.
  * This class provides the main window and layout for the calendar application.
  */
-public class GUIView extends JFrame implements IGUIView,
-        CalendarViewModel.CalendarViewModelListener,
-        EventViewModel.EventViewModelListener,
-        ExportImportViewModel.ExportImportViewModelListener,
-        ICalendarView {
+public class GUIView extends JFrame implements ICalendarView, IGUIView {
+  private static final Color THEME_COLOR = new Color(0x4a86e8);
+  private static final Color THEME_LIGHT = new Color(0xe6f2ff);
+  private static final Color BORDER_COLOR = new Color(0xcccccc);
+  private static final int SIDEBAR_WIDTH = 180;
+  private static final int MAIN_WIDTH = 590;
+
   private final GUICalendarPanel calendarPanel;
   private final GUIEventPanel eventPanel;
   private final GUICalendarSelectorPanel calendarSelectorPanel;
   private final GUIExportImportPanel exportImportPanel;
   private final JTextArea messageArea;
-  private final CalendarViewModel calendarViewModel;
-  private final EventViewModel eventViewModel;
-  private final ExportImportViewModel exportImportViewModel;
+  private final CalendarController controller;
+  private CalendarViewModel calendarViewModel;
+  private EventViewModel eventViewModel;
+  private ExportImportViewModel exportImportViewModel;
 
   /**
    * Constructs a new GUIView.
@@ -41,17 +49,19 @@ public class GUIView extends JFrame implements IGUIView,
    * @param controller the calendar controller
    */
   public GUIView(CalendarController controller) {
+    this.controller = controller;
     System.out.println("Creating GUIView...");
-    setTitle("Calendar Application");
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    setSize(1200, 800);
-    setLocationRelativeTo(null);
-
-    // Initialize ViewModels
+    
+    // Initialize view models
     calendarViewModel = new CalendarViewModel();
     eventViewModel = new EventViewModel(controller);
     exportImportViewModel = new ExportImportViewModel();
-
+    
+    // Set up the main window
+    setTitle("Calendar Application");
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setPreferredSize(new Dimension(800, 600));
+    
     // Initialize components
     calendarPanel = new GUICalendarPanel();
     eventPanel = new GUIEventPanel();
@@ -61,12 +71,15 @@ public class GUIView extends JFrame implements IGUIView,
     messageArea.setEditable(false);
     messageArea.setLineWrap(true);
     messageArea.setWrapStyleWord(true);
-
-    // Set up listeners
-    setupListeners();
-
+    
     // Set up layout
     setupLayout();
+    
+    // Set up listeners
+    setupListeners();
+    
+    pack();
+    setLocationRelativeTo(null);
     System.out.println("GUIView created successfully.");
   }
 
@@ -83,47 +96,202 @@ public class GUIView extends JFrame implements IGUIView,
    * Sets up the listeners for all ViewModels.
    */
   private void setupListeners() {
-    calendarViewModel.addListener(this);
-    eventViewModel.addListener(this);
-    exportImportViewModel.addListener(this);
+    // Set up calendar selector listener for calendar selection and creation
+    calendarSelectorPanel.addCalendarSelectorListener(new GUICalendarSelectorPanel.CalendarSelectorListener() {
+      @Override
+      public void onCalendarSelected(ICalendar calendar) {
+        if (calendar != null) {
+          controller.setSelectedCalendar(calendar);
+          eventPanel.clearForm();
+        }
+      }
+      
+      @Override
+      public void onCalendarSelected(String calendarName) {
+        if (calendarName != null) {
+          controller.setSelectedCalendarByName(calendarName);
+          eventPanel.clearForm();
+        }
+      }
+      
+      @Override
+      public void onCalendarCreated(String name, String timezone) {
+        // Handle calendar creation through the controller
+        try {
+          controller.createCalendar(name, timezone);
+          // Update the calendar list after creation
+          controller.updateCalendarList();
+        } catch (Exception ex) {
+          showError("Could not create calendar: " + ex.getMessage());
+        }
+      }
+    });
+    
+    // Set up event listeners for calendar panel
+    calendarPanel.addCalendarPanelListener(new GUICalendarPanel.CalendarPanelListener() {
+      @Override
+      public void onDateSelected(LocalDate date) {
+        if (date != null) {
+          eventPanel.setDate(date);
+        }
+      }
+
+      @Override
+      public void onEventSelected(Event event) {
+        if (event != null) {
+          eventPanel.displayEvent(event);
+        }
+      }
+
+      @Override
+      public void onRecurringEventSelected(RecurringEvent event) {
+        if (event != null) {
+          eventPanel.displayRecurringEvent(event);
+        }
+      }
+
+      @Override
+      public void onStatusRequested(LocalDate date) {
+        // Status handling is done in the panel itself
+      }
+
+      @Override
+      public void onEventsListRequested(LocalDate date) {
+        calendarPanel.updateEventList(date);
+      }
+
+      @Override
+      public void onDateRangeSelected(LocalDate startDate, LocalDate endDate) {
+        calendarPanel.updateEventListRange(startDate, endDate, null);
+      }
+    });
+    
+    // Set up export/import listeners
+    exportImportPanel.addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
+      @Override
+      public void onImport(File file) {
+        if (file != null) {
+          try {
+            controller.importCalendarFromCSV(file.getAbsolutePath());
+            exportImportPanel.showImportSuccess();
+          } catch (Exception ex) {
+            exportImportPanel.showError("Import failed: " + ex.getMessage());
+          }
+        }
+      }
+      
+      @Override
+      public void onExport(File file) {
+        if (file != null) {
+          try {
+            controller.exportCalendarToCSV(file.getAbsolutePath());
+            exportImportPanel.showExportSuccess();
+          } catch (Exception ex) {
+            exportImportPanel.showError("Export failed: " + ex.getMessage());
+          }
+        }
+      }
+    });
   }
 
   /**
    * Sets up the layout of the GUI components.
    */
   private void setupLayout() {
-    // Main panel with BorderLayout
-    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    // Custom title bar panel with consistent styling
+    JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    titleBar.setBackground(THEME_COLOR);
+    titleBar.setPreferredSize(new Dimension(getWidth(), 40));
+    titleBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    JLabel titleLabel = new JLabel("Calendar Application");
+    titleLabel.setForeground(Color.WHITE);
+    titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16));
+    titleBar.add(titleLabel);
+    
+    // Main content panel with proper spacing
+    JPanel contentPanel = new JPanel();
+    contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    contentPanel.setLayout(new BorderLayout(10, 10));
+    
+    // Create the split pane with proper settings
+    JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    mainSplitPane.setBorder(null);
+    mainSplitPane.setDividerSize(5);
+    mainSplitPane.setResizeWeight(0.0); // Fix left panel width
+    mainSplitPane.setMinimumSize(new Dimension(800, 500));
+    
+    // Left sidebar with proper constraints
+    JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
+    leftPanel.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 0));
+    leftPanel.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 0));
+    leftPanel.setBackground(new Color(0xf8f8f8));
+    leftPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER_COLOR));
+    
+    // Calendar selector at top of left panel
+    calendarSelectorPanel.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 200));
+    calendarSelectorPanel.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 150));
+    
+    // Import/Export in the center of left panel (moved up from bottom)
+    exportImportPanel.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 200));
+    exportImportPanel.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 150));
+    
+    // Create a vertical panel to hold components in the left sidebar
+    JPanel leftComponentsPanel = new JPanel();
+    leftComponentsPanel.setLayout(new BoxLayout(leftComponentsPanel, BoxLayout.Y_AXIS));
+    leftComponentsPanel.setBackground(new Color(0xf8f8f8));
+    
+    // Add components to left panel in vertical order
+    leftComponentsPanel.add(calendarSelectorPanel);
+    leftComponentsPanel.add(Box.createVerticalStrut(10)); // Add spacing
+    leftComponentsPanel.add(exportImportPanel);
+    leftComponentsPanel.add(Box.createVerticalGlue()); // Push everything up
+    
+    leftPanel.add(leftComponentsPanel, BorderLayout.CENTER);
+    
+    // Right side with a horizontal split between calendar and event panel
+    JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+    
+    // Create a secondary split pane to separate calendar and event panel horizontally
+    JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    rightSplitPane.setBorder(null);
+    rightSplitPane.setDividerSize(5);
+    rightSplitPane.setResizeWeight(0.7); // Give more weight to calendar
+    
+    // Calendar panel with proper size
+    JPanel calendarContainer = new JPanel(new BorderLayout());
+    calendarContainer.add(calendarPanel, BorderLayout.CENTER);
+    calendarContainer.setPreferredSize(new Dimension(550, 0));
+    
+    // Event panel with fixed width
+    eventPanel.setPreferredSize(new Dimension(350, 0));
+    JScrollPane eventScrollPane = new JScrollPane(eventPanel);
+    eventScrollPane.setBorder(null);
+    
+    // Add components to right split pane
+    rightSplitPane.setLeftComponent(calendarContainer);
+    rightSplitPane.setRightComponent(eventScrollPane);
+    
+    rightPanel.add(rightSplitPane, BorderLayout.CENTER);
+    
+    // Set up main split pane
+    mainSplitPane.setLeftComponent(leftPanel);
+    mainSplitPane.setRightComponent(rightPanel);
+    
+    // Add components to main window
+    contentPanel.add(mainSplitPane, BorderLayout.CENTER);
+    add(titleBar, BorderLayout.NORTH);
+    add(contentPanel, BorderLayout.CENTER);
 
-    // Left panel for calendar selector and export/import
-    JPanel leftPanel = new JPanel(new BorderLayout(5, 5));
-    leftPanel.add(calendarSelectorPanel, BorderLayout.NORTH);
-    leftPanel.add(exportImportPanel, BorderLayout.CENTER);
-    leftPanel.setPreferredSize(new Dimension(250, 0));
-
-    // Center panel for calendar view
-    JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
-    centerPanel.add(calendarPanel, BorderLayout.CENTER);
-    centerPanel.add(new JScrollPane(messageArea), BorderLayout.SOUTH);
-
-    // Right panel for event panel
-    JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
-    rightPanel.add(eventPanel, BorderLayout.CENTER);
-    rightPanel.setPreferredSize(new Dimension(300, 0));
-
-    // Create split panes for resizable panels
-    JSplitPane leftSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, centerPanel);
-    leftSplitPane.setResizeWeight(0.2);
-    leftSplitPane.setOneTouchExpandable(true);
-
-    JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplitPane, rightPanel);
-    mainSplitPane.setResizeWeight(0.8);
-    mainSplitPane.setOneTouchExpandable(true);
-
-    // Add main split pane to frame
-    mainPanel.add(mainSplitPane, BorderLayout.CENTER);
-    add(mainPanel);
+    // Add window resize listener
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        SwingUtilities.invokeLater(() -> {
+          revalidate();
+          repaint();
+        });
+      }
+    });
   }
 
   /**
@@ -191,26 +359,28 @@ public class GUIView extends JFrame implements IGUIView,
 
   @Override
   public void updateCalendarView(ICalendar calendar) {
-    try {
-      calendarViewModel.setCurrentCalendar(calendar);
-    } catch (ConflictingEventException | InvalidEventException | EventNotFoundException e) {
-      displayError("Failed to update calendar view: " + e.getMessage());
+    if (calendar != null) {
+      calendarPanel.updateCalendar(calendar);
     }
   }
 
   @Override
   public void updateEventList(List<Event> events) {
-    calendarPanel.updateEvents(events);
+    if (events != null) {
+      calendarPanel.updateEvents(events);
+    }
   }
 
   @Override
   public void updateRecurringEventList(List<RecurringEvent> recurringEvents) {
-    calendarPanel.updateRecurringEvents(recurringEvents);
+    if (recurringEvents != null) {
+      calendarPanel.updateRecurringEvents(recurringEvents);
+    }
   }
 
   @Override
   public void showEventDetails(Event event) {
-    eventViewModel.setSelectedEvent(event);
+    eventPanel.displayEvent(event);
   }
 
   @Override
@@ -220,124 +390,126 @@ public class GUIView extends JFrame implements IGUIView,
 
   @Override
   public void updateCalendarList(List<String> calendarNames) {
-    calendarViewModel.updateCalendarList(calendarNames);
+    calendarSelectorPanel.updateCalendarList(calendarNames);
   }
 
+  @Override
   public void setSelectedCalendar(String calendarName) {
-    calendarViewModel.setSelectedCalendarName(calendarName);
+    calendarSelectorPanel.setSelectedCalendar(calendarName);
   }
 
   @Override
   public String getSelectedCalendar() {
-    return calendarViewModel.getSelectedCalendarName();
+    return calendarSelectorPanel.getSelectedCalendarName();
   }
 
   @Override
   public LocalDate getSelectedDate() {
-    return calendarViewModel.getSelectedDate();
+    return calendarPanel.getSelectedDate();
   }
 
   @Override
   public void setSelectedDate(LocalDate date) {
-    calendarViewModel.setSelectedDate(date);
+    calendarPanel.setSelectedDate(date);
   }
 
   @Override
   public void refreshView() {
-    calendarViewModel.refresh();
-    eventViewModel.refresh();
-    exportImportViewModel.refresh();
+    SwingUtilities.invokeLater(() -> {
+      calendarPanel.refresh();
+      eventPanel.refresh();
+      calendarSelectorPanel.refresh();
+      revalidate();
+      repaint();
+    });
   }
 
   @Override
   public String readCommand() {
-    // This method is not used in GUI mode
-    // It's required by ICalendarView interface but not needed for GUI
-    return "";
+    // Not used in GUI mode
+    return null;
   }
 
   @Override
   public void displayMessage(String message) {
-    messageArea.append(message + "\n");
-    messageArea.setCaretPosition(messageArea.getDocument().getLength());
+    messageArea.setText(message);
   }
 
   @Override
   public void displayError(String error) {
-    messageArea.append("Error: " + error + "\n");
-    messageArea.setCaretPosition(messageArea.getDocument().getLength());
+    JOptionPane.showMessageDialog(
+        this,
+        error,
+        "Error",
+        JOptionPane.ERROR_MESSAGE
+    );
   }
 
   // CalendarViewModelListener implementation
-  @Override
   public void onCalendarChanged(ICalendar calendar) {
     calendarPanel.updateCalendar(calendar);
     exportImportViewModel.setCurrentCalendar(calendar);
   }
 
-  @Override
   public void onDateSelected(LocalDate date) {
     calendarPanel.setSelectedDate(date);
   }
 
-  @Override
   public void onEventsUpdated(List<Event> events) {
     calendarPanel.updateEvents(events);
   }
 
-  @Override
   public void onRecurringEventsUpdated(List<RecurringEvent> recurringEvents) {
     calendarPanel.updateRecurringEvents(recurringEvents);
   }
 
-  @Override
   public void onCalendarListUpdated(List<String> calendarNames) {
-    calendarSelectorPanel.updateCalendars(calendarNames);
+    calendarSelectorPanel.updateCalendarList(calendarNames);
   }
 
-  @Override
   public void onError(String error) {
     displayError(error);
   }
 
   // EventViewModelListener implementation
-  @Override
   public void onEventSelected(Event event) {
     eventPanel.displayEvent(event);
   }
 
-  @Override
   public void onRecurringEventSelected(RecurringEvent event) {
     eventPanel.displayRecurringEvent(event);
   }
 
-  @Override
   public void onEventCreated(Event event) {
     displayMessage("Event created successfully");
   }
 
-  @Override
   public void onRecurringEventCreated(RecurringEvent event) {
     displayMessage("Recurring event created successfully");
   }
 
-  @Override
   public void onEventUpdated(Event event) {
     displayMessage("Event updated successfully");
   }
 
-  @Override
   public void onRecurringEventUpdated(RecurringEvent event) {
     displayMessage("Recurring event updated successfully");
   }
 
-  @Override
   public void onImportSuccess() {
     displayMessage("Calendar imported successfully");
   }
 
-  @Override
   public void onExportSuccess() {
     displayMessage("Calendar exported successfully");
+  }
+
+  /**
+   * Shows an error message.
+   *
+   * @param message the error message to display
+   */
+  public void showError(String message) {
+    JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
   }
 } 

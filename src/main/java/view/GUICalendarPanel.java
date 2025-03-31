@@ -1,16 +1,20 @@
 package view;
 
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
-import controller.command.edit.strategy.EventEditor;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -30,6 +34,17 @@ public class GUICalendarPanel extends JPanel {
   private YearMonth currentMonth;
   private LocalDate selectedDate;
   private CalendarPanelListener listener;
+  private ICalendar selectedCalendar;
+  private JLabel monthYearLabel;
+  private LocalDate currentDate;
+  private static final int CELL_WIDTH = 78;
+  private static final int CELL_HEIGHT = 60;
+  private static final int GRID_WIDTH = 550;
+  private static final int GRID_HEIGHT = 400;
+  private static final Color HEADER_COLOR = new Color(0x4a86e8);
+  private static final Color HEADER_LIGHT_COLOR = new Color(0xe6f2ff);
+  private static final Color BORDER_COLOR = new Color(0xcccccc);
+  private static final Color TEXT_COLOR = new Color(0x333333);
 
   /**
    * Interface for calendar panel events.
@@ -52,148 +67,236 @@ public class GUICalendarPanel extends JPanel {
    * Constructs a new GUICalendarPanel.
    */
   public GUICalendarPanel() {
-    setLayout(new BorderLayout(5, 5));
-    setBorder(BorderFactory.createTitledBorder("Calendar"));
+    setLayout(new BorderLayout(10, 10));
+    setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    // Initialize components
-    monthLabel = new JLabel("", SwingConstants.CENTER);
-    calendarGrid = new JPanel(new GridLayout(7, 7, 5, 5));
+    // Initialize fields
+    currentMonth = YearMonth.now();
+    selectedDate = LocalDate.now();
     dateButtons = new HashMap<>();
     eventsByDate = new HashMap<>();
+
+    // Create components
+    monthLabel = new JLabel("", SwingConstants.CENTER);
+    monthLabel.setFont(new Font("Arial", Font.BOLD, 16));
+    
+    // Initialize calendar grid with proper constraints
+    calendarGrid = new JPanel(new GridLayout(0, 7, 2, 2)); // Set rows to 0 to allow flexible number of rows
+    calendarGrid.setBackground(Color.WHITE);
+    
     statusButton = new JButton("Check Status");
     eventListArea = new JEditorPane();
     eventListArea.setEditable(false);
     eventListArea.setContentType("text/html");
     startDateSpinner = new JSpinner(new SpinnerDateModel());
     endDateSpinner = new JSpinner(new SpinnerDateModel());
-    currentMonth = YearMonth.now();
-    selectedDate = LocalDate.now();
+    currentDate = LocalDate.now();
 
-    // Set up layout
-    setupLayout();
-    updateCalendarDisplay();
+    // Create and add components
+    add(createNavigationPanel(), BorderLayout.NORTH);
+    add(createCalendarPanel(), BorderLayout.CENTER);
+    add(createControlPanel(), BorderLayout.SOUTH);
+
+    // Add window resize listener
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        SwingUtilities.invokeLater(() -> {
+          updateCalendarDisplay();
+          revalidate();
+          repaint();
+        });
+      }
+    });
+
+    // Initial update after all components are created and added
+    SwingUtilities.invokeLater(() -> {
+      updateCalendarDisplay();
+      revalidate();
+      repaint();
+    });
   }
 
-  /**
-   * Sets up the layout of the calendar panel.
-   */
-  private void setupLayout() {
-    // Navigation panel
-    JPanel navigationPanel = new JPanel(new BorderLayout());
-    JButton prevButton = new JButton("←");
-    JButton nextButton = new JButton("→");
-    JButton todayButton = new JButton("Today");
+  private JPanel createNavigationPanel() {
+    JPanel navigationPanel = new JPanel(new BorderLayout(10, 0));
+    navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+    navigationPanel.setBackground(Color.WHITE);
 
+    // Month/Year label with consistent styling
+    monthYearLabel = new JLabel("", SwingConstants.CENTER);
+    monthYearLabel.setFont(new Font("Arial", Font.BOLD, 18));
+    monthYearLabel.setForeground(TEXT_COLOR);
+    monthYearLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+
+    // Navigation buttons
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+    buttonPanel.setBackground(Color.WHITE);
+    
+    JButton prevButton = createNavigationButton("←");
     prevButton.addActionListener(e -> navigateToPreviousMonth());
+    
+    JButton nextButton = createNavigationButton("→");
     nextButton.addActionListener(e -> navigateToNextMonth());
+    
+    JButton todayButton = createStyledButton("Today");
     todayButton.addActionListener(e -> navigateToToday());
 
-    navigationPanel.add(prevButton, BorderLayout.WEST);
-    navigationPanel.add(monthLabel, BorderLayout.CENTER);
-    navigationPanel.add(nextButton, BorderLayout.EAST);
-    navigationPanel.add(todayButton, BorderLayout.SOUTH);
+    buttonPanel.add(prevButton);
+    buttonPanel.add(monthYearLabel);
+    buttonPanel.add(nextButton);
+    buttonPanel.add(Box.createHorizontalStrut(20));
+    buttonPanel.add(todayButton);
 
-    // Calendar grid
-    calendarGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-    // Status and event list panel
-    JPanel statusPanel = new JPanel(new BorderLayout());
-    statusPanel.setBorder(BorderFactory.createTitledBorder("Status and Events"));
-    
-    statusButton.addActionListener(e -> {
-      if (listener != null) {
-        listener.onStatusRequested(selectedDate);
-      }
-    });
-    
-    JButton listEventsButton = new JButton("List Events");
-    listEventsButton.addActionListener(e -> {
-      if (listener != null) {
-        listener.onEventsListRequested(selectedDate);
-      }
-    });
-
-    // Date range selector
-    JPanel dateRangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    dateRangePanel.add(new JLabel("Start Date:"));
-    dateRangePanel.add(startDateSpinner);
-    dateRangePanel.add(new JLabel("End Date:"));
-    dateRangePanel.add(endDateSpinner);
-    
-    JButton showRangeButton = new JButton("Show Range");
-    showRangeButton.addActionListener(e -> {
-      if (listener != null) {
-        LocalDate startDate = ((java.util.Date) startDateSpinner.getValue()).toInstant()
-            .atZone(java.time.ZoneId.systemDefault())
-            .toLocalDate();
-        LocalDate endDate = ((java.util.Date) endDateSpinner.getValue()).toInstant()
-            .atZone(java.time.ZoneId.systemDefault())
-            .toLocalDate();
-        listener.onDateRangeSelected(startDate, endDate);
-      }
-    });
-    dateRangePanel.add(showRangeButton);
-    
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    buttonPanel.add(statusButton);
-    buttonPanel.add(listEventsButton);
-    
-    statusPanel.add(buttonPanel, BorderLayout.NORTH);
-    statusPanel.add(dateRangePanel, BorderLayout.CENTER);
-    statusPanel.add(new JScrollPane(eventListArea), BorderLayout.SOUTH);
-
-    // Add components to panel
-    add(navigationPanel, BorderLayout.NORTH);
-    add(new JScrollPane(calendarGrid), BorderLayout.CENTER);
-    add(statusPanel, BorderLayout.SOUTH);
+    navigationPanel.add(buttonPanel, BorderLayout.CENTER);
+    return navigationPanel;
   }
 
-  /**
-   * Updates the calendar display.
-   */
-  private void updateCalendarDisplay() {
-    // Update month label
-    monthLabel.setText(currentMonth.getMonth().toString() + " " + currentMonth.getYear());
+  private JPanel createCalendarPanel() {
+    JPanel mainCalendarPanel = new JPanel(new BorderLayout(0, 5));
+    mainCalendarPanel.setBackground(Color.WHITE);
 
-    // Clear existing buttons
+    // Create day headers in a separate panel
+    JPanel headerPanel = new JPanel(new GridLayout(1, 7, 0, 0));
+    headerPanel.setBackground(HEADER_LIGHT_COLOR);
+    headerPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+    
+    String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    for (String day : dayNames) {
+      JLabel label = new JLabel(day, SwingConstants.CENTER);
+      label.setFont(new Font("Arial", Font.BOLD, 12));
+      label.setForeground(TEXT_COLOR);
+      label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+      headerPanel.add(label);
+    }
+
+    // Configure the existing calendar grid
+    calendarGrid.setLayout(new GridLayout(0, 7, 0, 0));
+    calendarGrid.setBackground(Color.WHITE);
+    calendarGrid.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+    
+    // Create a panel to hold both the header and grid
+    JPanel calendarView = new JPanel(new BorderLayout());
+    calendarView.add(headerPanel, BorderLayout.NORTH);
+    calendarView.add(calendarGrid, BorderLayout.CENTER);
+    calendarView.setPreferredSize(new Dimension(GRID_WIDTH, GRID_HEIGHT));
+    
+    mainCalendarPanel.add(calendarView, BorderLayout.CENTER);
+    
+    // Add action buttons
+    JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+    actionPanel.setBackground(Color.WHITE);
+    
+    JButton checkStatusButton = createStyledButton("Check Status");
+    JButton listEventsButton = createStyledButton("List Events");
+    JButton showRangeButton = createStyledButton("Show Range");
+    
+    actionPanel.add(checkStatusButton);
+    actionPanel.add(listEventsButton);
+    actionPanel.add(showRangeButton);
+    
+    mainCalendarPanel.add(actionPanel, BorderLayout.SOUTH);
+    
+    return mainCalendarPanel;
+  }
+
+  private JPanel createControlPanel() {
+    JPanel controlPanel = new JPanel(new BorderLayout(10, 10));
+    controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+    // Buttons panel
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    buttonPanel.add(createStyledButton("Check Status"));
+    buttonPanel.add(createStyledButton("List Events"));
+    buttonPanel.add(createStyledButton("Show Range"));
+
+    // Event list area
+    eventListArea.setBorder(BorderFactory.createCompoundBorder(
+      BorderFactory.createLineBorder(new Color(0xDDDDDD)),
+      BorderFactory.createEmptyBorder(10, 10, 10, 10)
+    ));
+    JScrollPane eventScroll = new JScrollPane(eventListArea);
+    eventScroll.setPreferredSize(new Dimension(0, 150));
+
+    controlPanel.add(buttonPanel, BorderLayout.NORTH);
+    controlPanel.add(eventScroll, BorderLayout.CENTER);
+
+    return controlPanel;
+  }
+
+  private JButton createNavigationButton(String text) {
+    JButton button = new JButton(text);
+    button.setFont(button.getFont().deriveFont(Font.BOLD, 16));
+    button.setForeground(HEADER_COLOR);
+    button.setBackground(Color.WHITE);
+    button.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+    button.setPreferredSize(new Dimension(30, 30));
+    button.setFocusPainted(false);
+    return button;
+  }
+
+  private JButton createStyledButton(String text) {
+    JButton button = new JButton(text);
+    button.setBackground(HEADER_LIGHT_COLOR);
+    button.setForeground(TEXT_COLOR);
+    button.setBorder(BorderFactory.createLineBorder(HEADER_COLOR));
+    button.setPreferredSize(new Dimension(100, 30));
+    button.setFocusPainted(false);
+    return button;
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (currentMonth != null) {
+      SwingUtilities.invokeLater(() -> {
+        updateCalendarDisplay();
+        revalidate();
+        repaint();
+      });
+    }
+  }
+
+  private void updateCalendarDisplay() {
+    if (!SwingUtilities.isEventDispatchThread()) {
+      SwingUtilities.invokeLater(this::updateCalendarDisplay);
+      return;
+    }
+
+    // Update month label
+    monthYearLabel.setText(currentMonth.getMonth().toString() + " " + currentMonth.getYear());
+
+    // Clear existing cells
     calendarGrid.removeAll();
     dateButtons.clear();
 
-    // Add day headers
-    String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    for (String day : dayNames) {
-      JLabel dayLabel = new JLabel(day, SwingConstants.CENTER);
-      dayLabel.setFont(dayLabel.getFont().deriveFont(Font.BOLD));
-      calendarGrid.add(dayLabel);
-    }
-
-    // Calculate the first day of the month (0 = Sunday, 6 = Saturday)
+    // Calculate the first day of the month
     LocalDate firstDay = currentMonth.atDay(1);
     int firstDayOfWeek = firstDay.getDayOfWeek().getValue();
     int offset = (firstDayOfWeek == 7) ? 0 : firstDayOfWeek;
 
     // Add empty cells for days before the first day of the month
     for (int i = 0; i < offset; i++) {
-      JLabel emptyLabel = new JLabel("");
-      emptyLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-      calendarGrid.add(emptyLabel);
+      JPanel emptyCell = createEmptyCell();
+      calendarGrid.add(emptyCell);
     }
 
-    // Add day buttons
+    // Add day buttons for the current month
     int daysInMonth = currentMonth.lengthOfMonth();
     for (int day = 1; day <= daysInMonth; day++) {
       LocalDate date = currentMonth.atDay(day);
       JButton button = createDateButton(date);
       calendarGrid.add(button);
+      dateButtons.put(date, button);
     }
 
-    // Add empty cells for remaining days to maintain grid structure
-    int totalCells = 42; // 6 rows × 7 columns
-    int remainingCells = totalCells - (offset + daysInMonth);
+    // Fill remaining cells to complete the 6-week calendar
+    int totalCells = 42; // 6 weeks × 7 days
+    int filledCells = offset + daysInMonth;
+    int remainingCells = totalCells - filledCells;
+    
     for (int i = 0; i < remainingCells; i++) {
-      JLabel emptyLabel = new JLabel("");
-      emptyLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-      calendarGrid.add(emptyLabel);
+      JPanel emptyCell = createEmptyCell();
+      calendarGrid.add(emptyCell);
     }
 
     // Refresh the panel
@@ -201,128 +304,93 @@ public class GUICalendarPanel extends JPanel {
     calendarGrid.repaint();
   }
 
-  /**
-   * Creates a button for a specific date.
-   *
-   * @param date the date for the button
-   * @return the created button
-   */
+  private JPanel createEmptyCell() {
+    JPanel cell = new JPanel(new BorderLayout());
+    cell.setBackground(Color.WHITE);
+    cell.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+    cell.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
+    return cell;
+  }
+
   private JButton createDateButton(LocalDate date) {
-    JButton button = new JButton(String.valueOf(date.getDayOfMonth()));
-    button.setToolTipText(date.toString());
-    button.setFocusPainted(false);
-    button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-
-    // Set button appearance based on whether it has events
-    if (eventsByDate.containsKey(date)) {
-      button.setBackground(new Color(200, 255, 200));
-      button.setOpaque(true);
-      button.setBorder(BorderFactory.createLineBorder(new Color(100, 200, 100)));
-
-      // Add a small dot indicator for busy days
-      JPanel dot = new JPanel();
-      dot.setPreferredSize(new Dimension(6, 6));
-      dot.setBackground(new Color(100, 200, 100));
-      dot.setOpaque(true);
-      dot.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      
-      // Create a custom button with the dot
-      JButton customButton = new JButton() {
-        @Override
-        protected void paintComponent(Graphics g) {
-          super.paintComponent(g);
-          dot.setBounds(getWidth() - 10, getHeight() - 10, 6, 6);
-          dot.paint(g);
-        }
-      };
-      customButton.setText(String.valueOf(date.getDayOfMonth()));
-      customButton.setToolTipText(date.toString());
-      customButton.setFocusPainted(false);
-      customButton.setBackground(new Color(200, 255, 200));
-      customButton.setOpaque(true);
-      customButton.setBorder(BorderFactory.createLineBorder(new Color(100, 200, 100)));
-      
-      // Add mouse listener to show event details on hover
-      customButton.addMouseListener(new java.awt.event.MouseAdapter() {
-        @Override
-        public void mouseEntered(java.awt.event.MouseEvent evt) {
-          List<Event> events = eventsByDate.get(date);
-          if (!events.isEmpty()) {
-            StringBuilder tooltip = new StringBuilder("<html>Events:<br>");
-            for (Event event : events) {
-              tooltip.append("- ").append(event.getSubject())
-                    .append(" (").append(event.getStartDateTime().toLocalTime())
-                    .append(" - ").append(event.getEndDateTime().toLocalTime())
-                    .append(")<br>");
-            }
-            tooltip.append("</html>");
-            customButton.setToolTipText(tooltip.toString());
-          }
-        }
-
-        @Override
-        public void mouseExited(java.awt.event.MouseEvent evt) {
-          customButton.setToolTipText(date.toString());
-        }
-      });
-
-      button = customButton;
+    JButton button = new JButton();
+    button.setLayout(new BorderLayout());
+    
+    // Create date label that appears in the top-left corner
+    JLabel dateLabel = new JLabel(String.valueOf(date.getDayOfMonth()));
+    dateLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+    dateLabel.setForeground(TEXT_COLOR);
+    dateLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 0, 0));
+    
+    // Create events panel for displaying event indicators
+    JPanel eventsPanel = new JPanel();
+    eventsPanel.setLayout(new BoxLayout(eventsPanel, BoxLayout.Y_AXIS));
+    eventsPanel.setOpaque(false);
+    
+    // Style the button
+    button.setBackground(Color.WHITE);
+    button.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+    button.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
+    
+    // Add components to button
+    button.add(dateLabel, BorderLayout.NORTH);
+    button.add(eventsPanel, BorderLayout.CENTER);
+    
+    // Highlight today's date
+    if (date.equals(LocalDate.now())) {
+      button.setBackground(HEADER_LIGHT_COLOR);
     }
-
-    // Set button appearance based on whether it's selected
+    
+    // Highlight selected date
     if (date.equals(selectedDate)) {
-      button.setBackground(new Color(150, 200, 255));
-      button.setOpaque(true);
-      button.setBorder(BorderFactory.createLineBorder(new Color(50, 150, 255), 2));
-      button.setFont(button.getFont().deriveFont(Font.BOLD));
+      button.setBorder(BorderFactory.createLineBorder(HEADER_COLOR, 2));
     }
-
-    // Add hover effect
-    final JButton finalButton = button;
-    button.addMouseListener(new java.awt.event.MouseAdapter() {
-      @Override
-      public void mouseEntered(java.awt.event.MouseEvent evt) {
-        if (!date.equals(selectedDate)) {
-          finalButton.setBackground(new Color(220, 240, 255));
-          finalButton.setOpaque(true);
-        }
-      }
-
-      @Override
-      public void mouseExited(java.awt.event.MouseEvent evt) {
-        if (!date.equals(selectedDate)) {
-          if (eventsByDate.containsKey(date)) {
-            finalButton.setBackground(new Color(200, 255, 200));
-          } else {
-            finalButton.setBackground(new JButton().getBackground());
-            finalButton.setOpaque(false);
-          }
-        }
-      }
-    });
-
+    
+    // Add click listener
     button.addActionListener(e -> {
       selectedDate = date;
-      updateCalendarDisplay();
       if (listener != null) {
         listener.onDateSelected(date);
-
-        // Notify about events on the selected date
-        if (eventsByDate.containsKey(date)) {
-          List<Event> events = eventsByDate.get(date);
-          for (Event event : events) {
-            if (event instanceof RecurringEvent) {
-              listener.onRecurringEventSelected((RecurringEvent) event);
-            } else {
-              listener.onEventSelected(event);
-            }
-          }
-        }
       }
+      updateCalendarDisplay();
     });
-
-    dateButtons.put(date, button);
+    
+    // If there are events on this date, add indicators
+    if (eventsByDate.containsKey(date)) {
+      List<Event> events = eventsByDate.get(date);
+      for (int i = 0; i < Math.min(events.size(), 2); i++) {
+        Event event = events.get(i);
+        JPanel eventIndicator = createEventIndicator(event);
+        eventsPanel.add(eventIndicator);
+        eventsPanel.add(Box.createVerticalStrut(2));
+      }
+      
+      // If there are more events, add a "+X more" indicator
+      if (events.size() > 2) {
+        JLabel moreLabel = new JLabel("+" + (events.size() - 2) + " more");
+        moreLabel.setFont(new Font("Arial", Font.PLAIN, 9));
+        moreLabel.setForeground(TEXT_COLOR);
+        eventsPanel.add(moreLabel);
+      }
+    }
+    
     return button;
+  }
+  
+  private JPanel createEventIndicator(Event event) {
+    JPanel indicator = new JPanel();
+    indicator.setBackground(HEADER_COLOR);
+    indicator.setPreferredSize(new Dimension(70, 15));
+    indicator.setBorder(BorderFactory.createLineBorder(HEADER_COLOR.darker(), 1));
+    indicator.setLayout(new BorderLayout());
+    
+    JLabel titleLabel = new JLabel(event.getSubject());
+    titleLabel.setFont(new Font("Arial", Font.PLAIN, 9));
+    titleLabel.setForeground(Color.WHITE);
+    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+    
+    indicator.add(titleLabel, BorderLayout.CENTER);
+    return indicator;
   }
 
   /**
@@ -517,10 +585,19 @@ public class GUICalendarPanel extends JPanel {
   public void updateStatus(boolean isBusy) {
     String status = isBusy ? "Busy" : "Available";
     JOptionPane.showMessageDialog(
-        this,
-        "Status: " + status,
-        "Calendar Status",
-        JOptionPane.INFORMATION_MESSAGE
+      this,
+      "Status: " + status,
+      "Calendar Status",
+      JOptionPane.INFORMATION_MESSAGE
     );
+  }
+
+  /**
+   * Gets the currently selected calendar.
+   *
+   * @return the selected calendar, or null if no calendar is selected
+   */
+  public ICalendar getSelectedCalendar() {
+    return selectedCalendar;
   }
 } 

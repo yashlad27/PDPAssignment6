@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.TimeZone;
 
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -243,4 +244,11 @@ public interface ICalendar {
    * @throws IllegalArgumentException if filePath is null or empty
    */
   String exportData(String filePath, IDataExporter exporter) throws IOException;
+
+  /**
+   * Gets the timezone of this calendar.
+   *
+   * @return the timezone of the calendar
+   */
+  TimeZone getTimeZone();
 }
