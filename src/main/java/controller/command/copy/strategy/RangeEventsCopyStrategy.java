@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import model.calendar.Calendar;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -101,8 +102,8 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
       return "No events found between " + sourceStartDate + " and " + sourceEndDate + " to copy.";
     }
 
-    String sourceTimezone = ((model.calendar.Calendar) sourceCalendar).getTimeZone().getID();
-    String targetTimezone = ((model.calendar.Calendar) calendarManager.getCalendar(targetCalendarName)).getTimeZone().getID();
+    String sourceTimezone = ((Calendar) sourceCalendar).getTimeZone().getID();
+    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName)).getTimeZone().getID();
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
