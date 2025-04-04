@@ -48,21 +48,21 @@ public interface EventCreator {
    * @throws InvalidEventException if the event type is unknown or the arguments are invalid
    */
   static EventCreator forType(String type, String[] args) throws InvalidEventException {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case "single":
-        return new SingleEventCreator(args);
+        return ConsolidatedEventCreator.createSingleEvent(args);
       case "recurring":
-        return new RecurringEventCreator(args);
+        return ConsolidatedEventCreator.createRecurringEvent(args);
       case "allday":
-        return new AllDayEventCreator(args);
+        return ConsolidatedEventCreator.createAllDayEvent(args);
       case "recurring-until":
-        return new RecurringUntilEventCreator(args);
+        return ConsolidatedEventCreator.createRecurringUntilEvent(args);
       case "allday-recurring":
-        return new AllDayRecurringEventCreator(args);
+        return ConsolidatedEventCreator.createAllDayRecurringEvent(args);
       case "allday-recurring-until":
-        return new AllDayRecurringUntilEventCreator(args);
+        return ConsolidatedEventCreator.createAllDayRecurringUntilEvent(args);
       default:
-        throw new IllegalArgumentException("Unknown event type: " + type);
+        throw new InvalidEventException("Unknown event type: " + type);
     }
   }
 

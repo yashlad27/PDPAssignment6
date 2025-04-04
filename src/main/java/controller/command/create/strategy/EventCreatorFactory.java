@@ -20,20 +20,20 @@ public class EventCreatorFactory implements IEventCreatorFactory {
       throw new InvalidEventException("Event type cannot be empty");
     }
 
-    // Implement the factory pattern to create the appropriate event creator
+    // Implement the factory pattern to create the appropriate event creator using the consolidated class
     switch (type.toLowerCase()) {
       case "single":
-        return new SingleEventCreator(args);
+        return ConsolidatedEventCreator.createSingleEvent(args);
       case "recurring":
-        return new RecurringEventCreator(args);
+        return ConsolidatedEventCreator.createRecurringEvent(args);
       case "allday":
-        return new AllDayEventCreator(args);
+        return ConsolidatedEventCreator.createAllDayEvent(args);
       case "recurring-until":
-        return new RecurringUntilEventCreator(args);
+        return ConsolidatedEventCreator.createRecurringUntilEvent(args);
       case "allday-recurring":
-        return new AllDayRecurringEventCreator(args);
+        return ConsolidatedEventCreator.createAllDayRecurringEvent(args);
       case "allday-recurring-until":
-        return new AllDayRecurringUntilEventCreator(args);
+        return ConsolidatedEventCreator.createAllDayRecurringUntilEvent(args);
       default:
         throw new InvalidEventException("Unknown event type: " + type);
     }

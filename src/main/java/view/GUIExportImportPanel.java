@@ -237,6 +237,15 @@ public class GUIExportImportPanel extends JPanel {
   public void showError(String message) {
     JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
   }
+  
+  /**
+   * Shows an error message.
+   *
+   * @param message the error message to display
+   */
+  public void showErrorMessage(String message) {
+    showError(message);
+  }
 
   private void showStatus(String message, boolean success) {
     statusLabel.setText(message);

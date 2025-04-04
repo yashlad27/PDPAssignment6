@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -623,7 +624,7 @@ public class GUIEventPanel extends JPanel {
       Set<DayOfWeek> weekdays = weekdayCheckboxes.stream()
               .filter(JCheckBox::isSelected)
               .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1)))
-              .collect(java.util.stream.Collectors.toSet());
+              .collect(Collectors.toSet());
       int occurrences = (Integer) occurrencesSpinner.getValue();
       LocalDate untilDate = ((Date) untilDateSpinner.getValue()).toInstant()
               .atZone(ZoneOffset.UTC)

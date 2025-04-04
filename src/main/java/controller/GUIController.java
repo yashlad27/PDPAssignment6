@@ -10,15 +10,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import controller.command.copy.DirectCopyEventCommand;
 import controller.command.edit.strategy.EventEditor;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.CalendarNotFoundException;
+import model.exceptions.ConflictingEventException;
+import model.exceptions.EventNotFoundException;
+import model.exceptions.InvalidEventException;
 import model.export.CSVExporter;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
+import view.EventCopyDialog;
 import view.GUICalendarPanel;
 import view.GUICalendarSelectorPanel;
 import view.GUIEventPanel;
@@ -142,7 +147,7 @@ public class GUIController {
           // Validate timezone format
           if (!timezone.contains("/")) {
             System.out.println("[DEBUG] Invalid timezone format: " + timezone);
-            view.showError("Invalid timezone format. Please use Area/Location format.");
+            view.showErrorMessage("Invalid timezone format. Please use Area/Location format.");
             return;
           }
 
@@ -158,7 +163,7 @@ public class GUIController {
           view.refreshView();
         } catch (Exception ex) {
           System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
-          view.showError("Could not create calendar: " + ex.getMessage());
+          view.showErrorMessage("Could not create calendar: " + ex.getMessage());
         }
       }
     });
@@ -240,6 +245,24 @@ public class GUIController {
           view.displayError("Failed to get events in range: " + e.getMessage());
         }
       }
+
+      @Override
+      public void onEditEvent(Event event) {
+        System.out.println("[DEBUG] Edit event requested: " + event.getSubject());
+        editEvent(event);
+      }
+
+      @Override
+      public void onCopyEvent(Event event) {
+        System.out.println("[DEBUG] Copy event requested: " + event.getSubject());
+        copyEvent(event);
+      }
+
+      @Override
+      public void onPrintEvent(Event event) {
+        System.out.println("[DEBUG] Print event requested: " + event.getSubject());
+        printEvent(event);
+      }
     });
 
     // Event creation
@@ -307,18 +330,18 @@ public class GUIController {
         if (file != null) {
           try {
             System.out.println("[DEBUG] Starting import process for file: " + file.getAbsolutePath());
-            
+
             // Get the selected calendar from the view
             ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
-            System.out.println("[DEBUG] Selected calendar from selector panel: " + 
+            System.out.println("[DEBUG] Selected calendar from selector panel: " +
                 (currentCalendar != null ? currentCalendar.toString() : "null"));
-            
+
             // If no calendar is selected in the selector panel, try getting the current calendar from the controller
             if (currentCalendar == null) {
               System.out.println("[DEBUG] No calendar selected in selector panel, using current calendar from controller");
               currentCalendar = GUIController.this.currentCalendar;
             }
-            
+
             // If still null, try getting the first available calendar
             if (currentCalendar == null) {
               System.out.println("[DEBUG] Still no calendar, trying to get first available calendar");
@@ -336,35 +359,35 @@ public class GUIController {
                 }
               }
             }
-            
+
             // Final check if we have a valid calendar
             if (currentCalendar == null) {
               System.out.println("[ERROR] No calendar available for import");
-              view.showError("No calendar available. Please create a calendar first.");
+              view.showErrorMessage("No calendar available. Please create a calendar first.");
               return;
             }
-            
-            System.out.println("[DEBUG] Using calendar for import: " + ((model.calendar.Calendar)currentCalendar).getName());
-            
+
+            System.out.println("[DEBUG] Using calendar for import: " + ((model.calendar.Calendar) currentCalendar).getName());
+
             // Use the ExportImportViewModel to handle the import
             ExportImportViewModel exportImportViewModel = view.getExportImportViewModel();
             exportImportViewModel.setCurrentCalendar(currentCalendar);
-            
+
             // Import the events
             System.out.println("[DEBUG] Starting import process via ExportImportViewModel");
             int importedCount = exportImportViewModel.importFromCSV(file);
-            
+
             System.out.println("[DEBUG] Import completed. Imported " + importedCount + " events");
-            
+
             // Update the calendar view to show the imported events
             System.out.println("[DEBUG] Updating calendar view with imported events");
             view.getCalendarPanel().updateCalendar(currentCalendar);
-            
+
             // The success message will be shown by the ExportImportViewModel callback
           } catch (Exception e) {
             System.err.println("[ERROR] Import failed: " + e.getMessage());
             e.printStackTrace();
-            view.showError("Failed to import calendar data: " + e.getMessage());
+            view.showErrorMessage("Failed to import calendar data: " + e.getMessage());
           }
         }
       }
@@ -378,10 +401,10 @@ public class GUIController {
             CSVExporter exporter = new CSVExporter();
             exporter.exportEvents(currentCalendar.getAllEvents(), file);
           } else {
-            view.showError("Please select a calendar first");
+            view.showErrorMessage("Please select a calendar first");
           }
         } catch (Exception e) {
-          view.showError("Failed to export calendar data: " + e.getMessage());
+          view.showErrorMessage("Failed to export calendar data: " + e.getMessage());
         }
       }
     });
@@ -550,11 +573,13 @@ public class GUIController {
    * @param event the event to edit
    */
   public void editEvent(Event event) {
-    if (currentCalendar == null) {
-      view.displayError("Please select a calendar first");
-      return;
-    }
-    view.getEventPanel().displayEvent(event);
+    System.out.println("[DEBUG] Editing event: " + event.getSubject());
+
+    // Show the event edit dialog
+    view.showEventEditDialog(event, false);
+
+    // The view will handle the editing process and call back to the controller
+    // when the edit is confirmed via the onEventUpdated method
   }
 
   /**
@@ -563,11 +588,184 @@ public class GUIController {
    * @param event the recurring event to edit
    */
   public void editRecurringEvent(RecurringEvent event) {
+    System.out.println("[DEBUG] Editing recurring event: " + event.getSubject());
+
+    // Show the event edit dialog
+    view.showEventEditDialog(event, true);
+
+    // The view will handle the editing process and call back to the controller
+    // when the edit is confirmed via the onEventUpdated method
+  }
+  
+  /**
+   * Handles copying an event.
+   *
+   * @param event the event to copy
+   */
+  public void copyEvent(Event event) {
+    System.out.println("[DEBUG] Copying event: " + event.getSubject());
+    
     if (currentCalendar == null) {
-      view.displayError("Please select a calendar first");
+      view.showErrorMessage("Please select a calendar first");
       return;
     }
-    view.getEventPanel().displayRecurringEvent(event);
+    
+    try {
+      // Get all available calendars for the copy dialog
+      List<ICalendar> availableCalendars = new ArrayList<>();
+      Set<String> calendarNames = calendarManager.getCalendarRegistry().getCalendarNames();
+      
+      // Convert calendar names to calendar objects
+      for (String name : calendarNames) {
+        try {
+          availableCalendars.add(calendarManager.getCalendar(name));
+        } catch (Exception e) {
+          // Skip calendars that can't be retrieved
+        }
+      }
+      
+      // Show the copy dialog
+      EventCopyDialog copyDialog = new EventCopyDialog(view, event, availableCalendars);
+      boolean confirmed = copyDialog.showDialog();
+      
+      if (confirmed) {
+        // Get the target calendar name and date/time from the dialog
+        String targetCalendarName = copyDialog.getTargetCalendarName();
+        LocalDateTime targetDateTime = copyDialog.getTargetDateTime();
+        LocalDateTime targetEndDateTime = copyDialog.getTargetEndDateTime();
+        
+        // Find the target calendar by name
+        ICalendar targetCalendar = null;
+        for (ICalendar calendar : availableCalendars) {
+          if (((model.calendar.Calendar) calendar).getName().equals(targetCalendarName)) {
+            targetCalendar = calendar;
+            break;
+          }
+        }
+        
+        if (targetCalendar == null) {
+          view.showErrorMessage("Target calendar not found");
+          return;
+        }
+        
+        // Create a new event with the same details but at the new date/time
+        Event copiedEvent = new Event(
+            event.getSubject(), // Keep the original subject
+            targetDateTime,
+            targetEndDateTime,
+            event.getDescription(),
+            event.getLocation(),
+            event.isPublic()
+        );
+        
+        // Execute the copy command
+        DirectCopyEventCommand copyCommand = new DirectCopyEventCommand(targetCalendar, copiedEvent);
+        boolean success = copyCommand.execute();
+        
+        if (success) {
+          view.displayMessage("Event copied successfully to " + targetCalendarName);
+          view.refreshView();
+        } else {
+          view.showErrorMessage("Failed to copy event");
+        }
+      }
+    } catch (Exception e) {
+      view.showErrorMessage("Error copying event: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+  
+  /**
+   * Handles printing an event.
+   *
+   * @param event the event to print
+   */
+  public void printEvent(Event event) {
+    System.out.println("[DEBUG] Printing event: " + event.getSubject());
+    
+    if (currentCalendar == null) {
+      view.showErrorMessage("Please select a calendar first");
+      return;
+    }
+    
+    try {
+      // Format the event details for printing
+      StringBuilder eventDetails = new StringBuilder();
+      eventDetails.append("Event: ").append(event.getSubject()).append("\n");
+      eventDetails.append("Start: ").append(event.getStartDateTime()).append("\n");
+      eventDetails.append("End: ").append(event.getEndDateTime()).append("\n");
+      
+      if (event.getLocation() != null && !event.getLocation().isEmpty()) {
+        eventDetails.append("Location: ").append(event.getLocation()).append("\n");
+      }
+      
+      if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+        eventDetails.append("Description: ").append(event.getDescription()).append("\n");
+      }
+      
+      eventDetails.append("Public: ").append(event.isPublic() ? "Yes" : "No").append("\n");
+      
+      // Display a print dialog or send to printer
+      // For now, we'll just display a message with the event details
+      view.displayMessage("Printing event:\n" + eventDetails.toString());
+      
+      // In a real application, we would use the Java printing API here
+      // PrinterJob job = PrinterJob.getPrinterJob();
+      // job.setPrintable(new EventPrintable(event));
+      // if (job.printDialog()) {
+      //   job.print();
+      // }
+    } catch (Exception e) {
+      view.showErrorMessage("Error printing event: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Executes copying an event to another calendar.
+   *
+   * @param event             the event to copy
+   * @param targetCalendarName the name of the target calendar
+   * @return a message indicating the result of the operation
+   */
+  public String executeCopyEvent(Event event, String targetCalendarName) {
+    System.out.println("[DEBUG] Executing copy event: " + event.getSubject() + " to calendar: " + targetCalendarName);
+    
+    if (event == null) {
+      return "Error: No event selected";
+    }
+    
+    try {
+      // Get the target calendar
+      ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
+      if (targetCalendar == null) {
+        return "Error: Target calendar not found";
+      }
+      
+      // Create a new event with the same details
+      Event copiedEvent = new Event(
+          event.getSubject(),
+          event.getStartDateTime(),
+          event.getEndDateTime(),
+          event.getDescription(),
+          event.getLocation(),
+          event.isPublic()
+      );
+      
+      // Add the event to the target calendar
+      boolean added = targetCalendar.addEvent(copiedEvent, false);
+      
+      if (added) {
+        // Refresh the view if the target calendar is the current calendar
+        if (currentCalendar != null && targetCalendar == currentCalendar) {
+          view.refreshView();
+        }
+        return "Event copied successfully to " + targetCalendarName;
+      } else {
+        return "Failed to copy event to " + targetCalendarName;
+      }
+    } catch (Exception e) {
+      return "Error copying event: " + e.getMessage();
+    }
   }
 
   /**
@@ -580,6 +778,67 @@ public class GUIController {
       view.displayMessage("Application closed successfully");
     } catch (Exception e) {
       view.displayError("Error while closing application: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Handles the updating of an event after it has been edited.
+   *
+   * @param event the updated event
+   */
+  public void onEventUpdated(Event event) {
+    System.out.println("[DEBUG] Event updated: " + event.getSubject());
+    
+    if (currentCalendar == null) {
+      view.showErrorMessage("Please select a calendar first");
+      return;
+    }
+    
+    try {
+      // Get the original event properties
+      String subject = event.getSubject();
+      LocalDateTime startDateTime = event.getStartDateTime();
+      LocalDateTime endDateTime = event.getEndDateTime();
+      String description = event.getDescription();
+      String location = event.getLocation();
+      boolean isPublic = event.isPublic();
+      
+      // Find the original event to verify it exists
+      currentCalendar.findEvent(subject, startDateTime);
+      
+      // Update event properties using editSingleEvent
+      boolean updated = true;
+      
+      // Only update properties that might have changed
+      if (endDateTime != null) {
+        String endTimeStr = endDateTime.toLocalTime().toString();
+        updated = currentCalendar.editSingleEvent(subject, startDateTime, "endTime", endTimeStr) && updated;
+      }
+      
+      if (description != null) {
+        updated = currentCalendar.editSingleEvent(subject, startDateTime, "description", description) && updated;
+      }
+      
+      if (location != null) {
+        updated = currentCalendar.editSingleEvent(subject, startDateTime, "location", location) && updated;
+      }
+      
+      updated = currentCalendar.editSingleEvent(subject, startDateTime, "isPublic", String.valueOf(isPublic)) && updated;
+      
+      if (updated) {
+        view.showInfoMessage("Event updated successfully: " + event.getSubject());
+        view.refreshView();
+      } else {
+        view.showErrorMessage("Failed to update event due to conflicts");
+      }
+    } catch (EventNotFoundException e) {
+      view.showErrorMessage("Original event not found: " + e.getMessage());
+    } catch (InvalidEventException e) {
+      view.showErrorMessage("Invalid event data: " + e.getMessage());
+    } catch (ConflictingEventException e) {
+      view.showErrorMessage("Event conflicts with existing events: " + e.getMessage());
+    } catch (Exception e) {
+      view.showErrorMessage("Error updating event: " + e.getMessage());
     }
   }
 
