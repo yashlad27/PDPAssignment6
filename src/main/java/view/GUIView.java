@@ -5,10 +5,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.DayOfWeek;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.*;
 
@@ -146,12 +143,12 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         if (args != null) {
           System.out.println("[DEBUG] Event args: " + String.join(", ", args));
         }
-        
+
         if (args != null && args.length >= 2) {
           try {
             ICalendar currentCalendar = controller.getCurrentCalendar();
             System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
-            
+
             if (currentCalendar == null) {
               showError("Please select a calendar first");
               return;
@@ -189,12 +186,12 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         if (args != null) {
           System.out.println("[DEBUG] Update args: " + String.join(", ", args));
         }
-        
+
         if (args != null && args.length >= 2) {
           try {
             ICalendar currentCalendar = controller.getCurrentCalendar();
             System.out.println("[DEBUG] Current calendar for update: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
-            
+
             if (currentCalendar == null) {
               showError("Please select a calendar first");
               return;

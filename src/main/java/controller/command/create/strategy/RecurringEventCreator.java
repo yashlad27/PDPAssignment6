@@ -144,7 +144,7 @@ public class RecurringEventCreator extends AbstractEventCreator {
   private void validateOccurrences(int occurrences) throws InvalidEventException {
     validateWithPredicate(occurrences, value -> value <= 0, "Occurrences must be positive");
     validateWithPredicate(occurrences, value -> value > MAX_OCCURRENCES,
-        "Maximum occurrences exceeded");
+            "Maximum occurrences exceeded");
   }
 
   /**
@@ -156,7 +156,7 @@ public class RecurringEventCreator extends AbstractEventCreator {
    * @throws InvalidEventException if the invalidCondition returns true
    */
   private <T> void validateWithPredicate(T value, Predicate<T> invalidCondition,
-      String errorMessage) throws InvalidEventException {
+                                         String errorMessage) throws InvalidEventException {
     if (invalidCondition.test(value)) {
       throw new InvalidEventException(errorMessage);
     }
@@ -188,16 +188,16 @@ public class RecurringEventCreator extends AbstractEventCreator {
     validateEventParameters(eventName);
 
     validateWithPredicate(startDateTime, dateTime -> dateTime == null,
-        "Start date/time cannot be null");
+            "Start date/time cannot be null");
 
     validateWithPredicate(endDateTime, dateTime -> dateTime == null,
-        "End date/time cannot be null");
+            "End date/time cannot be null");
 
     validateWithPredicate(new DateTimePair(startDateTime, endDateTime),
-        pair -> pair.second.isBefore(pair.first), "End date/time cannot be before start date/time");
+            pair -> pair.second.isBefore(pair.first), "End date/time cannot be before start date/time");
 
     validateWithPredicate(repeatDays, collection -> isCollectionEmpty(collection),
-        "Repeat days cannot be empty");
+            "Repeat days cannot be empty");
 
     validateOccurrences(occurrences);
   }
@@ -225,8 +225,8 @@ public class RecurringEventCreator extends AbstractEventCreator {
   private Event buildRecurringEvent() throws InvalidEventException {
     try {
       return new RecurringEvent.Builder(eventName, startDateTime, endDateTime,
-          repeatDays).description(description).location(location).isPublic(isPublic)
-          .occurrences(occurrences).build();
+              repeatDays).description(description).location(location).isPublic(isPublic)
+              .occurrences(occurrences).build();
     } catch (IllegalArgumentException e) {
       throw new InvalidEventException(e.getMessage());
     }
@@ -240,6 +240,6 @@ public class RecurringEventCreator extends AbstractEventCreator {
   @Override
   protected String getSuccessMessage(Event event) {
     return String.format("Recurring event '%s' created successfully with %d occurrences on %s",
-        eventName, occurrences, DateTimeUtil.formatWeekdays(repeatDays));
+            eventName, occurrences, DateTimeUtil.formatWeekdays(repeatDays));
   }
 }

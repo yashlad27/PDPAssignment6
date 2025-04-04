@@ -1,14 +1,13 @@
 package controller;
 
+import java.io.File;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.DayOfWeek;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.io.File;
-import java.util.HashSet;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import controller.command.edit.strategy.EventEditor;
@@ -17,17 +16,17 @@ import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.CalendarNotFoundException;
-import utilities.TimeZoneHandler;
+import model.export.CSVExporter;
 import utilities.CalendarNameValidator;
+import utilities.TimeZoneHandler;
 import view.GUICalendarPanel;
 import view.GUICalendarSelectorPanel;
 import view.GUIEventPanel;
+import view.GUIExportImportPanel;
 import view.GUIView;
 import viewmodel.CalendarViewModel;
 import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
-import view.GUIExportImportPanel;
-import model.export.CSVExporter;
 
 /**
  * Controller class that handles GUI-specific logic and coordinates between the model and view.
@@ -123,7 +122,7 @@ public class GUIController {
           System.out.println("[DEBUG] Calendar selected: " + calendar.toString());
           currentCalendar = calendar;
           view.updateCalendarView(calendar);
-          
+
           // Update events display
           List<Event> events = getAllEvents();
           List<RecurringEvent> recurringEvents = getAllRecurringEvents();
@@ -150,7 +149,7 @@ public class GUIController {
           // Create the calendar
           calendarManager.createCalendar(name, timezone);
           System.out.println("[DEBUG] Calendar created");
-          
+
           // Update the view
           view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
           view.setSelectedCalendar(name);
@@ -173,7 +172,7 @@ public class GUIController {
             view.displayError("Please select a valid date");
             return;
           }
-          
+
           // Use proper controller methods instead of direct view updates
           // This ensures all necessary model checks are performed
           setSelectedDate(date);
@@ -215,7 +214,7 @@ public class GUIController {
           view.displayError("Please select a valid date");
           return;
         }
-        
+
         // Use proper controller methods to retrieve and update events
         List<Event> events = getEventsOnDate(date);
         view.updateEventList(events);
@@ -229,7 +228,7 @@ public class GUIController {
             view.displayError("Please select both start and end dates");
             return;
           }
-          
+
           if (startDate.isAfter(endDate)) {
             view.displayError("Start date must be before or equal to end date");
             return;
@@ -252,7 +251,7 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-          
+
           if (args == null || args.length < 2) {
             view.displayError("Invalid event data");
             return;
@@ -282,7 +281,7 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-          
+
           if (args == null || args.length < 2) {
             view.displayError("Invalid event data");
             return;
@@ -309,7 +308,7 @@ public class GUIController {
           // Import calendar data from CSV file
           CSVExporter importer = new CSVExporter();
           List<Event> importedEvents = importer.importEvents(file);
-          
+
           // Add imported events to the current calendar
           ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
           if (currentCalendar != null) {
@@ -719,14 +718,14 @@ public class GUIController {
     if (date == null) {
       return;
     }
-    
+
     try {
       // First update the model's knowledge of the selected date
       view.setSelectedDate(date);
-      
+
       // Then get events for this date
       List<Event> events = getEventsOnDate(date);
-      
+
       // Update all relevant view components with a consistent flow
       view.updateSelectedDate(date);
       view.updateEventList(events);

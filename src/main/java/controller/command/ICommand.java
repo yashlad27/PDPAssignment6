@@ -1,9 +1,10 @@
 package controller.command;
 
+import java.util.function.Function;
+
 import model.exceptions.ConflictingEventException;
 import model.exceptions.EventNotFoundException;
 import model.exceptions.InvalidEventException;
-import java.util.function.Function;
 
 /**
  * Interface for command pattern implementation. Each command represents a specific operation in the
@@ -31,14 +32,15 @@ public interface ICommand {
    * Creates an ICommand from a function that takes String[] and returns String.
    * This factory method allows for easy creation of command objects from lambda expressions.
    *
-   * @param name the name of the command
+   * @param name     the name of the command
    * @param executor the function that executes the command
    * @return an ICommand implementation
    */
   static ICommand fromExecutor(String name, Function<String[], String> executor) {
     return new ICommand() {
       @Override
-      public String execute(String[] args) throws ConflictingEventException, InvalidEventException, EventNotFoundException {
+      public String execute(String[] args) throws ConflictingEventException,
+              InvalidEventException, EventNotFoundException {
         return executor.apply(args);
       }
 

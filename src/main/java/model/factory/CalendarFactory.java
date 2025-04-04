@@ -7,10 +7,8 @@ import controller.command.event.CommandFactory;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import utilities.TimeZoneHandler;
-import view.ConsoleView;
 import view.GUIView;
 import view.ICalendarView;
-import view.IGUIView;
 import view.TextView;
 
 /**

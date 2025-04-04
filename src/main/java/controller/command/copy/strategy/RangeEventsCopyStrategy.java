@@ -3,9 +3,7 @@ package controller.command.copy.strategy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import model.calendar.Calendar;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -14,7 +12,6 @@ import model.exceptions.ConflictingEventException;
 import model.exceptions.InvalidEventException;
 import utilities.DateTimeUtil;
 import utilities.TimeZoneHandler;
-import utilities.TimezoneConverter;
 
 /**
  * Strategy for copying events within a date range from one calendar to another. Format: copy events
@@ -41,7 +38,7 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
   public String execute(String[] args) throws CalendarNotFoundException, InvalidEventException {
     if (args.length < 10) {
       throw new InvalidEventException(
-          "Insufficient arguments for copy events between " + "dates command");
+              "Insufficient arguments for copy events between " + "dates command");
     }
 
     if (!args[0].equals("copy") || !args[1].equals("events") || !args[2].equals("between")) {
@@ -88,13 +85,13 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
    * Copies events within a date range from the active calendar to a target calendar.
    */
   private String copyEvents(String startDateStr, String endDateStr, String targetCalendarName,
-      String targetStartDateStr) throws Exception {
+                            String targetStartDateStr) throws Exception {
     LocalDate sourceStartDate = DateTimeUtil.parseDate(startDateStr);
     LocalDate sourceEndDate = DateTimeUtil.parseDate(endDateStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
-          "Target calendar '" + targetCalendarName + "' does not exist");
+              "Target calendar '" + targetCalendarName + "' does not exist");
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
@@ -112,8 +109,8 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
       // Get the source event's UTC time (it's already in UTC in storage)
       LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
       long durationMinutes = java.time.Duration.between(
-          sourceEvent.getStartDateTime(),
-          sourceEvent.getEndDateTime()
+              sourceEvent.getStartDateTime(),
+              sourceEvent.getEndDateTime()
       ).toMinutes();
 
       // Convert UTC time to target timezone
@@ -121,12 +118,12 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
 
       // Create new event with target time and duration
       Event newEvent = new Event(
-          sourceEvent.getSubject(),
-          targetDateTime,
-          targetDateTime.plusMinutes(durationMinutes),
-          sourceEvent.getDescription(),
-          sourceEvent.getLocation(),
-          sourceEvent.isPublic()
+              sourceEvent.getSubject(),
+              targetDateTime,
+              targetDateTime.plusMinutes(durationMinutes),
+              sourceEvent.getDescription(),
+              sourceEvent.getLocation(),
+              sourceEvent.isPublic()
       );
 
       // Add the event to the target calendar
@@ -150,10 +147,10 @@ public class RangeEventsCopyStrategy implements CopyStrategy {
       return "Failed to copy any events to calendar '" + targetCalendarName + "'.";
     } else if (successCount < eventsToCopy.size()) {
       return "Copied " + successCount + " out of " + eventsToCopy.size() + " events to calendar '"
-          + targetCalendarName + "'.";
+              + targetCalendarName + "'.";
     } else {
       return "Successfully copied all " + successCount + " events to calendar '" + targetCalendarName
-          + "'.";
+              + "'.";
     }
   }
 }

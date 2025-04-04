@@ -36,7 +36,7 @@ public interface EventCreator {
    * @throws InvalidEventException     if the event parameters are invalid
    */
   String executeCreation(ICalendar calendar)
-      throws ConflictingEventException, InvalidEventException;
+          throws ConflictingEventException, InvalidEventException;
 
   /**
    * Factory method to create the appropriate strategy based on event type. This method encapsulates

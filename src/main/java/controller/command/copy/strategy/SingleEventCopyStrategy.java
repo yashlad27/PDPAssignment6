@@ -42,8 +42,8 @@ public class SingleEventCopyStrategy implements CopyStrategy {
 
   @Override
   public String execute(String[] args)
-      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException
-      , InvalidEventException {
+          throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException
+          , InvalidEventException {
     if (args.length < 7) {
       throw new InvalidEventException("Insufficient arguments for copy event command");
     }
@@ -89,12 +89,12 @@ public class SingleEventCopyStrategy implements CopyStrategy {
    * Copies a single event from the active calendar to a target calendar.
    */
   private String copyEvent(String eventName, String dateTimeStr, String targetCalendarName,
-      String targetDateTimeStr) throws Exception {
+                           String targetDateTimeStr) throws Exception {
     LocalDateTime sourceDateTime = DateTimeUtil.parseDateTime(dateTimeStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
-          "Target calendar '" + targetCalendarName + "' does not exist");
+              "Target calendar '" + targetCalendarName + "' does not exist");
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
@@ -116,12 +116,12 @@ public class SingleEventCopyStrategy implements CopyStrategy {
 
     // Create new event using times in target calendar's timezone
     Event newEvent = new Event(
-        sourceEvent.getSubject(),
-        startInTargetTz,
-        endInTargetTz,
-        sourceEvent.getDescription(),
-        sourceEvent.getLocation(),
-        sourceEvent.isPublic()
+            sourceEvent.getSubject(),
+            startInTargetTz,
+            endInTargetTz,
+            sourceEvent.getDescription(),
+            sourceEvent.getLocation(),
+            sourceEvent.isPublic()
     );
 
     // Add the event to the target calendar

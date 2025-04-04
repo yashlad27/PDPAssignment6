@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -394,7 +393,7 @@ public class CalendarController {
    * Creates a new calendar with the specified name and timezone.
    * This method is specifically designed for the GUI interaction.
    *
-   * @param name The name of the calendar to create
+   * @param name     The name of the calendar to create
    * @param timezone The timezone for the calendar
    * @return true if the calendar was created successfully, false otherwise
    * @throws IllegalArgumentException if the name or timezone is invalid
@@ -406,7 +405,7 @@ public class CalendarController {
     if (timezone == null || timezone.trim().isEmpty()) {
       throw new IllegalArgumentException("Timezone cannot be empty");
     }
-    
+
     try {
       String command = "create calendar \"" + name + "\" " + timezone;
       String result = processCommand(command);
@@ -416,7 +415,7 @@ public class CalendarController {
       return false;
     }
   }
-  
+
   /**
    * Sets the selected calendar by name.
    * This method is specifically designed for the GUI interaction.
@@ -428,7 +427,7 @@ public class CalendarController {
     if (calendarName == null || calendarName.trim().isEmpty()) {
       return false;
     }
-    
+
     try {
       String command = "use calendar \"" + calendarName + "\"";
       String result = processCommand(command);
@@ -439,7 +438,7 @@ public class CalendarController {
       return false;
     }
   }
-  
+
   /**
    * Sets the selected calendar.
    * This method is specifically designed for the GUI interaction.
@@ -451,7 +450,7 @@ public class CalendarController {
     if (calendar == null) {
       return false;
     }
-    
+
     try {
       return setSelectedCalendarByName(calendar.toString());
     } catch (Exception e) {
@@ -459,7 +458,7 @@ public class CalendarController {
       return false;
     }
   }
-  
+
   /**
    * Updates the calendar list in the view.
    * This method is specifically designed for the GUI interaction.
@@ -472,7 +471,7 @@ public class CalendarController {
       view.displayError("Error updating calendar list: " + e.getMessage());
     }
   }
-  
+
   /**
    * Imports a calendar from a CSV file.
    * This method is specifically designed for the GUI interaction.
@@ -484,14 +483,14 @@ public class CalendarController {
     if (filePath == null || filePath.trim().isEmpty()) {
       return false;
     }
-    
+
     try {
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
       if (activeCalendar == null) {
         view.displayError("No active calendar to import to");
         return false;
       }
-      
+
       String command = "import " + filePath;
       String result = processCommand(command);
       return !result.startsWith("Error");
@@ -500,7 +499,7 @@ public class CalendarController {
       return false;
     }
   }
-  
+
   /**
    * Exports the active calendar to a CSV file.
    * This method is specifically designed for the GUI interaction.
@@ -512,14 +511,14 @@ public class CalendarController {
     if (filePath == null || filePath.trim().isEmpty()) {
       return false;
     }
-    
+
     try {
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
       if (activeCalendar == null) {
         view.displayError("No active calendar to export");
         return false;
       }
-      
+
       String command = "export " + filePath;
       String result = processCommand(command);
       return !result.startsWith("Error");
@@ -539,7 +538,7 @@ public class CalendarController {
     if (date == null) {
       return;
     }
-    
+
     try {
       // Get events for the selected date from the model
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
@@ -553,7 +552,7 @@ public class CalendarController {
       view.displayError("Error setting selected date: " + e.getMessage());
     }
   }
-  
+
   /**
    * Retrieves events for a specific date from the active calendar.
    * This method is specifically designed for the GUI interaction.
@@ -565,7 +564,7 @@ public class CalendarController {
     if (date == null) {
       return new ArrayList<>();
     }
-    
+
     try {
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
       if (activeCalendar != null) {
@@ -574,23 +573,23 @@ public class CalendarController {
     } catch (Exception e) {
       view.displayError("Error getting events for date: " + e.getMessage());
     }
-    
+
     return new ArrayList<>();
   }
-  
+
   /**
    * Retrieves events within a date range from the active calendar.
    * This method is specifically designed for the GUI interaction.
    *
    * @param startDate The start date of the range (inclusive)
-   * @param endDate The end date of the range (inclusive)
+   * @param endDate   The end date of the range (inclusive)
    * @return A list of events in the specified date range, or an empty list if there are none or an error occurs
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {
       return new ArrayList<>();
     }
-    
+
     try {
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
       if (activeCalendar != null) {
@@ -599,10 +598,10 @@ public class CalendarController {
     } catch (Exception e) {
       view.displayError("Error getting events in range: " + e.getMessage());
     }
-    
+
     return new ArrayList<>();
   }
-  
+
   /**
    * Checks the status of a specific date (busy or free).
    * This method is specifically designed for the GUI interaction.
@@ -614,7 +613,7 @@ public class CalendarController {
     if (date == null) {
       return false;
     }
-    
+
     try {
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
       if (activeCalendar != null) {
@@ -625,7 +624,7 @@ public class CalendarController {
     } catch (Exception e) {
       view.displayError("Error checking date status: " + e.getMessage());
     }
-    
+
     return false;
   }
 }

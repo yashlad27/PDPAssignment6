@@ -23,9 +23,6 @@ public class GUICalendarSelectorPanel extends JPanel {
 
   private final DefaultListModel<String> calendarListModel;
   private final JButton addCalendarButton;
-  private final JButton removeCalendarButton;
-  private final JButton selectCalendarButton;
-  private final JLabel timezoneLabel;
 
   /**
    * Interface for calendar selection events.
@@ -151,9 +148,9 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     // Add Calendar button
     addCalendarButton = new JButton("Add Calendar");
-    removeCalendarButton = new JButton("Remove Calendar");
-    selectCalendarButton = new JButton("Select Calendar");
-    timezoneLabel = new JLabel("Timezone: ");
+    JButton removeCalendarButton = new JButton("Remove Calendar");
+    JButton selectCalendarButton = new JButton("Select Calendar");
+    JLabel timezoneLabel = new JLabel("Timezone: ");
 
     // Scroll pane for calendar list
     JScrollPane scrollPane = new JScrollPane(calendarList);
@@ -347,14 +344,14 @@ public class GUICalendarSelectorPanel extends JPanel {
     // Button panel with improved layout
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
-    
+
     JButton addButton = new JButton("Add");
     JButton cancelButton = new JButton("Cancel");
 
     // Use ButtonStyler for consistent styling
     ButtonStyler.applyPrimaryStyle(addButton);
     ButtonStyler.applySecondaryStyle(cancelButton);
-    
+
     // Set preferred size for buttons to ensure visibility
     Dimension buttonSize = new Dimension(100, 30);
     addButton.setPreferredSize(buttonSize);

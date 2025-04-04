@@ -38,7 +38,6 @@ public class GUIEventPanel extends JPanel {
   private final JSpinner untilDateSpinner;
   private final JButton saveButton;
   private final JButton cancelButton;
-  private LocalDate currentDate;
   private EventPanelListener listener;
   private final Map<JComponent, JLabel> errorLabels;
   private final JPanel recurringPanel;
@@ -190,9 +189,17 @@ public class GUIEventPanel extends JPanel {
   private void setupListeners() {
     // Add document listeners to text fields for real-time validation
     subjectField.getDocument().addDocumentListener(new DocumentListener() {
-      public void changedUpdate(DocumentEvent e) { checkSubject(); }
-      public void removeUpdate(DocumentEvent e) { checkSubject(); }
-      public void insertUpdate(DocumentEvent e) { checkSubject(); }
+      public void changedUpdate(DocumentEvent e) {
+        checkSubject();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        checkSubject();
+      }
+
+      public void insertUpdate(DocumentEvent e) {
+        checkSubject();
+      }
 
       private void checkSubject() {
         System.out.println("[DEBUG] Subject field changed: " + subjectField.getText());
@@ -200,9 +207,17 @@ public class GUIEventPanel extends JPanel {
     });
 
     locationField.getDocument().addDocumentListener(new DocumentListener() {
-      public void changedUpdate(DocumentEvent e) { checkLocation(); }
-      public void removeUpdate(DocumentEvent e) { checkLocation(); }
-      public void insertUpdate(DocumentEvent e) { checkLocation(); }
+      public void changedUpdate(DocumentEvent e) {
+        checkLocation();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        checkLocation();
+      }
+
+      public void insertUpdate(DocumentEvent e) {
+        checkLocation();
+      }
 
       private void checkLocation() {
         System.out.println("[DEBUG] Location field changed: " + locationField.getText());
@@ -210,9 +225,17 @@ public class GUIEventPanel extends JPanel {
     });
 
     descriptionArea.getDocument().addDocumentListener(new DocumentListener() {
-      public void changedUpdate(DocumentEvent e) { checkDescription(); }
-      public void removeUpdate(DocumentEvent e) { checkDescription(); }
-      public void insertUpdate(DocumentEvent e) { checkDescription(); }
+      public void changedUpdate(DocumentEvent e) {
+        checkDescription();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        checkDescription();
+      }
+
+      public void insertUpdate(DocumentEvent e) {
+        checkDescription();
+      }
 
       private void checkDescription() {
         System.out.println("[DEBUG] Description changed: " + descriptionArea.getText());
@@ -240,14 +263,14 @@ public class GUIEventPanel extends JPanel {
       boolean isRecurring = recurringCheckBox.isSelected();
       System.out.println("[DEBUG] Recurring checkbox changed: " + isRecurring);
       recurringOptionsPanel.setVisible(isRecurring);
-      
+
       // Log weekday selections if recurring is enabled
       if (isRecurring) {
-        weekdayCheckboxes.forEach(cb -> 
-          cb.addActionListener(we -> System.out.println("[DEBUG] Weekday changed - " + cb.getText() + ": " + cb.isSelected()))
+        weekdayCheckboxes.forEach(cb ->
+                cb.addActionListener(we -> System.out.println("[DEBUG] Weekday changed - " + cb.getText() + ": " + cb.isSelected()))
         );
       }
-      
+
       revalidate();
       repaint();
     });
@@ -308,7 +331,7 @@ public class GUIEventPanel extends JPanel {
 
           // Convert to LocalDateTime in system timezone
           String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-          
+
           LocalDateTime startDateTime = selectedDate.toInstant()
                   .atZone(ZoneId.of(systemTimezone))
                   .toLocalDateTime()
@@ -341,41 +364,41 @@ public class GUIEventPanel extends JPanel {
             System.out.println("[DEBUG] Recurring details - Weekdays: " + weekdays + ", Occurrences: " + occurrences + ", Until: " + untilDate);
 
             eventArgs = new String[]{
-                "series_from_date",
-                "create",
-                subject,
-                startDateTime.toString(),
-                String.format("%s,%s,%s,%s,%d,%s,%s",
+                    "series_from_date",
+                    "create",
                     subject,
-                    startDateTime,
-                    endDateTime,
-                    location,
-                    occurrences,
-                    weekdays,
-                    untilDate)
+                    startDateTime.toString(),
+                    String.format("%s,%s,%s,%s,%d,%s,%s",
+                            subject,
+                            startDateTime,
+                            endDateTime,
+                            location,
+                            occurrences,
+                            weekdays,
+                            untilDate)
             };
           } else {
             eventArgs = new String[]{
-                "single",
-                "create",
-                subject,
-                startDateTime.toString(),
-                String.format("%s,%s,%s,%s,%s",
+                    "single",
+                    "create",
                     subject,
-                    startDateTime,
-                    endDateTime,
-                    location,
-                    description)
+                    startDateTime.toString(),
+                    String.format("%s,%s,%s,%s,%s",
+                            subject,
+                            startDateTime,
+                            endDateTime,
+                            location,
+                            description)
             };
           }
           System.out.println("[DEBUG] Calling onEventSaved with args: " + String.join(", ", eventArgs));
           listener.onEventSaved(eventArgs, isRecurring);
           JOptionPane.showMessageDialog(this,
-              String.format("Event '%s' created successfully at %s",
-                  subject,
-                  location.isEmpty() ? "no location" : location),
-              "Success",
-              JOptionPane.INFORMATION_MESSAGE);
+                  String.format("Event '%s' created successfully at %s",
+                          subject,
+                          location.isEmpty() ? "no location" : location),
+                  "Success",
+                  JOptionPane.INFORMATION_MESSAGE);
           System.out.println("[DEBUG] Event saved, clearing form");
           clearForm();
         } else {
@@ -421,7 +444,7 @@ public class GUIEventPanel extends JPanel {
 
     // Convert to LocalDateTime in system timezone
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    
+
     LocalDateTime startDateTime = selectedDate.toInstant()
             .atZone(ZoneId.of(systemTimezone))
             .toLocalDateTime()
@@ -527,7 +550,6 @@ public class GUIEventPanel extends JPanel {
    * @param date the date to set
    */
   public void setDate(LocalDate date) {
-    this.currentDate = date;
     if (date != null) {
       dateSpinner.setValue(Date.from(date.atStartOfDay().toInstant(ZoneOffset.UTC)));
     }
@@ -730,39 +752,39 @@ public class GUIEventPanel extends JPanel {
     // Time pickers - using a dedicated panel for better layout
     JPanel timePanel = new JPanel(new GridLayout(2, 1, 0, 5));
     timePanel.setOpaque(false);
-    
+
     // Start time row
     JPanel startTimeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     startTimeRow.setOpaque(false);
     JLabel startTimeLabel = new JLabel("Start Time:");
     startTimeLabel.setPreferredSize(new Dimension(80, startTimeLabel.getPreferredSize().height));
     startTimeRow.add(startTimeLabel);
-    
+
     // Set fixed width for spinner
     startTimeSpinner.setPreferredSize(new Dimension(100, startTimeSpinner.getPreferredSize().height));
     startTimeRow.add(startTimeSpinner);
-    
+
     // End time row
     JPanel endTimeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     endTimeRow.setOpaque(false);
     JLabel endTimeLabel = new JLabel("End Time:");
     endTimeLabel.setPreferredSize(new Dimension(80, endTimeLabel.getPreferredSize().height));
     endTimeRow.add(endTimeLabel);
-    
+
     // Set fixed width for spinner
     endTimeSpinner.setPreferredSize(new Dimension(100, endTimeSpinner.getPreferredSize().height));
     endTimeRow.add(endTimeSpinner);
-    
+
     // Add to time panel
     timePanel.add(startTimeRow);
     timePanel.add(endTimeRow);
-    
+
     // Add time panel to form
     gbc.gridx = 0;
     gbc.gridy = 5;
     gbc.gridwidth = 2;
     formPanel.add(timePanel, gbc);
-    
+
     // Reset gridwidth for subsequent components
     gbc.gridwidth = 1;
 
@@ -831,7 +853,7 @@ public class GUIEventPanel extends JPanel {
     // Style buttons using ButtonStyler for consistent styling
     ButtonStyler.applyPrimaryStyle(saveButton);
     ButtonStyler.applySecondaryStyle(cancelButton);
-    
+
     // Set consistent button size
     Dimension buttonSize = new Dimension(100, 32);
     saveButton.setPreferredSize(buttonSize);

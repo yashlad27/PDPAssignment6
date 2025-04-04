@@ -2,7 +2,6 @@ package controller.command.calendar;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 import controller.ICommandFactory;
 import controller.command.ICommand;

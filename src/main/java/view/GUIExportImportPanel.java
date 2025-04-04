@@ -46,7 +46,7 @@ public class GUIExportImportPanel extends JPanel {
   public GUIExportImportPanel() {
     setBorder(BorderFactory.createTitledBorder("Import/Export"));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    
+
     // Set alignment for centering components
     setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -58,7 +58,7 @@ public class GUIExportImportPanel extends JPanel {
 
     JLabel importLabel = new JLabel("Import from CSV");
     importLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-    
+
     importButton = new JButton("Choose File...");
     ButtonStyler.applyPrimaryStyle(importButton);
     importButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -76,7 +76,7 @@ public class GUIExportImportPanel extends JPanel {
 
     JLabel exportLabel = new JLabel("Export to CSV");
     exportLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-    
+
     exportButton = new JButton("Export Calendar");
     ButtonStyler.applyPrimaryStyle(exportButton);
     exportButton.setAlignmentX(Component.CENTER_ALIGNMENT);

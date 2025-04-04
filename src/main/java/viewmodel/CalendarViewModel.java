@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import controller.command.edit.strategy.EventEditor;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;

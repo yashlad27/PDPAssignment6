@@ -5,11 +5,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.DuplicateCalendarException;
-import model.exceptions.ConflictingEventException;
 import model.event.Event;
 import model.event.RecurringEvent;
+import model.exceptions.CalendarNotFoundException;
+import model.exceptions.ConflictingEventException;
+import model.exceptions.DuplicateCalendarException;
 
 /**
  * Manages registration and retrieval of calendars by name.
@@ -221,7 +221,7 @@ public class CalendarRegistry {
 
     Calendar calendar = calendars.get(oldName);
     Calendar newCalendar = new Calendar(newName, calendar.getTimeZone().getID());
-    
+
     // Copy all events from the old calendar to the new one
     for (Event event : calendar.getAllEvents()) {
       try {
@@ -231,7 +231,7 @@ public class CalendarRegistry {
         throw new RuntimeException("Failed to copy event: " + e.getMessage());
       }
     }
-    
+
     // Copy all recurring events from the old calendar to the new one
     for (RecurringEvent event : calendar.getAllRecurringEvents()) {
       try {
@@ -241,10 +241,10 @@ public class CalendarRegistry {
         throw new RuntimeException("Failed to copy recurring event: " + e.getMessage());
       }
     }
-    
+
     calendars.remove(oldName);
     calendars.put(newName, newCalendar);
-    
+
     if (oldName.equals(activeCalendarName)) {
       activeCalendarName = newName;
     }

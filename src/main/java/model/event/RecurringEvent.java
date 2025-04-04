@@ -1,13 +1,11 @@
 package model.event;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -26,7 +24,7 @@ public class RecurringEvent extends Event {
   /**
    * Constructs a new recurring event.
    *
-   * @param subject     the subject of the event
+   * @param subject       the subject of the event
    * @param startDateTime the start date and time
    * @param endDateTime   the end date and time
    * @param description   the event description
@@ -37,8 +35,9 @@ public class RecurringEvent extends Event {
    * @param untilDate     the date until which to repeat
    */
   public RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-      String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
-      int occurrences, LocalDate untilDate) {
+                        String description, String location, boolean isPublic,
+                        Set<DayOfWeek> repeatDays,
+                        int occurrences, LocalDate untilDate) {
     super(subject, startDateTime, endDateTime, description, location, isPublic);
     this.repeatDays = repeatDays;
     this.occurrences = occurrences;
@@ -248,19 +247,19 @@ public class RecurringEvent extends Event {
   private Event createOccurrence(LocalDateTime date) {
     // Create occurrence using UTC times directly
     LocalDateTime startTime = date.withHour(getStartDateTime().getHour())
-                                 .withMinute(getStartDateTime().getMinute())
-                                 .withSecond(getStartDateTime().getSecond());
-    
+            .withMinute(getStartDateTime().getMinute())
+            .withSecond(getStartDateTime().getSecond());
+
     Duration duration = Duration.between(getStartDateTime(), getEndDateTime());
     LocalDateTime endTime = startTime.plus(duration);
 
     return new Event(
-        getSubject(),
-        startTime,
-        endTime,
-        getDescription(),
-        getLocation(),
-        isPublic()
+            getSubject(),
+            startTime,
+            endTime,
+            getDescription(),
+            getLocation(),
+            isPublic()
     );
   }
 

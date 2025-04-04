@@ -1,6 +1,10 @@
 package model.export;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -73,7 +77,7 @@ public class CSVExporter implements IDataExporter {
    * Exports events to a CSV file.
    *
    * @param events the list of events to export
-   * @param file the file to export to
+   * @param file   the file to export to
    * @throws IOException if there is an error writing to the file
    */
   public void exportEvents(List<Event> events, File file) throws IOException {

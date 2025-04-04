@@ -55,7 +55,7 @@ public interface ICalendar {
    * @param recurringEvent The recurring event to add, must not be null
    * @param autoDecline    If true, throws exception on conflict; if false, returns false
    * @return true if the event was added successfully, false if there was a conflict and autoDecline
-   *            is false
+   * is false
    */
   boolean addRecurringEvent(RecurringEvent recurringEvent, boolean autoDecline)
           throws ConflictingEventException;
@@ -240,7 +240,7 @@ public interface ICalendar {
    * @param filePath the path where the file should be created
    * @param exporter the exporter to use for formatting the data
    * @return the path of the created file
-   * @throws IOException if there are issues writing to the file
+   * @throws IOException              if there are issues writing to the file
    * @throws IllegalArgumentException if filePath is null or empty
    */
   String exportData(String filePath, IDataExporter exporter) throws IOException;
