@@ -219,31 +219,14 @@ public class GUIController {
           view.displayError("Please select a valid date");
           return;
         }
-
-        // Use proper controller methods to retrieve and update events
-        List<Event> events = getEventsOnDate(date);
-        view.updateEventList(events);
-        view.getCalendarPanel().updateEventList(date);
+        System.out.println("[DEBUG] Events list requested for date: " + date);
+        listEvents(date);
       }
 
       @Override
       public void onDateRangeSelected(LocalDate startDate, LocalDate endDate) {
-        try {
-          if (startDate == null || endDate == null) {
-            view.displayError("Please select both start and end dates");
-            return;
-          }
-
-          if (startDate.isAfter(endDate)) {
-            view.displayError("Start date must be before or equal to end date");
-            return;
-          }
-
-          List<Event> events = getEventsInRange(startDate, endDate);
-          view.getCalendarPanel().updateEventListRange(startDate, endDate, events);
-        } catch (Exception e) {
-          view.displayError("Failed to get events in range: " + e.getMessage());
-        }
+        System.out.println("[DEBUG] Date range selected: " + startDate + " to " + endDate);
+        showRange(startDate, endDate);
       }
 
       @Override
@@ -255,7 +238,7 @@ public class GUIController {
       @Override
       public void onCopyEvent(Event event) {
         System.out.println("[DEBUG] Copy event requested: " + event.getSubject());
-        copyEvent(event);
+        showCopyEventDialog(event);
       }
 
       @Override
@@ -274,12 +257,7 @@ public class GUIController {
             view.displayError("Please select a calendar first");
             return;
           }
-
-          if (args == null || args.length < 2) {
-            view.displayError("Invalid event data");
-            return;
-          }
-
+          
           String result = executeCommand("create", args);
           if (result.startsWith("Error")) {
             view.displayError(result);
@@ -291,7 +269,7 @@ public class GUIController {
           view.displayError("Failed to save event: " + e.getMessage());
         }
       }
-
+      
       @Override
       public void onEventCancelled() {
         view.getEventPanel().clearForm();
@@ -319,6 +297,17 @@ public class GUIController {
           }
         } catch (Exception e) {
           view.displayError("Failed to update event: " + e.getMessage());
+        }
+      }
+      
+      @Override
+      public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+        // Get the current event from the event panel
+        Event currentEvent = view.getEventPanel().getCurrentEvent();
+        if (currentEvent != null) {
+          copyEvent(currentEvent, targetCalendarName, targetStartDateTime, targetEndDateTime);
+        } else {
+          view.showErrorMessage("No event selected to copy");
         }
       }
     });
@@ -425,6 +414,69 @@ public class GUIController {
       view.getCalendarPanel().updateStatus(isBusy);
     } catch (Exception e) {
       view.displayError("Failed to update status: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Updates the events for the specified date.
+   *
+   * @param date the date to update events for
+   */
+  private void updateEvents(LocalDate date) {
+    if (date == null) {
+      return;
+    }
+
+    try {
+      List<Event> events = getEventsOnDate(date);
+      view.updateEventList(events);
+      view.getCalendarPanel().updateEventList(date);
+    } catch (Exception e) {
+      view.displayError("Failed to update events: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Lists events for the specified date.
+   *
+   * @param date the date to list events for
+   */
+  private void listEvents(LocalDate date) {
+    if (date == null) {
+      return;
+    }
+
+    try {
+      List<Event> events = getEventsOnDate(date);
+      view.updateEventList(events);
+      view.getCalendarPanel().updateEventList(date);
+    } catch (Exception e) {
+      view.displayError("Failed to list events: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Shows events in the specified date range.
+   *
+   * @param startDate the start date of the range
+   * @param endDate the end date of the range
+   */
+  private void showRange(LocalDate startDate, LocalDate endDate) {
+    try {
+      if (startDate == null || endDate == null) {
+        view.displayError("Please select both start and end dates");
+        return;
+      }
+
+      if (startDate.isAfter(endDate)) {
+        view.displayError("Start date must be before or equal to end date");
+        return;
+      }
+
+      List<Event> events = getEventsInRange(startDate, endDate);
+      view.getCalendarPanel().updateEventListRange(startDate, endDate, events);
+    } catch (Exception e) {
+      view.displayError("Failed to get events in range: " + e.getMessage());
     }
   }
 
@@ -573,6 +625,7 @@ public class GUIController {
    * @param event the event to edit
    */
   public void editEvent(Event event) {
+    System.out.println("[DEBUG] GUIController.editEvent called for: " + event.getSubject());
     System.out.println("[DEBUG] Editing event: " + event.getSubject());
 
     // Show the event edit dialog
@@ -598,12 +651,13 @@ public class GUIController {
   }
   
   /**
-   * Handles copying an event.
+   * Shows the copy event dialog for the given event.
    *
    * @param event the event to copy
    */
-  public void copyEvent(Event event) {
-    System.out.println("[DEBUG] Copying event: " + event.getSubject());
+  public void showCopyEventDialog(Event event) {
+    System.out.println("[DEBUG] GUIController.showCopyEventDialog called for: " + event.getSubject());
+    System.out.println("[DEBUG] Showing copy dialog for event: " + event.getSubject());
     
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
@@ -634,44 +688,73 @@ public class GUIController {
         LocalDateTime targetDateTime = copyDialog.getTargetDateTime();
         LocalDateTime targetEndDateTime = copyDialog.getTargetEndDateTime();
         
-        // Find the target calendar by name
-        ICalendar targetCalendar = null;
-        for (ICalendar calendar : availableCalendars) {
-          if (((model.calendar.Calendar) calendar).getName().equals(targetCalendarName)) {
-            targetCalendar = calendar;
-            break;
-          }
-        }
+        // Call the copyEvent method with the parameters from the dialog
+        copyEvent(event, targetCalendarName, targetDateTime, targetEndDateTime);
+      }
+    } catch (Exception e) {
+      view.showErrorMessage("Error showing copy dialog: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+  
+  /**
+   * Handles copying an event.
+   *
+   * @param event the event to copy
+   * @param targetCalendarName the name of the target calendar
+   * @param targetStartDateTime the target start date/time
+   * @param targetEndDateTime the target end date/time
+   * @return true if the copy was successful, false otherwise
+   */
+  public boolean copyEvent(Event event, String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+    System.out.println("[DEBUG] Copying event: " + event.getSubject() + " to calendar: " + targetCalendarName);
+    
+    if (currentCalendar == null) {
+      view.showErrorMessage("Please select a calendar first");
+      return false;
+    }
+    
+    try {
+      // Find the target calendar by name
+      ICalendar targetCalendar = null;
+      try {
+        targetCalendar = calendarManager.getCalendar(targetCalendarName);
+      } catch (Exception e) {
+        view.showErrorMessage("Target calendar not found: " + e.getMessage());
+        return false;
+      }
+      
+      if (targetCalendar == null) {
+        view.showErrorMessage("Target calendar not found");
+        return false;
+      }
         
-        if (targetCalendar == null) {
-          view.showErrorMessage("Target calendar not found");
-          return;
-        }
-        
-        // Create a new event with the same details but at the new date/time
-        Event copiedEvent = new Event(
-            event.getSubject(), // Keep the original subject
-            targetDateTime,
-            targetEndDateTime,
-            event.getDescription(),
-            event.getLocation(),
-            event.isPublic()
-        );
-        
-        // Execute the copy command
-        DirectCopyEventCommand copyCommand = new DirectCopyEventCommand(targetCalendar, copiedEvent);
-        boolean success = copyCommand.execute();
-        
-        if (success) {
-          view.displayMessage("Event copied successfully to " + targetCalendarName);
-          view.refreshView();
-        } else {
-          view.showErrorMessage("Failed to copy event");
-        }
+      // Create a new event with the same details but at the new date/time
+      Event copiedEvent = new Event(
+          event.getSubject(), // Keep the original subject
+          targetStartDateTime,
+          targetEndDateTime,
+          event.getDescription(),
+          event.getLocation(),
+          event.isPublic()
+      );
+      
+      // Execute the copy command
+      DirectCopyEventCommand copyCommand = new DirectCopyEventCommand(targetCalendar, copiedEvent);
+      boolean success = copyCommand.execute();
+      
+      if (success) {
+        view.displayMessage("Event copied successfully to " + targetCalendarName);
+        view.refreshView();
+        return true;
+      } else {
+        view.showErrorMessage("Failed to copy event");
+        return false;
       }
     } catch (Exception e) {
       view.showErrorMessage("Error copying event: " + e.getMessage());
       e.printStackTrace();
+      return false;
     }
   }
   
@@ -1036,13 +1119,5 @@ public class GUIController {
     }
   }
 
-  private void updateEvents(LocalDate date) {
-    try {
-      List<Event> events = getEventsOnDate(date);
-      view.getCalendarPanel().updateEventList(date);
-      view.getCalendarPanel().updateEvents(events);
-    } catch (Exception e) {
-      view.displayError("Failed to update events: " + e.getMessage());
-    }
-  }
-} 
+}
+ 

@@ -5,6 +5,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.swing.*;
@@ -185,6 +186,37 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         System.out.println("[DEBUG] Event creation cancelled");
         eventPanel.clearForm();
       }
+      
+      @Override
+      public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+        System.out.println("[DEBUG] Attempting to copy event to calendar: " + targetCalendarName);
+        
+        try {
+          // Get the current event from the event panel
+          Event currentEvent = eventPanel.getCurrentEvent();
+          if (currentEvent == null) {
+            showErrorMessage("No event selected to copy");
+            return;
+          }
+          
+          // Call the controller to handle the copy operation
+          if (guiController != null) {
+            boolean success = guiController.copyEvent(currentEvent, targetCalendarName, targetStartDateTime, targetEndDateTime);
+            if (success) {
+              showInfoMessage("Event copied successfully");
+              eventPanel.clearForm();
+              refreshView(); // Refresh to show the copied event
+            } else {
+              showErrorMessage("Failed to copy event");
+            }
+          } else {
+            showErrorMessage("Controller not initialized");
+          }
+        } catch (Exception e) {
+          System.out.println("[DEBUG] Event copy error: " + e.getMessage());
+          showErrorMessage("Error copying event: " + e.getMessage());
+        }
+      }
 
       @Override
       public void onEventUpdated(String[] args, boolean isRecurring) {
@@ -302,7 +334,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       public void onCopyEvent(Event event) {
         System.out.println("[DEBUG] Copy event requested in view: " + event.getSubject());
         if (guiController != null) {
-          guiController.copyEvent(event);
+          guiController.showCopyEventDialog(event);
         }
       }
 
@@ -605,6 +637,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
 
   @Override
   public void showEventDetails(Event event) {
+    System.out.println("[DEBUG] GUIView.showEventDetails called for event: " + (event != null ? event.getSubject() : "null"));
     eventPanel.displayEvent(event);
   }
 

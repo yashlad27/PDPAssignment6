@@ -671,13 +671,17 @@ public class GUICalendarPanel extends JPanel {
    * @param date the date to show events for
    */
   public void updateEventList(LocalDate date) {
+    System.out.println("[DEBUG] Updating event list for date: " + date);
     if (selectedCalendar == null) {
+      System.out.println("[DEBUG] No calendar selected");
       eventListArea.setText("No calendar selected");
       return;
     }
 
     List<Event> events = eventsByDate.getOrDefault(date, new ArrayList<>());
+    System.out.println("[DEBUG] Found " + events.size() + " events for date " + date);
     if (events.isEmpty()) {
+      System.out.println("[DEBUG] No events for date " + date);
       eventListArea.setText("No events for " + date);
       return;
     }
@@ -749,25 +753,31 @@ public class GUICalendarPanel extends JPanel {
    * @param events the list of events
    */
   private void addEventListeners(List<Event> events) {
+    System.out.println("[DEBUG] Adding event listeners for " + events.size() + " events");
     eventListArea.addHyperlinkListener(e -> {
       if (e.getEventType() == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
         String desc = e.getDescription();
+        System.out.println("[DEBUG] Hyperlink activated: " + desc);
         if (desc != null) {
           String[] parts = desc.split(":", 2);
           if (parts.length == 2) {
             String action = parts[0];
             String eventId = parts[1];
+            System.out.println("[DEBUG] Action: " + action + ", EventID: " + eventId);
 
-            
             // Find the event that matches this ID
             for (Event event : events) {
               String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
               if (currentEventId.equals(eventId)) {
+                System.out.println("[DEBUG] Found matching event: " + event.getSubject());
                 if ("edit".equals(action) && listener != null) {
+                  System.out.println("[DEBUG] Calling onEditEvent");
                   listener.onEditEvent(event);
                 } else if ("copy".equals(action) && listener != null) {
+                  System.out.println("[DEBUG] Calling onCopyEvent");
                   listener.onCopyEvent(event);
                 } else if ("print".equals(action) && listener != null) {
+                  System.out.println("[DEBUG] Calling onPrintEvent");
                   listener.onPrintEvent(event);
                 }
                 break;
