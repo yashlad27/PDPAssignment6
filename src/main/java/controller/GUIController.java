@@ -4,11 +4,15 @@ import java.io.File;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
+import java.text.SimpleDateFormat;
 
 import controller.command.copy.DirectCopyEventCommand;
 import controller.command.edit.strategy.EventEditor;
@@ -23,10 +27,11 @@ import model.exceptions.InvalidEventException;
 import model.export.CSVExporter;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
-import view.EventCopyDialog;
+
 import view.GUICalendarPanel;
 import view.GUICalendarSelectorPanel;
 import view.GUIEventPanel;
+import view.EventFormData;
 import view.GUIExportImportPanel;
 import view.GUIView;
 import viewmodel.CalendarViewModel;
@@ -246,18 +251,28 @@ public class GUIController {
         System.out.println("[DEBUG] Print event requested: " + event.getSubject());
         printEvent(event);
       }
+      
+
     });
 
-    // Event creation
+    // Event panel events
     view.getEventPanel().addEventPanelListener(new GUIEventPanel.EventPanelListener() {
       @Override
-      public void onEventSaved(String[] args, boolean isRecurring) {
+      public void onEventSaved(EventFormData formData) {
         try {
           if (currentCalendar == null) {
             view.displayError("Please select a calendar first");
             return;
           }
+
+          // Convert EventFormData to the format expected by the command executor
+          String[] args = convertFormDataToCommandArgs(formData, "create");
           
+          if (args == null || args.length < 2) {
+            view.displayError("Invalid event data");
+            return;
+          }
+
           String result = executeCommand("create", args);
           if (result.startsWith("Error")) {
             view.displayError(result);
@@ -269,20 +284,23 @@ public class GUIController {
           view.displayError("Failed to save event: " + e.getMessage());
         }
       }
-      
+
       @Override
       public void onEventCancelled() {
         view.getEventPanel().clearForm();
       }
 
       @Override
-      public void onEventUpdated(String[] args, boolean isRecurring) {
+      public void onEventUpdated(EventFormData formData) {
         try {
           if (currentCalendar == null) {
             view.displayError("Please select a calendar first");
             return;
           }
 
+          // Convert EventFormData to the format expected by the command executor
+          String[] args = convertFormDataToCommandArgs(formData, "edit");
+          
           if (args == null || args.length < 2) {
             view.displayError("Invalid event data");
             return;
@@ -390,7 +408,7 @@ public class GUIController {
             CSVExporter exporter = new CSVExporter();
             exporter.exportEvents(currentCalendar.getAllEvents(), file);
           } else {
-            view.showErrorMessage("Please select a calendar first");
+            view.displayError("Please select a calendar first");
           }
         } catch (Exception e) {
           view.showErrorMessage("Failed to export calendar data: " + e.getMessage());
@@ -660,43 +678,108 @@ public class GUIController {
     System.out.println("[DEBUG] Showing copy dialog for event: " + event.getSubject());
     
     if (currentCalendar == null) {
-      view.showErrorMessage("Please select a calendar first");
+      view.displayError("Please select a calendar first");
       return;
     }
     
     try {
-      // Get all available calendars for the copy dialog
-      List<ICalendar> availableCalendars = new ArrayList<>();
-      Set<String> calendarNames = calendarManager.getCalendarRegistry().getCalendarNames();
+      // Create a simple dialog to get target calendar
+      String[] calendarNames = calendarManager.getCalendarRegistry().getCalendarNames().toArray(new String[0]);
+      String targetCalendarName = (String) JOptionPane.showInputDialog(
+          null,
+          "Select target calendar:",
+          "Copy Event",
+          JOptionPane.QUESTION_MESSAGE,
+          null,
+          calendarNames,
+          calendarNames.length > 0 ? calendarNames[0] : null);
       
-      // Convert calendar names to calendar objects
-      for (String name : calendarNames) {
-        try {
-          availableCalendars.add(calendarManager.getCalendar(name));
-        } catch (Exception e) {
-          // Skip calendars that can't be retrieved
+      if (targetCalendarName != null) {
+        // Get the target calendar
+        ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
+        
+        // Execute the copy command
+        DirectCopyEventCommand copyCommand = new DirectCopyEventCommand(targetCalendar, event);
+        
+        boolean success = copyCommand.execute();
+        if (success) {
+          JOptionPane.showMessageDialog(null, "Event copied successfully");
+          view.refreshView();
+        } else {
+          JOptionPane.showMessageDialog(null, "Failed to copy event. There may be a conflict.");
         }
       }
-      
-      // Show the copy dialog
-      EventCopyDialog copyDialog = new EventCopyDialog(view, event, availableCalendars);
-      boolean confirmed = copyDialog.showDialog();
-      
-      if (confirmed) {
-        // Get the target calendar name and date/time from the dialog
-        String targetCalendarName = copyDialog.getTargetCalendarName();
-        LocalDateTime targetDateTime = copyDialog.getTargetDateTime();
-        LocalDateTime targetEndDateTime = copyDialog.getTargetEndDateTime();
-        
-        // Call the copyEvent method with the parameters from the dialog
-        copyEvent(event, targetCalendarName, targetDateTime, targetEndDateTime);
-      }
     } catch (Exception e) {
-      view.showErrorMessage("Error showing copy dialog: " + e.getMessage());
+      System.out.println("[ERROR] Error showing copy dialog: " + e.getMessage());
       e.printStackTrace();
+      JOptionPane.showMessageDialog(null, "Error copying event: " + e.getMessage());
     }
   }
-  
+
+  /**
+   * Handles a new event being saved from the event panel.
+   *
+   * @param formData the form data collected from the event panel
+   */
+  public void onEventSaved(EventFormData formData) {
+    try {
+      if (currentCalendar == null) {
+        view.displayError("Please select a calendar first");
+        return;
+      }
+
+      // Convert EventFormData to the format expected by the command executor
+      String[] args = convertFormDataToCommandArgs(formData, "create");
+      
+      if (args == null || args.length < 2) {
+        view.displayError("Invalid event data");
+        return;
+      }
+
+      String result = executeCommand("create", args);
+      if (result.startsWith("Error")) {
+        view.displayError(result);
+      } else {
+        view.displayMessage(result);
+        view.refreshView();
+      }
+    } catch (Exception e) {
+      view.displayError("Failed to save event: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Handles an event being updated from the event panel.
+   *
+   * @param formData the form data collected from the event panel
+   */
+  public void onEventUpdated(EventFormData formData) {
+    try {
+      if (currentCalendar == null) {
+        view.displayError("Please select a calendar first");
+        return;
+      }
+
+      // Convert EventFormData to the format expected by the command executor
+      String[] args = convertFormDataToCommandArgs(formData, "edit");
+      
+      if (args == null || args.length < 2) {
+        view.displayError("Invalid event data");
+        return;
+      }
+
+      String result = executeCommand("edit", args);
+      if (result.startsWith("Error")) {
+        view.displayError(result);
+      } else {
+        view.displayMessage(result);
+        view.refreshView();
+      }
+    } catch (Exception e) {
+      view.displayError("Failed to update event: " + e.getMessage());
+    }
+  }
+
   /**
    * Handles copying an event.
    *
@@ -710,7 +793,7 @@ public class GUIController {
     System.out.println("[DEBUG] Copying event: " + event.getSubject() + " to calendar: " + targetCalendarName);
     
     if (currentCalendar == null) {
-      view.showErrorMessage("Please select a calendar first");
+      view.displayError("Please select a calendar first");
       return false;
     }
     
@@ -767,7 +850,7 @@ public class GUIController {
     System.out.println("[DEBUG] Printing event: " + event.getSubject());
     
     if (currentCalendar == null) {
-      view.showErrorMessage("Please select a calendar first");
+      view.displayError("Please select a calendar first");
       return;
     }
     
@@ -865,6 +948,94 @@ public class GUIController {
   }
   
   /**
+   * Converts EventFormData to command arguments array.
+   * 
+   * @param formData The form data to convert
+   * @param commandType The type of command (create, edit, etc.)
+   * @return String array of command arguments
+   */
+  private String[] convertFormDataToCommandArgs(EventFormData formData, String commandType) {
+    if (formData == null) {
+      return null;
+    }
+    
+    List<String> args = new ArrayList<>();
+    
+    // First argument is always the command type
+    args.add(commandType);
+    
+    // Add calendar name if we have a current calendar
+    if (currentCalendar != null) {
+      args.add(currentCalendar.toString()); // Using toString() instead of getName()
+    } else {
+      return null; // Cannot proceed without a calendar
+    }
+    
+    // Add subject
+    args.add(formData.getSubject());
+    
+    // Add start date/time
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    
+    args.add(dateFormat.format(formData.getSelectedDate()));
+    args.add(timeFormat.format(formData.getStartTime()));
+    args.add(timeFormat.format(formData.getEndTime()));
+    
+    // Add location if present
+    if (formData.getLocation() != null && !formData.getLocation().isEmpty()) {
+      args.add("-l");
+      args.add(formData.getLocation());
+    }
+    
+    // Add description if present
+    if (formData.getDescription() != null && !formData.getDescription().isEmpty()) {
+      args.add("-d");
+      args.add(formData.getDescription());
+    }
+    
+    // Add all-day flag if needed
+    if (formData.isAllDay()) {
+      args.add("-a");
+    }
+    
+    // Add recurring event options if needed
+    if (formData.isRecurring() && formData.getWeekdays() != null && !formData.getWeekdays().isEmpty()) {
+      args.add("-r");
+      
+      // Convert weekdays to string format
+      StringBuilder weekdaysStr = new StringBuilder();
+      for (DayOfWeek day : formData.getWeekdays()) {
+        weekdaysStr.append(day.toString().substring(0, 3).toLowerCase()).append(",");
+      }
+      // Remove trailing comma
+      if (weekdaysStr.length() > 0) {
+        weekdaysStr.deleteCharAt(weekdaysStr.length() - 1);
+      }
+      
+      args.add(weekdaysStr.toString());
+      
+      // Add end date if present
+      if (formData.getUntilDate() != null) {
+        args.add("-e");
+        args.add(formData.getUntilDate().toString());
+      }
+    }
+    
+    // Add private flag if needed
+    if (formData.isPrivateEvent()) {
+      args.add("-p");
+    }
+    
+    // Add auto-decline flag if needed
+    if (formData.isAutoDecline()) {
+      args.add("-ad");
+    }
+    
+    return args.toArray(new String[0]);
+  }
+  
+  /**
    * Handles the updating of an event after it has been edited.
    *
    * @param event the updated event
@@ -873,7 +1044,7 @@ public class GUIController {
     System.out.println("[DEBUG] Event updated: " + event.getSubject());
     
     if (currentCalendar == null) {
-      view.showErrorMessage("Please select a calendar first");
+      view.displayError("Please select a calendar first");
       return;
     }
     

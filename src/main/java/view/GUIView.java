@@ -12,7 +12,6 @@ import javax.swing.*;
 
 import controller.CalendarController;
 import controller.GUIController;
-import controller.command.edit.strategy.EventEditor;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -26,17 +25,14 @@ import viewmodel.ExportImportViewModel;
  */
 public class GUIView extends JFrame implements ICalendarView, IGUIView {
   private static final Color THEME_COLOR = new Color(0x4a86e8);
-  private static final Color THEME_LIGHT = new Color(0xe6f2ff);
   private static final Color BORDER_COLOR = new Color(0xcccccc);
   private static final int SIDEBAR_WIDTH = 180;
-  private static final int MAIN_WIDTH = 590;
 
   private final GUICalendarPanel calendarPanel;
   private final GUIEventPanel eventPanel;
   private final GUICalendarSelectorPanel calendarSelectorPanel;
   private final GUIExportImportPanel exportImportPanel;
   private final JTextArea messageArea;
-  private final JLabel statusBar;
   private final CalendarController controller;
   private CalendarViewModel calendarViewModel;
   private EventViewModel eventViewModel;
@@ -52,8 +48,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     this.controller = controller;
     System.out.println("Creating GUIView...");
     
-    // Initialize status bar
-    this.statusBar = new JLabel("Ready");
+    // Status bar removed
     
     // Initialize view models
     calendarViewModel = new CalendarViewModel();
@@ -145,39 +140,27 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     // Set up event panel listener
     eventPanel.addEventPanelListener(new GUIEventPanel.EventPanelListener() {
       @Override
-      public void onEventSaved(String[] args, boolean isRecurring) {
-        System.out.println("[DEBUG] Attempting to save event. Recurring: " + isRecurring);
-        if (args != null) {
-          System.out.println("[DEBUG] Event args: " + String.join(", ", args));
-        }
+      public void onEventSaved(EventFormData formData) {
+        System.out.println("[DEBUG] Attempting to save event. Recurring: " + formData.isRecurring());
+        
+        try {
+          ICalendar currentCalendar = controller.getCurrentCalendar();
+          System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
 
-        if (args != null && args.length >= 2) {
-          try {
-            ICalendar currentCalendar = controller.getCurrentCalendar();
-            System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
-
-            if (currentCalendar == null) {
-              showErrorMessage("Please select a calendar first");
-              return;
-            }
-
-            if (isRecurring) {
-              System.out.println("[DEBUG] Creating recurring event");
-              EventEditor editor = EventEditor.forType("series_from_date", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Recurring event creation result: " + result);
-              handleEventResult(result);
-            } else {
-              System.out.println("[DEBUG] Creating single event");
-              EventEditor editor = EventEditor.forType("single", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Single event creation result: " + result);
-              handleEventResult(result);
-            }
-          } catch (Exception e) {
-            System.out.println("[DEBUG] Event creation error: " + e.getMessage());
-            showErrorMessage("Error creating event: " + e.getMessage());
+          if (currentCalendar == null) {
+            showErrorMessage("Please select a calendar first");
+            return;
           }
+
+          // Pass the form data to the GUI controller
+          if (guiController != null) {
+            guiController.onEventSaved(formData);
+          } else {
+            showErrorMessage("GUI Controller not initialized");
+          }
+        } catch (Exception e) {
+          showErrorMessage("Error creating event: " + e.getMessage());
+          e.printStackTrace();
         }
       }
 
@@ -219,37 +202,26 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       }
 
       @Override
-      public void onEventUpdated(String[] args, boolean isRecurring) {
-        System.out.println("[DEBUG] Attempting to update event. Recurring: " + isRecurring);
-        if (args != null) {
-          System.out.println("[DEBUG] Update args: " + String.join(", ", args));
-        }
-
-        if (args != null && args.length >= 2) {
-          try {
-            ICalendar currentCalendar = controller.getCurrentCalendar();
-            System.out.println("[DEBUG] Current calendar for update: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
-
-            if (currentCalendar == null) {
-              showErrorMessage("Please select a calendar first");
-              return;
-            }
-
-            if (isRecurring) {
-              EventEditor editor = EventEditor.forType("series_from_date", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Recurring event update result: " + result);
-              handleEventResult(result);
-            } else {
-              EventEditor editor = EventEditor.forType("single", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Single event update result: " + result);
-              handleEventResult(result);
-            }
-          } catch (Exception e) {
-            System.out.println("[DEBUG] Event update error: " + e.getMessage());
-            showErrorMessage("Error updating event: " + e.getMessage());
+      public void onEventUpdated(EventFormData formData) {
+        System.out.println("[DEBUG] Attempting to update event. Recurring: " + formData.isRecurring());
+        
+        try {
+          ICalendar currentCalendar = controller.getCurrentCalendar();
+          if (currentCalendar == null) {
+            showErrorMessage("Please select a calendar first");
+            return;
           }
+
+          // Pass the form data to the GUI controller
+          if (guiController != null) {
+            guiController.onEventUpdated(formData);
+          } else {
+            showErrorMessage("GUI Controller not initialized");
+          }
+        } catch (Exception e) {
+          System.out.println("[DEBUG] Event update error: " + e.getMessage());
+          showErrorMessage("Error updating event: " + e.getMessage());
+          e.printStackTrace();
         }
       }
 
