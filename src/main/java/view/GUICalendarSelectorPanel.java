@@ -344,40 +344,23 @@ public class GUICalendarSelectorPanel extends JPanel {
     timezoneComboBox.setSelectedItem(java.util.TimeZone.getDefault().getID());
     formPanel.add(timezoneComboBox, gbc);
 
-    // Button panel
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    // Button panel with improved layout
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+    buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
+    
     JButton addButton = new JButton("Add");
     JButton cancelButton = new JButton("Cancel");
 
-    // Style buttons
-    addButton.setBackground(THEME_COLOR);
-    addButton.setForeground(Color.WHITE);
-    addButton.setFont(new Font("Arial", Font.BOLD, 12));
-    addButton.setFocusPainted(false);
-    addButton.setOpaque(true);
-    addButton.setContentAreaFilled(true);
-    addButton.setBorderPainted(true);
-    addButton.setBorder(new RoundRectBorder(THEME_COLOR, 8));
-    addButton.addMouseListener(new java.awt.event.MouseAdapter() {
-        public void mouseEntered(java.awt.event.MouseEvent evt) {
-            addButton.setBackground(new Color(41, 98, 255));
-            addButton.setBorder(new RoundRectBorder(new Color(41, 98, 255), 8));
-        }
-
-        public void mouseExited(java.awt.event.MouseEvent evt) {
-            addButton.setBackground(THEME_COLOR);
-            addButton.setBorder(new RoundRectBorder(THEME_COLOR, 8));
-        }
-    });
-
-    // Style cancel button
-    cancelButton.setBackground(new Color(0xf0f0f0));
-    cancelButton.setForeground(new Color(0x333333));
-    cancelButton.setFocusPainted(false);
-    cancelButton.setOpaque(true);
-    cancelButton.setContentAreaFilled(true);
-    cancelButton.setBorderPainted(true);
-    cancelButton.setBorder(new RoundRectBorder(new Color(0xcccccc), 8));
+    // Use ButtonStyler for consistent styling
+    ButtonStyler.applyPrimaryStyle(addButton);
+    ButtonStyler.applySecondaryStyle(cancelButton);
+    
+    // Set preferred size for buttons to ensure visibility
+    Dimension buttonSize = new Dimension(100, 30);
+    addButton.setPreferredSize(buttonSize);
+    cancelButton.setPreferredSize(buttonSize);
+    addButton.setMinimumSize(buttonSize);
+    cancelButton.setMinimumSize(buttonSize);
 
     // Center the buttons with some space between them
     buttonPanel.add(addButton);

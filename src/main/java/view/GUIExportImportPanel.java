@@ -46,15 +46,23 @@ public class GUIExportImportPanel extends JPanel {
   public GUIExportImportPanel() {
     setBorder(BorderFactory.createTitledBorder("Import/Export"));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    
+    // Set alignment for centering components
+    setAlignmentX(Component.CENTER_ALIGNMENT);
 
     // Create a panel for import section
     JPanel importPanel = new JPanel();
     importPanel.setLayout(new BoxLayout(importPanel, BoxLayout.Y_AXIS));
     importPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    importPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
     JLabel importLabel = new JLabel("Import from CSV");
+    importLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
     importButton = new JButton("Choose File...");
-    importButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, importButton.getPreferredSize().height));
+    ButtonStyler.applyPrimaryStyle(importButton);
+    importButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    importButton.setMaximumSize(new Dimension(150, importButton.getPreferredSize().height));
 
     importPanel.add(importLabel);
     importPanel.add(Box.createVerticalStrut(5));
@@ -64,10 +72,15 @@ public class GUIExportImportPanel extends JPanel {
     JPanel exportPanel = new JPanel();
     exportPanel.setLayout(new BoxLayout(exportPanel, BoxLayout.Y_AXIS));
     exportPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    exportPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
     JLabel exportLabel = new JLabel("Export to CSV");
+    exportLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
     exportButton = new JButton("Export Calendar");
-    exportButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, exportButton.getPreferredSize().height));
+    ButtonStyler.applyPrimaryStyle(exportButton);
+    exportButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    exportButton.setMaximumSize(new Dimension(150, exportButton.getPreferredSize().height));
 
     exportPanel.add(exportLabel);
     exportPanel.add(Box.createVerticalStrut(5));

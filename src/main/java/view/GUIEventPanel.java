@@ -727,22 +727,44 @@ public class GUIEventPanel extends JPanel {
     gbc.gridy = 4;
     formPanel.add(dateSpinner, gbc);
 
-    // Time pickers
+    // Time pickers - using a dedicated panel for better layout
+    JPanel timePanel = new JPanel(new GridLayout(2, 1, 0, 5));
+    timePanel.setOpaque(false);
+    
+    // Start time row
+    JPanel startTimeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    startTimeRow.setOpaque(false);
+    JLabel startTimeLabel = new JLabel("Start Time:");
+    startTimeLabel.setPreferredSize(new Dimension(80, startTimeLabel.getPreferredSize().height));
+    startTimeRow.add(startTimeLabel);
+    
+    // Set fixed width for spinner
+    startTimeSpinner.setPreferredSize(new Dimension(100, startTimeSpinner.getPreferredSize().height));
+    startTimeRow.add(startTimeSpinner);
+    
+    // End time row
+    JPanel endTimeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    endTimeRow.setOpaque(false);
+    JLabel endTimeLabel = new JLabel("End Time:");
+    endTimeLabel.setPreferredSize(new Dimension(80, endTimeLabel.getPreferredSize().height));
+    endTimeRow.add(endTimeLabel);
+    
+    // Set fixed width for spinner
+    endTimeSpinner.setPreferredSize(new Dimension(100, endTimeSpinner.getPreferredSize().height));
+    endTimeRow.add(endTimeSpinner);
+    
+    // Add to time panel
+    timePanel.add(startTimeRow);
+    timePanel.add(endTimeRow);
+    
+    // Add time panel to form
     gbc.gridx = 0;
     gbc.gridy = 5;
-    formPanel.add(new JLabel("Start Time:"), gbc);
-
-    gbc.gridx = 0;
-    gbc.gridy = 6;
-    formPanel.add(startTimeSpinner, gbc);
-
-    gbc.gridx = 1;
-    gbc.gridy = 5;
-    formPanel.add(new JLabel("End Time:"), gbc);
-
-    gbc.gridx = 1;
-    gbc.gridy = 6;
-    formPanel.add(endTimeSpinner, gbc);
+    gbc.gridwidth = 2;
+    formPanel.add(timePanel, gbc);
+    
+    // Reset gridwidth for subsequent components
+    gbc.gridwidth = 1;
 
     // Time error label
     gbc.gridx = 0;
@@ -806,43 +828,14 @@ public class GUIEventPanel extends JPanel {
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
     buttonPanel.setOpaque(false);
 
-    // Style save button
-    saveButton.setBackground(new Color(66, 134, 244));
-    saveButton.setForeground(Color.WHITE);
-    saveButton.setFont(new Font("Arial", Font.BOLD, 12));
-    saveButton.setFocusPainted(false);
-    saveButton.setOpaque(true);
-    saveButton.setContentAreaFilled(true);
-    saveButton.setBorderPainted(false);
-    saveButton.setPreferredSize(new Dimension(100, 30));
-    saveButton.addMouseListener(new java.awt.event.MouseAdapter() {
-        public void mouseEntered(java.awt.event.MouseEvent evt) {
-            saveButton.setBackground(new Color(41, 98, 255));
-        }
-
-        public void mouseExited(java.awt.event.MouseEvent evt) {
-            saveButton.setBackground(new Color(66, 134, 244));
-        }
-    });
-
-    // Style cancel button
-    cancelButton.setBackground(new Color(0xf0f0f0));
-    cancelButton.setForeground(new Color(0x333333));
-    cancelButton.setFont(new Font("Arial", Font.PLAIN, 12));
-    cancelButton.setFocusPainted(false);
-    cancelButton.setOpaque(true);
-    cancelButton.setContentAreaFilled(true);
-    cancelButton.setBorderPainted(false);
-    cancelButton.setPreferredSize(new Dimension(100, 30));
-    cancelButton.addMouseListener(new java.awt.event.MouseAdapter() {
-        public void mouseEntered(java.awt.event.MouseEvent evt) {
-            cancelButton.setBackground(new Color(0xe0e0e0));
-        }
-
-        public void mouseExited(java.awt.event.MouseEvent evt) {
-            cancelButton.setBackground(new Color(0xf0f0f0));
-        }
-    });
+    // Style buttons using ButtonStyler for consistent styling
+    ButtonStyler.applyPrimaryStyle(saveButton);
+    ButtonStyler.applySecondaryStyle(cancelButton);
+    
+    // Set consistent button size
+    Dimension buttonSize = new Dimension(100, 32);
+    saveButton.setPreferredSize(buttonSize);
+    cancelButton.setPreferredSize(buttonSize);
 
     // Add buttons to panel with proper spacing
     buttonPanel.add(Box.createHorizontalGlue());

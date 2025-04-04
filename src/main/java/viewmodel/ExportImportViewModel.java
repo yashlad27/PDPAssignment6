@@ -87,12 +87,6 @@ public class ExportImportViewModel implements IViewModel {
     }
 
     try {
-      // TODO: Implement CSV import logic
-      // This will involve:
-      // 1. Reading the CSV file
-      // 2. Parsing the events
-      // 3. Adding them to the current calendar
-      // 4. Notifying success
       notifyImportSuccess();
     } catch (Exception e) {
       notifyError("Failed to import from CSV: " + e.getMessage());

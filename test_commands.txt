@@ -1,0 +1,6 @@
+create single "Meeting" "2024-03-20 14:00" "2024-03-20 15:00" "Team sync" "Conference Room A" true
+create recurring "Weekly Standup" "2024-03-21 10:00" "2024-03-21 10:30" "MWF" 5 "Daily updates" "Zoom" true
+create allday "Holiday" "2024-03-25" "Company holiday" "Office" true
+print on 2024-03-20
+print from 2024-03-20 to 2024-03-25
+exit 

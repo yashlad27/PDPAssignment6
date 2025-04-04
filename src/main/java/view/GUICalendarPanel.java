@@ -5,7 +5,10 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,10 +27,10 @@ public class GUICalendarPanel extends JPanel {
   private final JPanel calendarGrid;
   private final Map<LocalDate, JButton> dateButtons;
   private final Map<LocalDate, List<Event>> eventsByDate;
-  private final JButton statusButton;
-  private final JEditorPane eventListArea;
-  private final JSpinner startDateSpinner;
-  private final JSpinner endDateSpinner;
+  private JButton statusButton;
+  private JEditorPane eventListArea;
+  private JSpinner startDateSpinner;
+  private JSpinner endDateSpinner;
   private YearMonth currentMonth;
   private LocalDate selectedDate;
   private CalendarPanelListener listener;
@@ -179,13 +182,47 @@ public class GUICalendarPanel extends JPanel {
 
     mainCalendarPanel.add(calendarView, BorderLayout.CENTER);
 
-    // Add action buttons
-    JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+    // Add action buttons with improved styling and centered layout
+    JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
     actionPanel.setBackground(Color.WHITE);
+    actionPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-    JButton checkStatusButton = createStyledButton("Check Status");
-    JButton listEventsButton = createStyledButton("List Events");
-    JButton showRangeButton = createStyledButton("Show Range");
+    // Create buttons with consistent styling using ButtonStyler
+    JButton checkStatusButton = new JButton("Check Status");
+    JButton listEventsButton = new JButton("List Events");
+    JButton showRangeButton = new JButton("Show Range");
+    
+    // Apply consistent styling
+    ButtonStyler.applyPrimaryStyle(checkStatusButton);
+    ButtonStyler.applyPrimaryStyle(listEventsButton);
+    ButtonStyler.applyPrimaryStyle(showRangeButton);
+    
+    // Set consistent size
+    Dimension buttonSize = new Dimension(120, 30);
+    checkStatusButton.setPreferredSize(buttonSize);
+    listEventsButton.setPreferredSize(buttonSize);
+    showRangeButton.setPreferredSize(buttonSize);
+    
+    // Add action listeners
+    checkStatusButton.addActionListener(e -> {
+        if (listener != null) {
+            listener.onStatusRequested(selectedDate);
+        }
+    });
+    
+    listEventsButton.addActionListener(e -> {
+        if (listener != null) {
+            listener.onEventsListRequested(selectedDate);
+        }
+    });
+    
+    showRangeButton.addActionListener(e -> {
+        if (listener != null) {
+            // Use a default end date (7 days from selected date) for range
+            LocalDate endDate = selectedDate.plusDays(7);
+            listener.onDateRangeSelected(selectedDate, endDate);
+        }
+    });
 
     actionPanel.add(checkStatusButton);
     actionPanel.add(listEventsButton);
@@ -209,6 +246,75 @@ public class GUICalendarPanel extends JPanel {
     eventScroll.setPreferredSize(new Dimension(0, 150));
 
     controlPanel.add(eventScroll, BorderLayout.CENTER);
+    
+    // Action buttons panel at the bottom
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+    
+    // Status button
+    statusButton = createStyledButton("Check Status");
+    statusButton.addActionListener(e -> {
+      if (listener != null && selectedDate != null) {
+        listener.onStatusRequested(selectedDate);
+      }
+    });
+    
+    // List events button
+    JButton listEventsButton = createStyledButton("List Events");
+    listEventsButton.addActionListener(e -> {
+      if (listener != null && selectedDate != null) {
+        listener.onEventsListRequested(selectedDate);
+      }
+    });
+    
+    // Date range panel with spinners and button
+    JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+    
+    // Configure date spinners
+    startDateSpinner = new JSpinner(new SpinnerDateModel());
+    endDateSpinner = new JSpinner(new SpinnerDateModel());
+    JSpinner.DateEditor startEditor = new JSpinner.DateEditor(startDateSpinner, "yyyy-MM-dd");
+    JSpinner.DateEditor endEditor = new JSpinner.DateEditor(endDateSpinner, "yyyy-MM-dd");
+    startDateSpinner.setEditor(startEditor);
+    endDateSpinner.setEditor(endEditor);
+    
+    // Set default values to current date and a week later
+    Calendar calendar = Calendar.getInstance();
+    startDateSpinner.setValue(calendar.getTime());
+    calendar.add(Calendar.DAY_OF_MONTH, 7);
+    endDateSpinner.setValue(calendar.getTime());
+    
+    // Size the spinners appropriately
+    Dimension spinnerSize = new Dimension(120, 30);
+    startDateSpinner.setPreferredSize(spinnerSize);
+    endDateSpinner.setPreferredSize(spinnerSize);
+    
+    // Show range button
+    JButton showRangeButton = createStyledButton("Show Range");
+    showRangeButton.addActionListener(e -> {
+      if (listener != null) {
+        // Convert java.util.Date to LocalDate
+        Date startDate = (Date) startDateSpinner.getValue();
+        Date endDate = (Date) endDateSpinner.getValue();
+        LocalDate start = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate end = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        
+        listener.onDateRangeSelected(start, end);
+      }
+    });
+    
+    // Add components to range panel
+    rangePanel.add(new JLabel("From:"));
+    rangePanel.add(startDateSpinner);
+    rangePanel.add(new JLabel("To:"));
+    rangePanel.add(endDateSpinner);
+    rangePanel.add(showRangeButton);
+    
+    // Add buttons to button panel
+    buttonPanel.add(statusButton);
+    buttonPanel.add(listEventsButton);
+    
+    // We don't need these buttons here as they already exist below the calendar grid
+    // The buttons below the calendar grid are sufficient
 
     return controlPanel;
   }
