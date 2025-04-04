@@ -304,27 +304,68 @@ public class GUIController {
     view.getExportImportPanel().addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
       @Override
       public void onImport(File file) {
-        try {
-          // Import calendar data from CSV file
-          CSVExporter importer = new CSVExporter();
-          List<Event> importedEvents = importer.importEvents(file);
-
-          // Add imported events to the current calendar
-          ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
-          if (currentCalendar != null) {
-            for (Event event : importedEvents) {
+        if (file != null) {
+          try {
+            System.out.println("[DEBUG] Starting import process for file: " + file.getAbsolutePath());
+            
+            // Get the selected calendar from the view
+            ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
+            System.out.println("[DEBUG] Selected calendar from selector panel: " + 
+                (currentCalendar != null ? currentCalendar.toString() : "null"));
+            
+            // If no calendar is selected in the selector panel, try getting the current calendar from the controller
+            if (currentCalendar == null) {
+              System.out.println("[DEBUG] No calendar selected in selector panel, using current calendar from controller");
+              currentCalendar = GUIController.this.currentCalendar;
+            }
+            
+            // If still null, try getting the first available calendar
+            if (currentCalendar == null) {
+              System.out.println("[DEBUG] Still no calendar, trying to get first available calendar");
               try {
-                currentCalendar.addEvent(event, true);
-              } catch (Exception e) {
-                view.showError("Failed to import event: " + e.getMessage());
+                // Try to get the active calendar
+                currentCalendar = calendarManager.getActiveCalendar();
+                System.out.println("[DEBUG] Using active calendar: " + currentCalendar.toString());
+              } catch (CalendarNotFoundException e) {
+                // If no active calendar, try to get the first calendar by name
+                Set<String> calendarNames = calendarManager.getCalendarRegistry().getCalendarNames();
+                if (!calendarNames.isEmpty()) {
+                  String firstName = calendarNames.iterator().next();
+                  currentCalendar = calendarManager.getCalendar(firstName);
+                  System.out.println("[DEBUG] Using first available calendar: " + currentCalendar.toString());
+                }
               }
             }
+            
+            // Final check if we have a valid calendar
+            if (currentCalendar == null) {
+              System.out.println("[ERROR] No calendar available for import");
+              view.showError("No calendar available. Please create a calendar first.");
+              return;
+            }
+            
+            System.out.println("[DEBUG] Using calendar for import: " + ((model.calendar.Calendar)currentCalendar).getName());
+            
+            // Use the ExportImportViewModel to handle the import
+            ExportImportViewModel exportImportViewModel = view.getExportImportViewModel();
+            exportImportViewModel.setCurrentCalendar(currentCalendar);
+            
+            // Import the events
+            System.out.println("[DEBUG] Starting import process via ExportImportViewModel");
+            int importedCount = exportImportViewModel.importFromCSV(file);
+            
+            System.out.println("[DEBUG] Import completed. Imported " + importedCount + " events");
+            
+            // Update the calendar view to show the imported events
+            System.out.println("[DEBUG] Updating calendar view with imported events");
             view.getCalendarPanel().updateCalendar(currentCalendar);
-          } else {
-            view.showError("Please select a calendar first");
+            
+            // The success message will be shown by the ExportImportViewModel callback
+          } catch (Exception e) {
+            System.err.println("[ERROR] Import failed: " + e.getMessage());
+            e.printStackTrace();
+            view.showError("Failed to import calendar data: " + e.getMessage());
           }
-        } catch (Exception e) {
-          view.showError("Failed to import calendar data: " + e.getMessage());
         }
       }
 

@@ -19,7 +19,7 @@ public class ExportImportViewModel implements IViewModel {
    * Interface for listeners that want to be notified of changes in the ExportImportViewModel.
    */
   public interface ExportImportViewModelListener {
-    void onImportSuccess();
+    void onImportSuccess(String message);
 
     void onExportSuccess();
 
@@ -79,17 +79,57 @@ public class ExportImportViewModel implements IViewModel {
    * Imports events from a CSV file.
    *
    * @param file the CSV file to import from
+   * @return the number of events successfully imported
    */
-  public void importFromCSV(File file) {
+  public int importFromCSV(File file) {
     if (currentCalendar == null) {
       notifyError("No calendar selected for import");
-      return;
+      return 0;
     }
 
     try {
-      notifyImportSuccess();
+      System.out.println("[DEBUG] Starting CSV import from file: " + file.getAbsolutePath());
+      
+      // Create a CSVExporter instance to handle the import
+      model.export.CSVExporter csvExporter = new model.export.CSVExporter();
+      
+      // Import events from the CSV file
+      System.out.println("[DEBUG] Reading events from CSV file");
+      List<model.event.Event> importedEvents = csvExporter.importEvents(file);
+      
+      System.out.println("[DEBUG] Successfully imported " + importedEvents.size() + " events from CSV");
+      
+      // Add each imported event to the current calendar
+      int successCount = 0;
+      for (model.event.Event event : importedEvents) {
+        try {
+          System.out.println("[DEBUG] Adding event to calendar: " + event.getSubject());
+          boolean added = currentCalendar.addEvent(event, true); // Set autoDecline to true
+          if (added) {
+            successCount++;
+          }
+        } catch (Exception e) {
+          System.err.println("[ERROR] Failed to add event '" + event.getSubject() + "': " + e.getMessage());
+        }
+      }
+      
+      System.out.println("[DEBUG] Import completed successfully. Added " + successCount + " out of " + importedEvents.size() + " events");
+      
+      // Notify listeners of successful import
+      String message = "Successfully imported " + successCount + " events";
+      System.out.println("[DEBUG] Notifying listeners with success message: " + message);
+      notifyImportSuccess(message);
+      
+      // Force a refresh of the calendar display to show the imported events
+      System.out.println("[DEBUG] Requesting calendar refresh to display imported events");
+      refresh();
+      
+      return successCount;
     } catch (Exception e) {
+      System.err.println("[ERROR] Import failed: " + e.getMessage());
+      e.printStackTrace();
       notifyError("Failed to import from CSV: " + e.getMessage());
+      return 0;
     }
   }
 
@@ -105,21 +145,32 @@ public class ExportImportViewModel implements IViewModel {
     }
 
     try {
-      // TODO: Implement CSV export logic
-      // This will involve:
-      // 1. Getting all events from the current calendar
-      // 2. Converting them to CSV format
-      // 3. Writing to the file
-      // 4. Notifying success
+      System.out.println("[DEBUG] Starting CSV export to file: " + file.getAbsolutePath());
+      
+      // Get all events from the current calendar
+      String calendarName = ((model.calendar.Calendar)currentCalendar).getName();
+      System.out.println("[DEBUG] Retrieving events from calendar: " + calendarName);
+      List<model.event.Event> events = currentCalendar.getAllEvents();
+      System.out.println("[DEBUG] Found " + events.size() + " events to export");
+      
+      // Create a CSVExporter instance
+      model.export.CSVExporter csvExporter = new model.export.CSVExporter();
+      
+      // Export events to the CSV file
+      csvExporter.exportEvents(events, file);
+      
+      System.out.println("[DEBUG] Export completed successfully");
       notifyExportSuccess();
     } catch (Exception e) {
+      System.err.println("[ERROR] Export failed: " + e.getMessage());
+      e.printStackTrace();
       notifyError("Failed to export to CSV: " + e.getMessage());
     }
   }
 
-  private void notifyImportSuccess() {
+  private void notifyImportSuccess(String message) {
     for (ExportImportViewModelListener listener : listeners) {
-      listener.onImportSuccess();
+      listener.onImportSuccess(message);
     }
   }
 

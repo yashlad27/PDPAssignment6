@@ -1,10 +1,12 @@
 package view;
 
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import model.calendar.ICalendar;
 
@@ -23,6 +25,7 @@ public class GUICalendarSelectorPanel extends JPanel {
 
   private final DefaultListModel<String> calendarListModel;
   private final JButton addCalendarButton;
+  private final JButton useCalendarButton;
 
   /**
    * Interface for calendar selection events.
@@ -46,6 +49,15 @@ public class GUICalendarSelectorPanel extends JPanel {
      * @param timezone The timezone of the new calendar
      */
     default void onCalendarCreated(String name, String timezone) {
+      // Default implementation does nothing
+    }
+    
+    /**
+     * Called when a file is selected for import.
+     *
+     * @param file The file to import
+     */
+    default void onImport(File file) {
       // Default implementation does nothing
     }
   }
@@ -148,9 +160,19 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     // Add Calendar button
     addCalendarButton = new JButton("Add Calendar");
-    JButton removeCalendarButton = new JButton("Remove Calendar");
-    JButton selectCalendarButton = new JButton("Select Calendar");
-    JLabel timezoneLabel = new JLabel("Timezone: ");
+    useCalendarButton = new JButton("Use");
+    ButtonStyler.applyPrimaryStyle(useCalendarButton);
+    
+    // Set preferred size for buttons to ensure they fit
+    addCalendarButton.setPreferredSize(new Dimension(120, 25));
+    useCalendarButton.setPreferredSize(new Dimension(80, 25));
+    
+    // Create a panel for buttons with horizontal layout
+    JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 5, 0));
+    buttonPanel.setOpaque(false);
+    buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    buttonPanel.add(addCalendarButton);
+    buttonPanel.add(useCalendarButton);
 
     // Scroll pane for calendar list
     JScrollPane scrollPane = new JScrollPane(calendarList);
@@ -159,7 +181,7 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     add(titleLabel, BorderLayout.NORTH);
     add(scrollPane, BorderLayout.CENTER);
-    add(addCalendarButton, BorderLayout.SOUTH);
+    add(buttonPanel, BorderLayout.SOUTH);
 
     calendarItems = new ArrayList<>();
 
@@ -288,6 +310,57 @@ public class GUICalendarSelectorPanel extends JPanel {
     addCalendarButton.addActionListener(e -> {
       // Show dialog to create a new calendar
       showAddCalendarDialog();
+    });
+    
+    useCalendarButton.addActionListener(e -> {
+      // Open file chooser for importing events into the selected calendar
+      if (selectedCalendar != null) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select CSV File to Import");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
+        
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+          File importFile = fileChooser.getSelectedFile();
+          System.out.println("[DEBUG] Selected import file: " + importFile.getAbsolutePath());
+          
+          // Confirm import with user
+          int result = JOptionPane.showConfirmDialog(
+              this,
+              "Import events from " + importFile.getName() + " into calendar '" + selectedCalendar.toString() + "'?",
+              "Confirm Import",
+              JOptionPane.YES_NO_OPTION,
+              JOptionPane.QUESTION_MESSAGE);
+          
+          if (result == JOptionPane.YES_OPTION) {
+            System.out.println("[DEBUG] User confirmed import, proceeding...");
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            
+            // Notify listener to handle the import
+            if (listener != null) {
+              try {
+                // The listener will handle the import process
+                listener.onImport(importFile);
+              } catch (Exception ex) {
+                System.err.println("[ERROR] Import failed: " + ex.getMessage());
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Import failed: " + ex.getMessage(),
+                    "Import Error",
+                    JOptionPane.ERROR_MESSAGE);
+              } finally {
+                setCursor(Cursor.getDefaultCursor());
+              }
+            }
+          }
+        }
+      } else {
+        JOptionPane.showMessageDialog(
+            this,
+            "Please select a calendar first",
+            "No Calendar Selected",
+            JOptionPane.WARNING_MESSAGE);
+      }
     });
   }
 

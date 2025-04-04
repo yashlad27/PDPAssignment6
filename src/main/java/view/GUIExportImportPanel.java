@@ -86,10 +86,30 @@ public class GUIExportImportPanel extends JPanel {
     exportPanel.add(Box.createVerticalStrut(5));
     exportPanel.add(exportButton);
 
+    // Initialize file labels
+    importFileLabel = new JLabel(" ");
+    importFileLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    importFileLabel.setForeground(Color.GRAY);
+    importPanel.add(Box.createVerticalStrut(5));
+    importPanel.add(importFileLabel);
+    
+    exportFileLabel = new JLabel(" ");
+    exportFileLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    exportFileLabel.setForeground(Color.GRAY);
+    exportPanel.add(Box.createVerticalStrut(5));
+    exportPanel.add(exportFileLabel);
+    
+    // Initialize status label
+    statusLabel = new JLabel(" ");
+    statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    statusLabel.setForeground(Color.GRAY);
+    
     // Add panels to main panel
     add(importPanel);
     add(Box.createVerticalStrut(10));
     add(exportPanel);
+    add(Box.createVerticalStrut(5));
+    add(statusLabel);
     add(Box.createVerticalGlue());
 
     // Initialize file chooser
@@ -108,11 +128,53 @@ public class GUIExportImportPanel extends JPanel {
    * Sets up event listeners for the buttons.
    */
   private void setupListeners() {
+    // Set up the Choose File button for import
     importButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Import Choose File button clicked");
+      fileChooser.setDialogTitle("Select CSV File to Import");
+      
+      // Set up file filter for CSV files
+      FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
+      fileChooser.setFileFilter(filter);
+      
       if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
         importFile = fileChooser.getSelectedFile();
+        System.out.println("[DEBUG] Selected import file: " + importFile.getAbsolutePath());
         importFileLabel.setText(importFile.getName());
-        importButton.setEnabled(true);
+        
+        // Automatically trigger the import process after file selection
+        if (importFile != null && listener != null) {
+          try {
+            System.out.println("[DEBUG] Automatically starting import process for file: " + importFile.getAbsolutePath());
+            
+            // Confirm import with user
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                "Import events from " + importFile.getName() + "?",
+                "Confirm Import",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+            
+            if (result == JOptionPane.YES_OPTION) {
+              System.out.println("[DEBUG] User confirmed import, proceeding...");
+              setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+              
+              // Call the listener to handle the import
+              listener.onImport(importFile);
+              
+              setCursor(Cursor.getDefaultCursor());
+              // The success message will be shown by the viewmodel callback
+            } else {
+              System.out.println("[DEBUG] User cancelled import");
+            }
+          } catch (Exception ex) {
+            System.err.println("[ERROR] Import failed: " + ex.getMessage());
+            ex.printStackTrace();
+            setCursor(Cursor.getDefaultCursor());
+            showStatus("Import failed: " + ex.getMessage(), false);
+            showError("Import failed: " + ex.getMessage());
+          }
+        }
       }
     });
 
@@ -127,16 +189,7 @@ public class GUIExportImportPanel extends JPanel {
       }
     });
 
-    importButton.addActionListener(e -> {
-      if (importFile != null && listener != null) {
-        try {
-          listener.onImport(importFile);
-          showStatus("Import successful", true);
-        } catch (Exception ex) {
-          showStatus("Import failed: " + ex.getMessage(), false);
-        }
-      }
-    });
+    // Import functionality is now handled directly in the Choose File button handler
 
     exportButton.addActionListener(e -> {
       if (exportFile != null && listener != null) {
@@ -161,10 +214,12 @@ public class GUIExportImportPanel extends JPanel {
   }
 
   /**
-   * Shows a success message for an import operation.
+   * Shows a success message for an import operation with details on the number of events imported.
+   * 
+   * @param message The success message with details
    */
-  public void showImportSuccess() {
-    JOptionPane.showMessageDialog(this, "Calendar imported successfully");
+  public void showImportSuccess(String message) {
+    JOptionPane.showMessageDialog(this, message, "Import Successful", JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**

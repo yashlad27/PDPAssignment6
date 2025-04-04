@@ -292,7 +292,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         if (file != null) {
           try {
             controller.importCalendarFromCSV(file.getAbsolutePath());
-            exportImportPanel.showImportSuccess();
+            // Success message will be shown by the ExportImportViewModel
           } catch (Exception ex) {
             exportImportPanel.showError("Import failed: " + ex.getMessage());
           }
@@ -622,8 +622,34 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     displayMessage("Recurring event updated successfully");
   }
 
-  public void onImportSuccess() {
-    displayMessage("Calendar imported successfully");
+  public void onImportSuccess(String message) {
+    System.out.println("[DEBUG] GUIView.onImportSuccess called with message: " + message);
+    displayMessage(message);
+    
+    // Show success popup
+    System.out.println("[DEBUG] Showing import success popup");
+    exportImportPanel.showImportSuccess(message);
+    
+    // Refresh the calendar view to show the imported events
+    LocalDate currentDate = calendarPanel.getSelectedDate();
+    System.out.println("[DEBUG] Refreshing calendar view after import for date: " + currentDate);
+    
+    // Get the current calendar's events
+    if (calendarViewModel.getCurrentCalendar() != null) {
+      // Get all events for the current calendar
+      List<Event> events = calendarViewModel.getCurrentCalendar().getAllEvents();
+      System.out.println("[DEBUG] Found " + events.size() + " events in calendar after import");
+      
+      // Update the calendar panel with all events
+      calendarPanel.updateEvents(events);
+      
+      // Force a complete refresh of the calendar display
+      calendarPanel.updateCalendar(calendarViewModel.getCurrentCalendar());
+      System.out.println("[DEBUG] Calendar panel updated with imported events");
+      
+      // Refresh the entire view
+      refreshView();
+    }
   }
 
   public void onExportSuccess() {
