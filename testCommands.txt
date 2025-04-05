@@ -1,0 +1,6 @@
+create-calendar TestCalendar
+use-calendar TestCalendar
+create-event "Test Event" 2025-04-05T16:00 2025-04-05T17:00
+print-events
+show-status
+exit

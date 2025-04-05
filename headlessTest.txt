@@ -1,0 +1,7 @@
+create TestCalendar
+use TestCalendar
+create "Simple Test Event" 2025-04-05T16:00 2025-04-05T17:00
+print 2025-04-05
+print 2025-04-05 2025-04-06
+show 2025-04-05T16:30
+exit
