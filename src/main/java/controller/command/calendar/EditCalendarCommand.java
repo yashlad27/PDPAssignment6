@@ -14,7 +14,6 @@ import view.ICalendarView;
  */
 public class EditCalendarCommand implements ICommand {
   private final CalendarManager calendarManager;
-  private final ICalendarView view;
 
   /**
    * Creates a new EditCalendarCommand.
@@ -24,7 +23,7 @@ public class EditCalendarCommand implements ICommand {
    */
   public EditCalendarCommand(CalendarManager calendarManager, ICalendarView view) {
     this.calendarManager = calendarManager;
-    this.view = view;
+    // View parameter is kept for interface consistency but not used in this implementation
   }
 
   @Override

@@ -11,6 +11,7 @@ import model.factory.CalendarFactory;
 import utilities.TimeZoneHandler;
 import view.GUIView;
 import view.ICalendarView;
+import view.TextView;
 
 /**
  * Main entry point for the Calendar Application. This class handles both interactive and headless
@@ -166,10 +167,17 @@ public class CalendarApp {
    * Starts the application in text mode (interactive or headless).
    */
   private static void startTextMode() {
-    if (commandLineArgs.length > 1 && commandLineArgs[1].equals("headless")) {
-      startHeadlessMode(commandLineArgs);
+    // Get the TextView instance to set up the mode correctly
+    if (view instanceof TextView) {
+      // Just check if it's the correct type - no need to create a variable
+      if (commandLineArgs.length > 1 && commandLineArgs[1].equals("headless")) {
+        startHeadlessMode(commandLineArgs);
+      } else {
+        startInteractiveMode();
+      }
     } else {
-      startInteractiveMode();
+      System.err.println("Error: TextView not created correctly for text mode.");
+      System.exit(1);
     }
   }
 
@@ -187,6 +195,17 @@ public class CalendarApp {
    */
   private static void startHeadlessMode(String[] args) {
     String filename = args[2];
+    
+    // Set up the TextView for headless mode
+    if (view instanceof TextView) {
+      boolean setupSuccess = ((TextView) view).setupHeadlessMode(filename);
+      
+      if (!setupSuccess) {
+        System.err.println("Failed to set up headless mode with file: " + filename);
+        System.exit(1);
+      }
+    }
+    
     boolean success = controller.startHeadlessMode(filename);
     if (!success) {
       System.err.println("Headless mode execution failed.");

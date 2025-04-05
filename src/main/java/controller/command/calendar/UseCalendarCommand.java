@@ -10,7 +10,6 @@ import view.ICalendarView;
  */
 public class UseCalendarCommand implements ICommand {
   private final CalendarManager calendarManager;
-  private final ICalendarView view;
 
   /**
    * Creates a new UseCalendarCommand.
@@ -20,7 +19,7 @@ public class UseCalendarCommand implements ICommand {
    */
   public UseCalendarCommand(CalendarManager calendarManager, ICalendarView view) {
     this.calendarManager = calendarManager;
-    this.view = view;
+    // View parameter is kept for interface consistency but not used in this implementation
   }
 
   @Override

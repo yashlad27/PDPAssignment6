@@ -14,12 +14,13 @@ import java.util.Arrays;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import java.text.SimpleDateFormat;
 
 import controller.command.copy.DirectCopyEventCommand;
-import controller.command.edit.strategy.EventEditor;
+import controller.command.edit.strategy.ConsolidatedEventEditor;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -38,8 +39,6 @@ import view.GUIEventPanel;
 import view.EventFormData;
 import view.GUIExportImportPanel;
 import view.GUIView;
-import viewmodel.CalendarViewModel;
-import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
 
 /**
@@ -60,9 +59,7 @@ public class GUIController {
   public GUIController(CalendarManager calendarManager, GUIView view) {
     this.calendarManager = calendarManager;
     this.view = view;
-    CalendarViewModel calendarViewModel = view.getCalendarViewModel();
-    EventViewModel eventViewModel = view.getEventViewModel();
-    ExportImportViewModel exportImportViewModel = view.getExportImportViewModel();
+    // ViewModels are managed by the view itself, so we don't need references here
     this.timezoneHandler = new TimeZoneHandler();
     this.currentCalendar = null;
   }
@@ -594,7 +591,8 @@ public class GUIController {
 
     try {
       String[] args = new String[]{"single", "delete", event.getSubject(), event.getStartDateTime().toString()};
-      EventEditor editor = EventEditor.forType("single", args);
+      ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
+          UUID.fromString(args[1]), args[2], args[3], args[4]);
       editor.executeEdit(currentCalendar);
       view.displayMessage("Event deleted successfully");
       view.refreshView();
@@ -616,7 +614,9 @@ public class GUIController {
 
     try {
       String[] args = new String[]{"series_from_date", "delete", event.getSubject(), event.getStartDateTime().toString()};
-      EventEditor editor = EventEditor.forType("series_from_date", args);
+      LocalDate fromDate = LocalDate.parse(args[5]);
+      ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
+          UUID.fromString(args[1]), args[2], args[3], args[4], fromDate);
       editor.executeEdit(currentCalendar);
       view.displayMessage("Recurring event deleted successfully");
       view.refreshView();

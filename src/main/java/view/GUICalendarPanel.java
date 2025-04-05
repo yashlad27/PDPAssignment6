@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -36,7 +35,6 @@ public class GUICalendarPanel extends JPanel {
   private JSpinner endDateSpinner;
   private YearMonth currentMonth;
   private LocalDate selectedDate;
-  private Set<LocalDate> highlightedDates;
   private ICalendar selectedCalendar;
   private ICalendar currentCalendar;
   private CalendarPanelListener listener;
@@ -146,7 +144,6 @@ public class GUICalendarPanel extends JPanel {
     eventListArea.setContentType("text/html");
     startDateSpinner = new JSpinner(new SpinnerDateModel());
     endDateSpinner = new JSpinner(new SpinnerDateModel());
-    LocalDate currentDate = LocalDate.now();
 
     // Create and add components
     add(createNavigationPanel(), BorderLayout.NORTH);
@@ -805,26 +802,109 @@ public class GUICalendarPanel extends JPanel {
   }
 
   /**
-   * Updates the status display.
-   *
-   * @param isBusy whether the selected date is busy
-   */
-  public void updateStatus(boolean isBusy) {
-    String status = isBusy ? "Busy" : "Available";
-    JOptionPane.showMessageDialog(
-            this,
-            "Status: " + status,
-            "Calendar Status",
-            JOptionPane.INFORMATION_MESSAGE
-    );
   }
+}
 
-  /**
-   * Gets the currently selected calendar.
-   *
-   * @return the selected calendar, or null if no calendar is selected
-   */
-  public ICalendar getSelectedCalendar() {
-    return selectedCalendar;
+/**
+ * Updates the events for a specific date.
+ *
+ * @param date the date to update events for
+ * @param events the list of events on that date
+ */
+public void updateDateEvents(LocalDate date, List<Event> events) {
+  if (date == null) return;
+  
+  // Store the events for this date
+  eventsByDate.put(date, new ArrayList<>(events));
+  
+  // Update the button for this date
+  boolean isBusy = events != null && !events.isEmpty();
+  updateDateStatus(date, isBusy, events != null ? events.size() : 0);
+  
+  // If this is the selected date, update the event list
+  if (date.equals(selectedDate)) {
+    updateEventList(date);
   }
-} 
+}
+
+/**
+ * Gets the currently selected calendar.
+ *
+ * @return the selected calendar, or null if no calendar is selected
+ */
+public ICalendar getSelectedCalendar() {
+  return selectedCalendar;
+}
+
+/**
+ * Updates the status display.
+ *
+ * @param isBusy whether the selected date is busy
+ */
+public void updateStatus(boolean isBusy) {
+  String status = isBusy ? "Busy" : "Available";
+  JOptionPane.showMessageDialog(
+          this,
+          "Status: " + status,
+          "Calendar Status",
+          JOptionPane.INFORMATION_MESSAGE
+  );
+}
+
+/**
+ * Updates the status for a specific date.
+ *
+ * @param date the date to update status for
+ * @param isBusy whether the date has events
+ * @param eventCount the number of events on that date
+ */
+public void updateDateStatus(LocalDate date, boolean isBusy, int eventCount) {
+  if (date == null) return;
+  
+  // Update the button for this date with styling to show status
+  JButton dateButton = dateButtons.get(date);
+  if (dateButton != null) {
+    // Apply visual indicator of busy status
+    if (isBusy) {
+      dateButton.setBackground(new Color(255, 240, 240)); // Light red background for busy dates
+      dateButton.setText("<html>" + date.getDayOfMonth() + "<br><span style='color:red;font-size:8pt'>" + eventCount + " event" + (eventCount > 1 ? "s" : "") + "</span></html>");
+    } else {
+      if (date.equals(selectedDate)) {
+        dateButton.setBackground(HEADER_LIGHT_COLOR);  // Selected date background
+      } else {
+        dateButton.setBackground(Color.WHITE);  // Normal background
+      }
+      dateButton.setText(String.valueOf(date.getDayOfMonth()));
+    }
+  }
+}
+
+/**
+ * Sets the selected date range and highlights it in the calendar.
+ *
+ * @param startDate the start date of the range
+ * @param endDate the end date of the range
+ */
+public void setSelectedDateRange(LocalDate startDate, LocalDate endDate) {
+  if (startDate == null || endDate == null) return;
+  
+  // Clear previous selections
+  for (JButton button : dateButtons.values()) {
+    button.setBackground(Color.WHITE);
+  }
+  
+  // Highlight the selected date range
+  LocalDate currentDate = startDate;
+  while (!currentDate.isAfter(endDate)) {
+    JButton button = dateButtons.get(currentDate);
+    if (button != null) {
+      button.setBackground(HEADER_LIGHT_COLOR);
+    }
+    currentDate = currentDate.plusDays(1);
+  }
+  
+  // Set the selected date to the start date
+  this.selectedDate = startDate;
+}
+
+}

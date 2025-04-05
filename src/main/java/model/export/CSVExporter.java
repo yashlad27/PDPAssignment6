@@ -36,13 +36,6 @@ public class CSVExporter implements IDataExporter {
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
   /**
-   * Date-time formatter used to format complete date-time values (YYYY-MM-DDTHH:MM).
-   * This is used for formatting date-time values in ISO-8601-like format.
-   */
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-"
-          + "MM-dd'T'HH:mm");
-
-  /**
    * Imports events from a CSV file.
    *
    * @param file the CSV file to import from
@@ -102,7 +95,6 @@ public class CSVExporter implements IDataExporter {
       LocalTime startTime = LocalTime.parse(parts[2], TIME_FORMATTER);
       LocalDate endDate = LocalDate.parse(parts[3], DATE_FORMATTER);
       LocalTime endTime = LocalTime.parse(parts[4], TIME_FORMATTER);
-      boolean allDay = Boolean.parseBoolean(parts[5]);
       String description = unescapeCSV(parts[6]);
       String location = unescapeCSV(parts[7]);
       boolean isPublic = Boolean.parseBoolean(parts[8]);

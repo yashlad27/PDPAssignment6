@@ -241,15 +241,8 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           System.out.println("[DEBUG] Event update error: " + e.getMessage());
           showErrorMessage("Error updating event: " + e.getMessage());
           e.printStackTrace();
-        }
-      }
-
-      private void handleEventResult(String result) {
-        System.out.println("[DEBUG] Handling event result: " + result);
-        if (result.startsWith("Error")) {
-          showErrorMessage(result);
-        } else {
-          displayMessage(result);
+          
+          // Still try to refresh the view even after error
           refreshView();
           // Update the event list for the selected date
           LocalDate selectedDate = calendarPanel.getSelectedDate();
@@ -266,9 +259,9 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
                 calendarPanel.updateEventList(selectedDate);
                 System.out.println("[DEBUG] View updated with events");
               }
-            } catch (Exception e) {
-              System.out.println("[DEBUG] Error updating event list: " + e.getMessage());
-              showErrorMessage("Error updating event list: " + e.getMessage());
+            } catch (Exception ex) {
+              System.out.println("[DEBUG] Error updating event list: " + ex.getMessage());
+              showErrorMessage("Error updating event list: " + ex.getMessage());
             }
           }
         }
@@ -596,6 +589,46 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
    */
   public ExportImportViewModel getExportImportViewModel() {
     return exportImportViewModel;
+  }
+  
+  /**
+   * Updates the status for a specific date.
+   *
+   * @param date the date for which to update status
+   * @param isBusy whether the date has events
+   * @param eventCount the number of events on that date
+   */
+  public void updateStatus(LocalDate date, boolean isBusy, int eventCount) {
+    System.out.println("[DEBUG] Updating status for date " + date + ": " + (isBusy ? "Busy" : "Available") + ", " + eventCount + " events");
+    calendarPanel.updateDateStatus(date, isBusy, eventCount);
+  }
+  
+  /**
+   * Updates the events for a specific date.
+   *
+   * @param date the date for which to update events
+   * @param events the list of events on that date
+   */
+  public void updateEvents(LocalDate date, List<Event> events) {
+    System.out.println("[DEBUG] Updating events for date " + date + " with " + (events != null ? events.size() : 0) + " events");
+    calendarPanel.updateDateEvents(date, events);
+    updateEventList(events);
+  }
+  
+  /**
+   * Updates the event list for a date range.
+   *
+   * @param startDate the start date of the range
+   * @param endDate the end date of the range
+   * @param events the list of events in the range
+   */
+  public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
+    System.out.println("[DEBUG] Updating event list for date range " + startDate + " to " + endDate + 
+        " with " + (events != null ? events.size() : 0) + " events");
+    // Highlight the date range in the calendar panel
+    calendarPanel.setSelectedDateRange(startDate, endDate);
+    // Update the event list
+    eventPanel.updateEventList(events);
   }
 
   /**

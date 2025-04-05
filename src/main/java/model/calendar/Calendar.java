@@ -14,11 +14,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import model.calendar.iterator.CompositeEventIterator;
+import model.calendar.iterator.ConsolidatedEventIterator;
 import model.calendar.iterator.EventIterator;
-import model.calendar.iterator.FilteredEventIterator;
-import model.calendar.iterator.RecurringEventIterator;
-import model.calendar.iterator.RegularEventIterator;
 
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -642,9 +639,9 @@ public class Calendar implements ICalendar {
    */
   public EventIterator getEventIterator() {
     List<EventIterator> iterators = new ArrayList<>();
-    iterators.add(new RegularEventIterator(events));
-    iterators.add(new RecurringEventIterator(recurringEvents));
-    return new CompositeEventIterator(iterators);
+    iterators.add(ConsolidatedEventIterator.createRegularIterator(events));
+    iterators.add(ConsolidatedEventIterator.createRecurringIterator(recurringEvents));
+    return ConsolidatedEventIterator.createCompositeIterator(iterators);
   }
   
   /**
@@ -654,7 +651,7 @@ public class Calendar implements ICalendar {
    * @return a filtered iterator
    */
   public EventIterator getFilteredEventIterator(EventFilter filter) {
-    return new FilteredEventIterator(getEventIterator(), filter);
+    return ConsolidatedEventIterator.createFilteredIterator(getEventIterator(), filter);
   }
   
   /**

@@ -1038,6 +1038,116 @@ public class GUIEventPanel extends JPanel {
    * Collects form data and notifies the listener to update an event.
    * This method only collects UI data and delegates the actual event processing to the controller.
    */
+  /**
+   * Updates the event list with the provided events.
+   *
+   * @param events the list of events to display
+   */
+  public void updateEventList(List<Event> events) {
+    if (events == null || events.isEmpty()) {
+      // Clear the event list display
+      clearEventDisplay();
+      return;
+    }
+    
+    // Update the event display with the new events
+    displayEvents(events);
+  }
+  
+  /**
+   * Displays a list of events in the event panel.
+   *
+   * @param events the list of events to display
+   */
+  private void displayEvents(List<Event> events) {
+    // Clear current display
+    clearEventDisplay();
+    
+    // Create a panel to hold all event items
+    JPanel eventsContainer = new JPanel();
+    eventsContainer.setLayout(new BoxLayout(eventsContainer, BoxLayout.Y_AXIS));
+    eventsContainer.setBackground(Color.WHITE);
+    
+    // Add each event to the display
+    for (Event event : events) {
+      JPanel eventItem = createEventDisplayItem(event);
+      eventsContainer.add(eventItem);
+      eventsContainer.add(Box.createVerticalStrut(5));
+    }
+    
+    // Add the events container to the scroll pane
+    JScrollPane scrollPane = new JScrollPane(eventsContainer);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    
+    // Add to the panel
+    removeAll();
+    setLayout(new BorderLayout());
+    add(scrollPane, BorderLayout.CENTER);
+    revalidate();
+    repaint();
+  }
+  
+  /**
+   * Creates a display item for an event.
+   *
+   * @param event the event to create a display for
+   * @return a panel containing the event information
+   */
+  private JPanel createEventDisplayItem(Event event) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BorderLayout(5, 5));
+    panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+    panel.setBackground(Color.WHITE);
+    
+    // Create a label for the event title
+    JLabel titleLabel = new JLabel(event.getSubject());
+    titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    panel.add(titleLabel, BorderLayout.NORTH);
+    
+    // Create a formatted string for the event details
+    StringBuilder details = new StringBuilder();
+    details.append("<html>");
+    
+    // Add time details
+    String startTime = event.getStartDateTime().toLocalTime().toString();
+    String endTime = event.getEndDateTime().toLocalTime().toString();
+    details.append(String.format("<b>Time:</b> %s - %s<br/>", startTime, endTime));
+    
+    // Add location if present
+    if (event.getLocation() != null && !event.getLocation().isEmpty()) {
+      details.append(String.format("<b>Location:</b> %s<br/>", event.getLocation()));
+    }
+    
+    // Add description if present
+    if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+      details.append(String.format("<b>Description:</b> %s<br/>", event.getDescription()));
+    }
+    
+    details.append("</html>");
+    
+    // Create a label for the event details
+    JLabel detailsLabel = new JLabel(details.toString());
+    panel.add(detailsLabel, BorderLayout.CENTER);
+    
+    return panel;
+  }
+  
+  /**
+   * Clears the event display area.
+   */
+  private void clearEventDisplay() {
+    removeAll();
+    setLayout(new BorderLayout());
+    JLabel emptyLabel = new JLabel("No events to display");
+    emptyLabel.setHorizontalAlignment(JLabel.CENTER);
+    add(emptyLabel, BorderLayout.CENTER);
+    revalidate();
+    repaint();
+  }
+
   public void updateEvent(Event event) {
     // Only collect form data and pass it to the controller
     EventFormData formData = collectFormData();

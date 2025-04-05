@@ -14,10 +14,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * This component provides buttons for importing from and exporting to CSV files.
  */
 public class GUIExportImportPanel extends JPanel {
-  private static final Color THEME_COLOR = new Color(0x4a86e8);
-  private static final Color THEME_LIGHT = new Color(0xe6f2ff);
-  private static final Color BORDER_COLOR = new Color(0xcccccc);
-
   private final JButton importButton;
   private final JButton exportButton;
   private final JFileChooser fileChooser;
@@ -28,8 +24,6 @@ public class GUIExportImportPanel extends JPanel {
   private JLabel statusLabel;
   private ExportImportListener listener;
   private final List<ExportImportListener> listeners;
-  private static final FileNameExtensionFilter CSV_FILTER =
-          new FileNameExtensionFilter("CSV Files (*.csv)", "csv");
 
   /**
    * Interface for listening to export/import events.

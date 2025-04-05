@@ -465,7 +465,7 @@ public class CommandParser {
     String property = matcher.group(1);
     String subject = matcher.group(2);
     String startDateTime = matcher.group(3);
-    String endDateTime = matcher.group(4);
+    // Group 4 is available but not used in this implementation
     String newValue = matcher.group(5);
 
     String[] args = {"single", property, subject, startDateTime, newValue};

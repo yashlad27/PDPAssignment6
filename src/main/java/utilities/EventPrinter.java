@@ -6,7 +6,6 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.time.format.DateTimeFormatter;
 
 import model.event.Event;
 
@@ -15,7 +14,6 @@ import model.event.Event;
  */
 public class EventPrinter implements Printable {
   private final Event event;
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
   /**
    * Constructs a new EventPrinter.

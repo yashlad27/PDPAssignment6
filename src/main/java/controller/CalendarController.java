@@ -5,8 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -44,8 +42,6 @@ public class CalendarController {
   private final CalendarManager calendarManager;
   private ICommandFactory commandFactory;
   private static final String EXIT_COMMAND = "exit";
-  private static final Set<String> VALID_COMMANDS = new HashSet<>(
-          Arrays.asList("create", "use", "show", "edit", "copy", "exit"));
 
   /**
    * Constructs a new CalendarController with all necessary dependencies.

@@ -9,17 +9,15 @@ import view.ICalendarView;
  */
 public class CopyCalendarCommand implements ICommand {
     private final CalendarManager calendarManager;
-    private final ICalendarView view;
 
     /**
      * Creates a new CopyCalendarCommand.
      *
      * @param calendarManager the calendar manager
-     * @param view the view
      */
     public CopyCalendarCommand(CalendarManager calendarManager, ICalendarView view) {
         this.calendarManager = calendarManager;
-        this.view = view;
+        // View parameter is kept for interface consistency but not used in this implementation
     }
 
     @Override
