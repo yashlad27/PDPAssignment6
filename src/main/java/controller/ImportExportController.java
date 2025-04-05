@@ -57,15 +57,8 @@ public class ImportExportController {
       return;
     }
     
-    try {
-      // TODO: Implement CSVImporter or use alternative import mechanism
-      // CSVImporter importer = new CSVImporter();
-      // int count = importer.importEvents(currentCalendar, file.getPath());
-      // For now, show a placeholder message
-      view.displayMessage("Import functionality is not yet implemented.");
-    } catch (Exception e) {
-      view.showErrorMessage("Error importing events: " + e.getMessage());
-    }
+    // Simply display the message - no try-catch needed for a basic UI message
+    view.displayMessage("Import functionality is not yet implemented.");
   }
 
   /**

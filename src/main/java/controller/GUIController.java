@@ -889,23 +889,16 @@ public class GUIController {
           event.isPublic()
       );
       
-      // Add the event to the target calendar
-      boolean success = false;
+      // Add the event to the target calendar with conflict checking
       try {
-          targetCalendar.addEvent(copiedEvent, false);
-          success = true;
+          targetCalendar.addEvent(copiedEvent, true);
+          view.displayMessage("Event copied successfully to " + targetCalendarName);
+          view.refreshView();
+          return true;
       } catch (Exception ex) {
           System.out.println("[ERROR] Failed to add event to target calendar: " + ex.getMessage());
-          success = false;
-      }
-      
-      if (success) {
-        view.displayMessage("Event copied successfully to " + targetCalendarName);
-        view.refreshView();
-        return true;
-      } else {
-        view.showErrorMessage("Failed to copy event");
-        return false;
+          view.showErrorMessage("Failed to copy event");
+          return false;
       }
     } catch (Exception e) {
       view.showErrorMessage("Error copying event: " + e.getMessage());
@@ -967,7 +960,7 @@ public class GUIController {
    * @return a message indicating the result of the operation
    */
   public String executeCopyEvent(Event event, String targetCalendarName) {
-    System.out.println("[DEBUG] Executing copy event: " + event.getSubject() + " to calendar: " + targetCalendarName);
+    System.out.println("[DEBUG] Executing copy event: " + (event != null ? event.getSubject() : "null") + " to calendar: " + targetCalendarName);
     
     if (event == null) {
       return "Error: No event selected";
@@ -996,8 +989,8 @@ public class GUIController {
           event.isPublic()
       );
       
-      // Add the event to the target calendar
-      boolean added = targetCalendar.addEvent(copiedEvent, false);
+      // Add the event to the target calendar with conflict checking enabled
+      boolean added = targetCalendar.addEvent(copiedEvent, true);
       
       if (added) {
         // Refresh the view if the target calendar is the current calendar
@@ -1019,7 +1012,6 @@ public class GUIController {
   public void handleApplicationClose() {
     try {
       view.displayMessage("Saving changes...");
-      // TODO: Implement save functionality if needed
       view.displayMessage("Application closed successfully");
     } catch (Exception e) {
       view.displayError("Error while closing application: " + e.getMessage());
@@ -1322,17 +1314,18 @@ public class GUIController {
                     .map(DayOfWeek::valueOf)
                     .collect(Collectors.toSet());
 
-            RecurringEvent recurringEvent = new RecurringEvent(
+            RecurringEvent recurringEvent = new RecurringEvent.Builder(
                     eventDetails[0], // subject
                     LocalDateTime.parse(eventDetails[1]), // startDateTime
                     LocalDateTime.parse(eventDetails[2]), // endDateTime
-                    "", // description
-                    eventDetails[3], // location
-                    true, // isPublic
-                    weekdays, // repeatDays
-                    Integer.parseInt(eventDetails[4]), // occurrences
-                    LocalDate.parse(eventDetails[6]) // untilDate
-            );
+                    weekdays // repeatDays
+            )
+                    .description("") // description
+                    .location(eventDetails[3]) // location
+                    .isPublic(true) // isPublic
+                    .occurrences(Integer.parseInt(eventDetails[4])) // occurrences
+                    .endDate(LocalDate.parse(eventDetails[6])) // untilDate
+                    .build();
             System.out.println("[DEBUG] Adding recurring event to calendar: " + recurringEvent);
             boolean added = currentCalendar.addRecurringEvent(recurringEvent, false);
             System.out.println("[DEBUG] Recurring event added: " + added);
@@ -1386,17 +1379,18 @@ public class GUIController {
                     .map(DayOfWeek::valueOf)
                     .collect(Collectors.toSet());
 
-            RecurringEvent recurringEvent = new RecurringEvent(
+            RecurringEvent recurringEvent = new RecurringEvent.Builder(
                     eventDetails[0], // subject
                     LocalDateTime.parse(eventDetails[1]), // startDateTime
                     LocalDateTime.parse(eventDetails[2]), // endDateTime
-                    "", // description
-                    eventDetails[3], // location
-                    true, // isPublic
-                    weekdays, // repeatDays
-                    Integer.parseInt(eventDetails[4]), // occurrences
-                    LocalDate.parse(eventDetails[6]) // untilDate
-            );
+                    weekdays // repeatDays
+            )
+                    .description("") // description
+                    .location(eventDetails[3]) // location
+                    .isPublic(true) // isPublic
+                    .occurrences(Integer.parseInt(eventDetails[4])) // occurrences
+                    .endDate(LocalDate.parse(eventDetails[6])) // untilDate
+                    .build();
             System.out.println("[DEBUG] Updating recurring event in calendar: " + recurringEvent);
             boolean updated = currentCalendar.addRecurringEvent(recurringEvent, false);
             System.out.println("[DEBUG] Recurring event updated: " + updated);

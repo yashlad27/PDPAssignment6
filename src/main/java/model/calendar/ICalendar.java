@@ -32,6 +32,20 @@ import model.export.IDataExporter;
 public interface ICalendar {
 
   /**
+   * Gets the name of the calendar.
+   *
+   * @return the name of the calendar
+   */
+  String getName();
+  
+  /**
+   * Sets the name of the calendar.
+   *
+   * @param name the name to set
+   */
+  void setName(String name);
+
+  /**
    * Adds a single event to the calendar with optional conflict checking.
    *
    * <p>If autoDecline is true, the method will throw a ConflictingEventException when the event

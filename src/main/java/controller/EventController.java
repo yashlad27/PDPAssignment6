@@ -130,17 +130,18 @@ public class EventController {
     
     // Create and return the appropriate event type
     if (formData.isRecurring()) {
-      return new RecurringEvent(
+      return new RecurringEvent.Builder(
               subject,
               startDateTime,
               endDateTime,
-              description,
-              location,
-              isPublic,
-              formData.getWeekdays(),
-              formData.getOccurrences(),
-              formData.getUntilDate()
-      );
+              formData.getWeekdays()
+      )
+              .description(description)
+              .location(location)
+              .isPublic(isPublic)
+              .occurrences(formData.getOccurrences())
+              .endDate(formData.getUntilDate())
+              .build();
     } else {
       return new Event(
               subject,

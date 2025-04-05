@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
+// Removed unused imports
 
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -695,7 +695,7 @@ public class GUICalendarPanel extends JPanel {
     // Use currentCalendar instead of selectedCalendar for consistency
     if (currentCalendar == null) {
       System.out.println("[DEBUG] No calendar selected");
-      eventListArea.setText("No calendar selected");
+      displayMessageInEventList("No calendar selected");
       return;
     }
 
@@ -705,27 +705,273 @@ public class GUICalendarPanel extends JPanel {
     
     if (events.isEmpty()) {
       System.out.println("[DEBUG] No events for date " + date);
-      eventListArea.setText("No events for " + date);
+      displayMessageInEventList("No events for " + date);
       return;
     }
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("<html><body style='font-family:Arial; font-size:12px;'>").append("<h3 style='color:#4a86e8;'>Events for ").append(date).append("</h3>");
-
+    // Create a panel to hold all event panels
+    JPanel eventsContainer = new JPanel();
+    eventsContainer.setLayout(new BoxLayout(eventsContainer, BoxLayout.Y_AXIS));
+    eventsContainer.setBackground(Color.WHITE);
+    
+    // Add a title label
+    JLabel titleLabel = new JLabel("Events for " + date);
+    titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+    titleLabel.setForeground(HEADER_COLOR);
+    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+    eventsContainer.add(titleLabel);
+    
+    // Create and add event panels
     for (Event event : events) {
-      String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
-      sb.append("<div id='" + currentEventId + "' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>").append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>").append("<span style='color:#666;'>").append(event.getStartDateTime().toLocalTime()).append(" - ").append(event.getEndDateTime().toLocalTime()).append("</span><br>").append("<span>").append(event.getDescription()).append("</span><br>").append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>").append("<div style='margin-top:5px;'>").append("<button onclick='printEvent(\"" + currentEventId + "\")' style='background-color:#4a86e8; color:white; border:none; padding:5px 10px; cursor:pointer;'>Print</button>").append("</div>").append("</div>");
+      // Generate a unique ID for each event for consistency
+      String currentEventId = event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString();
+      System.out.println("[DEBUG] Using event ID format: " + currentEventId);
+      System.out.println("[DEBUG] Creating event entry with ID: " + currentEventId);
+      
+      // Create a panel for this event
+      JPanel eventPanel = createEventPanel(event);
+      eventsContainer.add(eventPanel);
+      eventsContainer.add(Box.createVerticalStrut(10)); // Add spacing between events
     }
-
-    sb.append("<script>");
-    sb.append("function editEvent(id) { window.location.href='edit:' + id; }\n");
-    sb.append("function copyEvent(id) { window.location.href='copy:' + id; }\n");
-    sb.append("function printEvent(id) { window.location.href='print:' + id; }\n");
-    sb.append("</script>");
-    sb.append("</body></html>");
-    eventListArea.setContentType("text/html");
-    eventListArea.setText(sb.toString());
-    addEventListeners(events);
+    
+    // Replace the content in the eventListArea with our new component
+    // We'll create a viewport to the panel and set it as the content
+    JScrollPane scrollPane = new JScrollPane(eventsContainer);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    scrollPane.getViewport().setBackground(Color.WHITE);
+    
+    // Remove any existing components and add our scroll pane
+    if (eventListArea.getParent() instanceof JViewport) {
+      JViewport viewport = (JViewport) eventListArea.getParent();
+      if (viewport.getParent() instanceof JScrollPane) {
+        JScrollPane currentScrollPane = (JScrollPane) viewport.getParent();
+        Container parent = currentScrollPane.getParent();
+        if (parent != null) {
+          int index = -1;
+          for (int i = 0; i < parent.getComponentCount(); i++) {
+            if (parent.getComponent(i) == currentScrollPane) {
+              index = i;
+              break;
+            }
+          }
+          if (index >= 0) {
+            parent.remove(currentScrollPane);
+            parent.add(scrollPane, index);
+            parent.revalidate();
+            parent.repaint();
+          }
+        }
+      }
+    }
+    
+    System.out.println("[DEBUG] Event list updated with " + events.size() + " events using native Swing components");
+  }
+  
+  /**
+   * Creates a panel to display a single event with edit, copy, and print buttons.
+   * 
+   * Creates an event panel for displaying an event.
+   *
+   * @param event the event to display
+   * @return a panel containing the event details
+   */
+  private JPanel createEventPanel(Event event) {
+    // Store the event ID for reference
+    final Event eventInstance = event; // Keep a direct reference to the event object
+    JPanel panel = new JPanel(new BorderLayout(5, 5));
+    panel.setBackground(Color.WHITE);
+    panel.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(BORDER_COLOR),
+        BorderFactory.createEmptyBorder(8, 8, 8, 8)
+    ));
+    
+    // Create a panel for event details
+    JPanel detailsPanel = new JPanel();
+    detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+    detailsPanel.setBackground(Color.WHITE);
+    
+    // Event title
+    JLabel titleLabel = new JLabel(event.getSubject());
+    titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    titleLabel.setForeground(HEADER_COLOR);
+    titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    detailsPanel.add(titleLabel);
+    detailsPanel.add(Box.createVerticalStrut(3));
+    
+    // Event time
+    JLabel timeLabel = new JLabel(event.getStartDateTime().toLocalTime() + " - " + 
+        event.getEndDateTime().toLocalTime());
+    timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+    timeLabel.setForeground(Color.DARK_GRAY);
+    timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    detailsPanel.add(timeLabel);
+    detailsPanel.add(Box.createVerticalStrut(3));
+    
+    // Event description
+    if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+      JLabel descLabel = new JLabel(event.getDescription());
+      descLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+      descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+      detailsPanel.add(descLabel);
+      detailsPanel.add(Box.createVerticalStrut(3));
+    }
+    
+    // Event location
+    if (event.getLocation() != null && !event.getLocation().isEmpty()) {
+      JLabel locLabel = new JLabel(event.getLocation());
+      locLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+      locLabel.setForeground(Color.DARK_GRAY);
+      locLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+      detailsPanel.add(locLabel);
+    }
+    
+    panel.add(detailsPanel, BorderLayout.CENTER);
+    
+    // Create a panel for buttons
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    buttonPanel.setBackground(Color.WHITE);
+    
+    // Edit button
+    JButton editButton = new JButton("Edit");
+    editButton.setBackground(HEADER_COLOR);
+    editButton.setForeground(Color.WHITE);
+    editButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    editButton.setFocusPainted(false);
+    editButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Edit button clicked for event: " + event.getSubject());
+      highlightEvent(panel);
+      // Store the event as the currently selected one
+      currentSelectedEvent = eventInstance;
+      handleEventAction(event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString(), "edit");
+    });
+    buttonPanel.add(editButton);
+    
+    // Copy button
+    JButton copyButton = new JButton("Copy");
+    copyButton.setBackground(HEADER_COLOR);
+    copyButton.setForeground(Color.WHITE);
+    copyButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    copyButton.setFocusPainted(false);
+    copyButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Copy button clicked for event: " + event.getSubject());
+      highlightEvent(panel);
+      // Store the event as the currently selected one
+      currentSelectedEvent = eventInstance;
+      handleEventAction(event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString(), "copy");
+    });
+    buttonPanel.add(copyButton);
+    
+    // Print button
+    JButton printButton = new JButton("Print");
+    printButton.setBackground(HEADER_COLOR);
+    printButton.setForeground(Color.WHITE);
+    printButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    printButton.setFocusPainted(false);
+    printButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Print button clicked for event: " + event.getSubject());
+      highlightEvent(panel);
+      // Store the event as the currently selected one
+      currentSelectedEvent = eventInstance;
+      handleEventAction(event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString(), "print");
+    });
+    buttonPanel.add(printButton);
+    
+    panel.add(buttonPanel, BorderLayout.SOUTH);
+    
+    return panel;
+  }
+  
+  private void highlightEvent(JPanel eventPanel) {
+    // Clear any existing highlight
+    if (eventPanel.getParent() instanceof JPanel) {
+      JPanel parent = (JPanel) eventPanel.getParent();
+      for (Component comp : parent.getComponents()) {
+        if (comp instanceof JPanel && comp != eventPanel) {
+          comp.setBackground(Color.WHITE);
+        }
+      }
+    }
+    
+    // Set the selected event highlight
+    eventPanel.setBackground(HEADER_LIGHT_COLOR);
+  }
+  
+  // Store the currently selected event for reference
+  private Event currentSelectedEvent = null;
+  
+  private void handleEventAction(String eventId, String action) {
+    // Find the corresponding event
+    Event targetEvent = null;
+    for (List<Event> eventList : eventsByDate.values()) {
+      for (Event event : eventList) {
+        String currentId = event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString();
+        if (currentId.equals(eventId)) {
+          targetEvent = event;
+          break;
+        }
+      }
+      if (targetEvent != null) break;
+    }
+    
+    if (targetEvent != null && listener != null) {
+      // Store the selected event for reference
+      this.currentSelectedEvent = targetEvent;
+      System.out.println("[DEBUG] Selected event: " + targetEvent.getSubject());
+      
+      switch (action) {
+        case "edit":
+          System.out.println("[DEBUG] Sending edit event to listener: " + targetEvent.getSubject());
+          listener.onEditEvent(targetEvent);
+          break;
+        case "copy":
+          System.out.println("[DEBUG] Sending copy event to listener: " + targetEvent.getSubject());
+          listener.onCopyEvent(targetEvent);
+          break;
+        case "print":
+          System.out.println("[DEBUG] Sending print event to listener: " + targetEvent.getSubject());
+          listener.onPrintEvent(targetEvent);
+          break;
+      }
+    } else {
+      System.out.println("[ERROR] Could not find event with ID: " + eventId);
+    }
+  }
+  
+  private void displayMessageInEventList(String message) {
+    JPanel messagePanel = new JPanel(new BorderLayout());
+    messagePanel.setBackground(Color.WHITE);
+    
+    JLabel messageLabel = new JLabel(message, SwingConstants.CENTER);
+    messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+    messagePanel.add(messageLabel, BorderLayout.CENTER);
+    
+    // Replace the current content with the message panel
+    if (eventListArea.getParent() instanceof JViewport) {
+      JViewport viewport = (JViewport) eventListArea.getParent();
+      if (viewport.getParent() instanceof JScrollPane) {
+        JScrollPane scrollPane = (JScrollPane) viewport.getParent();
+        Container parent = scrollPane.getParent();
+        if (parent != null) {
+          int index = -1;
+          for (int i = 0; i < parent.getComponentCount(); i++) {
+            if (parent.getComponent(i) == scrollPane) {
+              index = i;
+              break;
+            }
+          }
+          if (index >= 0) {
+            JScrollPane newScrollPane = new JScrollPane(messagePanel);
+            newScrollPane.setBorder(null);
+            parent.remove(scrollPane);
+            parent.add(newScrollPane, index);
+            parent.revalidate();
+            parent.repaint();
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -736,96 +982,205 @@ public class GUICalendarPanel extends JPanel {
    * @param events    the list of events in the range
    */
   public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<html><body style='font-family:Arial; font-size:12px;'>");
-    sb.append("<h3 style='color:#4a86e8;'>Events from ").append(startDate).append(" to ").append(endDate).append(":</h3>");
-
-    for (Event event : events) {
-      String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
-      sb.append("<div id='" + currentEventId + "' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>");
-      sb.append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>");
-      sb.append("<span style='color:#666;'>").append(event.getStartDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-      sb.append(" - ").append(event.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("</span><br>");
-      sb.append("<span>").append(event.getDescription() != null ? event.getDescription() : "").append("</span><br>");
-      sb.append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>");
-      sb.append("<div style='margin-top:5px;'>");
-      sb.append("<button onclick='printEvent(\"" + currentEventId + "\")' style='background-color:#4a86e8; color:white; border:none; padding:5px 10px; cursor:pointer;'>Print</button>");
-      sb.append("</div>").append("</div>");
+    // If no events found, display a message
+    if (events == null || events.isEmpty()) {
+      displayMessageInEventList("No events found between " + startDate + " and " + endDate);
+      return;
     }
 
-    sb.append("<script>");
-    sb.append("function printEvent(id) { window.location.href='print:' + id; }\n");
-    sb.append("</script>");
-    sb.append("</body></html>");
-    eventListArea.setContentType("text/html");
-    eventListArea.setText(sb.toString());
-    addEventListeners(events);
-  }
-
-  /**
-   * Adds event listeners for the hyperlinks in the event list.
-   *
-   * @param events the list of events
-   */
-  private void addEventListeners(List<Event> events) {
-    eventListArea.addHyperlinkListener(e -> {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        String url = e.getDescription();
-        System.out.println("[DEBUG] Event link clicked: " + url);
-        if (url.startsWith("edit:")) {
-          String eventIdStr = url.substring(5);
-          for (Event event : events) {
-            String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
-            if (currentEventId.equals(eventIdStr)) {
-              if (listener != null) {
-                System.out.println("[DEBUG] Edit requested for event: " + event.getSubject());
-                listener.onEditEvent(event);
-              }
+    // Create a panel to hold all event panels
+    JPanel eventsContainer = new JPanel();
+    eventsContainer.setLayout(new BoxLayout(eventsContainer, BoxLayout.Y_AXIS));
+    eventsContainer.setBackground(Color.WHITE);
+    
+    // Add a title label
+    JLabel titleLabel = new JLabel("Events from " + startDate + " to " + endDate);
+    titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+    titleLabel.setForeground(HEADER_COLOR);
+    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+    eventsContainer.add(titleLabel);
+    
+    // Create and add event panels
+    for (Event event : events) {
+      // Generate a unique ID for each event for consistency
+      String currentEventId = event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString();
+      System.out.println("[DEBUG] Using event ID format: " + currentEventId);
+      System.out.println("[DEBUG] Creating event entry with ID: " + currentEventId);
+      
+      // Create a panel for this event with more date information since this is a range view
+      JPanel eventPanel = new JPanel(new BorderLayout(5, 5));
+      eventPanel.setBackground(Color.WHITE);
+      eventPanel.setBorder(BorderFactory.createCompoundBorder(
+          BorderFactory.createLineBorder(BORDER_COLOR),
+          BorderFactory.createEmptyBorder(8, 8, 8, 8)
+      ));
+      
+      // Create a panel for event details
+      JPanel detailsPanel = new JPanel();
+      detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+      detailsPanel.setBackground(Color.WHITE);
+      
+      // Event title
+      JLabel subjectLabel = new JLabel(event.getSubject());
+      subjectLabel.setFont(new Font("Arial", Font.BOLD, 14));
+      subjectLabel.setForeground(HEADER_COLOR);
+      subjectLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+      detailsPanel.add(subjectLabel);
+      detailsPanel.add(Box.createVerticalStrut(3));
+      
+      // Event date and time - for range view, include the full date
+      String dateTimeStr = event.getStartDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + 
+                          " - " + event.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+      JLabel dateTimeLabel = new JLabel(dateTimeStr);
+      dateTimeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+      dateTimeLabel.setForeground(Color.DARK_GRAY);
+      dateTimeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+      detailsPanel.add(dateTimeLabel);
+      detailsPanel.add(Box.createVerticalStrut(3));
+      
+      // Event description
+      if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+        JLabel descLabel = new JLabel(event.getDescription());
+        descLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailsPanel.add(descLabel);
+        detailsPanel.add(Box.createVerticalStrut(3));
+      }
+      
+      // Event location
+      if (event.getLocation() != null && !event.getLocation().isEmpty()) {
+        JLabel locLabel = new JLabel(event.getLocation());
+        locLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        locLabel.setForeground(Color.DARK_GRAY);
+        locLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailsPanel.add(locLabel);
+      }
+      
+      eventPanel.add(detailsPanel, BorderLayout.CENTER);
+      
+      // Create a panel for buttons
+      JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+      buttonPanel.setBackground(Color.WHITE);
+      
+      // Edit button
+      JButton editButton = new JButton("Edit");
+      editButton.setBackground(HEADER_COLOR);
+      editButton.setForeground(Color.WHITE);
+      editButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+      editButton.setFocusPainted(false);
+      final String eventIdForEdit = currentEventId; // Create final copy for lambda
+      editButton.addActionListener(e -> {
+        System.out.println("[DEBUG] Edit button clicked for event in range view: " + eventIdForEdit);
+        highlightEvent(eventPanel);
+        handleEventAction(eventIdForEdit, "edit");
+      });
+      buttonPanel.add(editButton);
+      
+      // Copy button
+      JButton copyButton = new JButton("Copy");
+      copyButton.setBackground(HEADER_COLOR);
+      copyButton.setForeground(Color.WHITE);
+      copyButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+      copyButton.setFocusPainted(false);
+      final String eventIdForCopy = currentEventId; // Create final copy for lambda
+      copyButton.addActionListener(e -> {
+        System.out.println("[DEBUG] Copy button clicked for event in range view: " + eventIdForCopy);
+        highlightEvent(eventPanel);
+        handleEventAction(eventIdForCopy, "copy");
+      });
+      buttonPanel.add(copyButton);
+      
+      // Print button
+      JButton printButton = new JButton("Print");
+      printButton.setBackground(HEADER_COLOR);
+      printButton.setForeground(Color.WHITE);
+      printButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+      printButton.setFocusPainted(false);
+      final String eventIdForPrint = currentEventId; // Create final copy for lambda
+      printButton.addActionListener(e -> {
+        System.out.println("[DEBUG] Print button clicked for event in range view: " + eventIdForPrint);
+        highlightEvent(eventPanel);
+        handleEventAction(eventIdForPrint, "print");
+      });
+      buttonPanel.add(printButton);
+      
+      eventPanel.add(buttonPanel, BorderLayout.SOUTH);
+      
+      eventsContainer.add(eventPanel);
+      eventsContainer.add(Box.createVerticalStrut(10)); // Add spacing between events
+    }
+    
+    // Replace the content in the eventListArea with our new component
+    JScrollPane scrollPane = new JScrollPane(eventsContainer);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    scrollPane.getViewport().setBackground(Color.WHITE);
+    
+    // Replace the existing component with our scroll pane
+    if (eventListArea.getParent() instanceof JViewport) {
+      JViewport viewport = (JViewport) eventListArea.getParent();
+      if (viewport.getParent() instanceof JScrollPane) {
+        JScrollPane currentScrollPane = (JScrollPane) viewport.getParent();
+        Container parent = currentScrollPane.getParent();
+        if (parent != null) {
+          int index = -1;
+          for (int i = 0; i < parent.getComponentCount(); i++) {
+            if (parent.getComponent(i) == currentScrollPane) {
+              index = i;
               break;
             }
           }
-        } else if (url.startsWith("copy:")) {
-          String eventIdStr = url.substring(5);
-          for (Event event : events) {
-            String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
-            if (currentEventId.equals(eventIdStr)) {
-              if (listener != null) {
-                System.out.println("[DEBUG] Copy requested for event: " + event.getSubject());
-                listener.onCopyEvent(event);
-              }
-              break;
-            }
+          if (index >= 0) {
+            parent.remove(currentScrollPane);
+            parent.add(scrollPane, index);
+            parent.revalidate();
+            parent.repaint();
           }
         }
       }
-    });
+    }
   }
-
+  
   /**
+   * Returns the currently selected event.
+   *
+   * @return the currently selected event, or null if none is selected
+   */
+  public Event getCurrentSelectedEvent() {
+    return currentSelectedEvent;
   }
-}
-
-/**
- * Updates the events for a specific date.
- *
- * @param date the date to update events for
- * @param events the list of events on that date
- */
-public void updateDateEvents(LocalDate date, List<Event> events) {
-  if (date == null) return;
   
-  // Store the events for this date
-  eventsByDate.put(date, new ArrayList<>(events));
-  
-  // Update the button for this date
-  boolean isBusy = events != null && !events.isEmpty();
-  updateDateStatus(date, isBusy, events != null ? events.size() : 0);
-  
-  // If this is the selected date, update the event list
-  if (date.equals(selectedDate)) {
-    updateEventList(date);
+  /**
+   * Sets the currently selected event.
+   *
+   * @param event the event to set as selected
+   */
+  public void setCurrentSelectedEvent(Event event) {
+    this.currentSelectedEvent = event;
   }
-}
+  
+  /**
+   * Updates the events for a specific date.
+   *
+   * @param date the date to update events for
+   * @param events the list of events on that date
+   */
+  public void updateDateEvents(LocalDate date, List<Event> events) {
+    if (date == null) return;
+    
+    // Store the events for this date
+    eventsByDate.put(date, new ArrayList<>(events));
+    
+    // Update the button for this date
+    boolean isBusy = events != null && !events.isEmpty();
+    updateDateStatus(date, isBusy, events != null ? events.size() : 0);
+    
+    // If this is the selected date, update the event list
+    if (date.equals(selectedDate)) {
+      updateEventList(date);
+    }
+  }
 
 /**
  * Gets the currently selected calendar.

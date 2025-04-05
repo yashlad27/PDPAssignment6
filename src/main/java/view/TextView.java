@@ -18,6 +18,12 @@ import model.event.RecurringEvent;
  * supporting both interactive (console) and headless (file) modes.
  */
 public class TextView implements ICalendarView {
+  /*
+   * This controller reference is maintained for future implementation of direct controller calls.
+   * Currently used for initialization and maintaining the MVC architecture, but specific calls
+   * are handled through command processing rather than direct controller invocation.
+   */
+  @SuppressWarnings("unused")
   private final CalendarController controller;
   private BufferedReader reader;
   private boolean isInteractive;

@@ -487,52 +487,86 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   }
 
   /**
-   * Shows an event edit dialog.
+   * Shows an enhanced event edit dialog with more comprehensive options.
    *
    * @param event       the event to edit
    * @param isRecurring whether the event is recurring
    */
   public void showEventEditDialog(Event event, boolean isRecurring) {
-    EventEditDialog dialog = new EventEditDialog(this, event, isRecurring);
+    // Use the interface type rather than the concrete implementation
+    view.dialog.IEventEditDialog dialog = new view.dialog.EnhancedEventEditDialog(this, event, isRecurring);
     boolean confirmed = dialog.showDialog();
 
     if (confirmed) {
-      // Update the event with the new values
-      String subject = dialog.getSubject();
-      String location = dialog.getEventLocation();
-      String description = dialog.getDescription();
+      // Get updated values from the dialog
+      String updatedSubject = dialog.getSubject();
+      String updatedLocation = dialog.getEventLocation();
+      String updatedDescription = dialog.getDescription();
+      LocalDateTime updatedStartDateTime = dialog.getStartDateTime();
+      LocalDateTime updatedEndDateTime = dialog.getEndDateTime();
+      boolean updatedPrivate = dialog.isPrivate();
+      boolean updatedAllDay = dialog.isAllDay();
+      
+      // Note: Recurring flag is captured but not implemented in this version
+      // This would be used in a future enhancement
 
-      // Create a copy of the event with the new values
-      Event updatedEvent = event;
-      updatedEvent.setSubject(subject);
-      updatedEvent.setLocation(location);
-      updatedEvent.setDescription(description);
-
+      // Create a new event with the updated values
+      Event updatedEvent = new Event(updatedSubject, updatedStartDateTime, updatedEndDateTime,
+          updatedDescription, updatedLocation, !updatedPrivate);
+      
+      // Handle all-day events by setting appropriate start and end times
+      if (updatedAllDay) {
+          // Update to full-day time range if marked as all-day event
+          updatedEvent.setStartDateTime(updatedStartDateTime.toLocalDate().atStartOfDay());
+          updatedEvent.setEndDateTime(updatedStartDateTime.toLocalDate().atTime(23, 59, 59));
+      }
       // Notify the controller that the event has been updated
       if (guiController != null) {
-        guiController.onEventUpdated(updatedEvent);
+        try {
+          guiController.onEventUpdated(updatedEvent);
+        } catch (Exception e) {
+          // If an exception occurs (likely ConflictingEventException), show error to user
+          showErrorMessage("Cannot update event: " + e.getMessage() + 
+                        "\n\nEvents cannot conflict with each other. Editing an existing event " + 
+                        "that would create a conflict with another existing event is not allowed.");
+        }
       }
     }
   }
 
   /**
-   * Shows an event copy dialog.
+   * Shows an enhanced event copy dialog with more comprehensive options.
    *
    * @param event     the event to copy
    * @param calendars the list of available calendars
    */
   public void showEventCopyDialog(Event event, List<ICalendar> calendars) {
-    EventCopyDialog dialog = new EventCopyDialog(this, event, calendars);
+    // Use the interface type rather than the concrete implementation
+    view.dialog.IEventCopyDialog dialog = new view.dialog.EnhancedEventCopyDialog(this, event, calendars);
     boolean confirmed = dialog.showDialog();
 
     if (confirmed) {
-      // Get the target calendar name
+      // Get the target calendar name and datetime information
       String targetCalendarName = dialog.getTargetCalendarName();
+      LocalDateTime targetStartDateTime = dialog.getTargetStartDateTime();
+      LocalDateTime targetEndDateTime = dialog.getTargetEndDateTime();
+
+      // Create a copy of the event with the new target date/time
+      Event targetEvent = event;
+      targetEvent.setStartDateTime(targetStartDateTime);
+      targetEvent.setEndDateTime(targetEndDateTime);
 
       // Notify the controller that the event should be copied
       if (guiController != null) {
-        String result = guiController.executeCopyEvent(event, targetCalendarName);
-        showInfoMessage(result);
+        try {
+          String result = guiController.executeCopyEvent(targetEvent, targetCalendarName);
+          showInfoMessage(result);
+        } catch (Exception e) {
+          // If an exception occurs (likely ConflictingEventException), show error to user
+          showErrorMessage("Cannot copy event: " + e.getMessage() + 
+                        "\n\nEvents cannot conflict with each other. A conflict with any instance " + 
+                        "of a recurring event is treated as a conflict with the recurring event itself, and is prohibited.");
+        }
       }
     }
   }

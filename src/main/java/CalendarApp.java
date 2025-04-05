@@ -54,7 +54,7 @@ public class CalendarApp {
             null, calendarManager, null);
 
     // Create view based on current mode
-    view = factory.createView(currentMode, controller);
+    view = CalendarFactory.createView(currentMode, controller);
 
     // Now create command factories with the view
     ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);

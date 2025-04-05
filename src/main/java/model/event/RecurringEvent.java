@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -18,13 +19,22 @@ public class RecurringEvent extends Event {
 
   private final Set<DayOfWeek> repeatDays;
   private final int occurrences;
-  private final LocalDate untilDate;
+  private final LocalDate endDate;
   private final UUID recurringId;
+  // The isAllDay field determines if the event spans the entire day
+  private final boolean isAllDay;
+  
+  /**
+   * @return true if this event spans the entire day
+   */
+  public boolean isAllDay() {
+    return isAllDay;
+  }
 
   /**
    * Constructs a new recurring event.
    *
-   * @param subject       the subject of the event
+   * @param subject       the event subject
    * @param startDateTime the start date and time
    * @param endDateTime   the end date and time
    * @param description   the event description
@@ -32,19 +42,21 @@ public class RecurringEvent extends Event {
    * @param isPublic      whether the event is public
    * @param repeatDays    the days of the week to repeat on
    * @param occurrences   the number of occurrences
-   * @param untilDate     the date until which to repeat
+   * @param endDate       the date until which to repeat
+   * @param recurringId   the recurring event ID
+   * @param isAllDay      whether the event is an all-day event
    */
-  public RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                        String description, String location, boolean isPublic,
-                        Set<DayOfWeek> repeatDays,
-                        int occurrences, LocalDate untilDate) {
+  private RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
+                       String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
+                       int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
     super(subject, startDateTime, endDateTime, description, location, isPublic);
-    this.repeatDays = repeatDays;
+    this.repeatDays = new HashSet<>(repeatDays);
     this.occurrences = occurrences;
-    this.untilDate = untilDate;
-    this.recurringId = UUID.randomUUID();
+    this.endDate = endDate;
+    this.recurringId = recurringId != null ? recurringId : UUID.randomUUID();
+    this.isAllDay = isAllDay;
 
-    if (isAllDay()) {
+    if (isAllDay) {
       this.setAllDay(true);
     }
   }
@@ -65,6 +77,17 @@ public class RecurringEvent extends Event {
     private LocalDate endDate = null;
     private UUID recurringId = null;
     private boolean isAllDay = false;
+
+    /**
+     * Sets whether this is an all-day event.
+     *
+     * @param isAllDay true if this is an all-day event
+     * @return This builder for method chaining
+     */
+    public Builder allDay(boolean isAllDay) {
+      this.isAllDay = isAllDay;
+      return this;
+    }
 
     /**
      * Constructor for the builder with required params.
@@ -173,7 +196,7 @@ public class RecurringEvent extends Event {
      */
     public RecurringEvent build() {
       validate();
-      return new RecurringEvent(subject, startDateTime, endDateTime, description, location, isPublic, repeatDays, occurrences, endDate);
+      return new RecurringEvent(subject, startDateTime, endDateTime, description, location, isPublic, repeatDays, occurrences, endDate, recurringId, isAllDay);
     }
 
     /**
@@ -193,7 +216,7 @@ public class RecurringEvent extends Event {
         throw new IllegalArgumentException("Must specify either occurrences or endDate");
       }
 
-      if (endDate != null && !endDate.isAfter(startDateTime.toLocalDate())) {
+      if (endDate != null && startDateTime.toLocalDate().isAfter(endDate)) {
         throw new IllegalArgumentException("End date must be after start date");
       }
     }
@@ -243,7 +266,7 @@ public class RecurringEvent extends Event {
 
     return occurrences;
   }
-  
+
   /**
    * Gets occurrences of this recurring event between the specified dates (inclusive).
    *
@@ -255,36 +278,30 @@ public class RecurringEvent extends Event {
     if (startDate == null || endDate == null) {
       throw new IllegalArgumentException("Start and end dates cannot be null");
     }
-    
+
     if (startDate.isAfter(endDate)) {
       throw new IllegalArgumentException("Start date cannot be after end date");
     }
-    
+
     List<Event> occurrences = new ArrayList<>();
     LocalDateTime currentDateTime = getStartDateTime();
     LocalDate currentDate = currentDateTime.toLocalDate();
-    
+
     // Adjust current date to start date if it's later
     if (startDate.isAfter(currentDate)) {
       currentDate = startDate;
       currentDateTime = currentDate.atTime(getStartDateTime().toLocalTime());
     }
-    
+
     // Determine the end boundary
-    LocalDate eventEndDate = untilDate;
-    if (eventEndDate == null && this.occurrences > 0) {
-      // Calculate approximate end date based on occurrences
-      // This is a rough estimate - we'll still count occurrences below
-      int daysToAdd = this.occurrences * 7 / repeatDays.size(); // Approximate days needed
-      eventEndDate = getStartDateTime().toLocalDate().plusDays(daysToAdd);
-    }
-    
+    LocalDate eventEndDate = endDate;
+
     // Use the earlier of our calculated end date and the requested end date
     LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate)) 
         ? eventEndDate : endDate;
-    
+
     int count = 0;
-    
+
     // Iterate through dates and collect occurrences
     while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0 || count < this.occurrences)) {
       if (repeatDays.contains(currentDateTime.getDayOfWeek())) {
@@ -295,7 +312,7 @@ public class RecurringEvent extends Event {
       currentDateTime = currentDateTime.plusDays(1);
       currentDate = currentDateTime.toLocalDate();
     }
-    
+
     return occurrences;
   }
 
@@ -350,7 +367,21 @@ public class RecurringEvent extends Event {
    *
    * @return the end date, or null if based on occurrences
    */
+  /**
+   * Gets the end date of the recurring event.
+   *
+   * @return the end date, or null if based on occurrences
+   */
   public LocalDate getEndDate() {
-    return untilDate;
+    return endDate;
+  }
+  
+  /**
+   * Gets the end date of the recurring event (alias for getEndDate()).
+   *
+   * @return the end date, or null if based on occurrences
+   */
+  public LocalDate getUntilDate() {
+    return endDate;
   }
 }
