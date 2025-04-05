@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,18 +34,18 @@ public class GUIEventPanel extends JPanel {
     EDIT("Edit Event"),
     COPY("Copy Event"),
     VIEW("View Event");
-    
+
     private final String displayName;
-    
+
     PanelMode(String displayName) {
       this.displayName = displayName;
     }
-    
+
     public String getDisplayName() {
       return displayName;
     }
   }
-  
+
   private PanelMode currentMode = PanelMode.CREATE;
   private final JTextField subjectField;
   private final JTextArea descriptionArea;
@@ -61,17 +62,17 @@ public class GUIEventPanel extends JPanel {
   private final JButton cancelButton;
   private final JButton editButton;
   private final JButton copyButton;
-  
+
   // Mode indicator label
   private final JLabel modeLabel;
-  
+
   // Copy options components
   private JPanel copyOptionsPanel;
   private JComboBox<String> targetCalendarCombo;
   private JSpinner targetDateSpinner;
   private JSpinner targetStartTimeSpinner;
   private JSpinner targetEndTimeSpinner;
-  
+
   // Current event being edited or copied
   private Event currentEvent;
   private EventPanelListener listener;
@@ -85,7 +86,6 @@ public class GUIEventPanel extends JPanel {
   // Define consistent colors
   private static final Color HEADER_COLOR = new Color(0x4a86e8);
   private static final Color HEADER_LIGHT_COLOR = new Color(0xe6f2ff);
-  private static final Color BORDER_COLOR = new Color(0xcccccc);
   private static final Color TEXT_COLOR = new Color(0x333333);
 
   /**
@@ -121,7 +121,7 @@ public class GUIEventPanel extends JPanel {
   public interface EventPanelListener {
     /**
      * Called when a new event is saved.
-     * 
+     *
      * @param formData the form data collected from UI components
      */
     void onEventSaved(EventFormData formData);
@@ -133,19 +133,21 @@ public class GUIEventPanel extends JPanel {
 
     /**
      * Called when an existing event is updated.
-     * 
+     *
      * @param formData the form data collected from UI components
      */
     void onEventUpdated(EventFormData formData);
 
     /**
      * Called when an event is copied.
-     * 
-     * @param targetCalendarName the name of the target calendar
+     *
+     * @param targetCalendarName  the name of the target calendar
      * @param targetStartDateTime the target start date/time
-     * @param targetEndDateTime the target end date/time
+     * @param targetEndDateTime   the target end date/time
      */
     void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime);
+
+    List<String> getAvailableCalendarNames();
   }
 
   /**
@@ -171,23 +173,26 @@ public class GUIEventPanel extends JPanel {
     editButton = new JButton("Edit");
     copyButton = new JButton("Copy");
     
+    // Hide edit and copy buttons as per requirements
+    editButton.setVisible(false);
+    copyButton.setVisible(false);
+
     // Explicitly set all buttons to be visible
     saveButton.setVisible(true);
     cancelButton.setVisible(true);
-    editButton.setVisible(true);
     copyButton.setVisible(true);
-    
+
     System.out.println("[DEBUG] All buttons created and set to visible");
     recurringOptionsPanel = new JPanel(new GridLayout(0, 1));
     recurringPanel = new JPanel(new BorderLayout());
     errorLabels = new HashMap<>();
     timezoneHandler = new TimeZoneHandler();
-    
+
     // Initialize mode label
     modeLabel = new JLabel(PanelMode.CREATE.getDisplayName());
     modeLabel.setFont(modeLabel.getFont().deriveFont(Font.BOLD, 14f));
     modeLabel.setForeground(HEADER_COLOR);
-    
+
     // Initialize copy options components
     copyOptionsPanel = new JPanel(new GridBagLayout());
     copyOptionsPanel.setBorder(BorderFactory.createTitledBorder("Copy Options"));
@@ -195,12 +200,12 @@ public class GUIEventPanel extends JPanel {
     targetDateSpinner = new JSpinner(new SpinnerDateModel());
     targetStartTimeSpinner = new JSpinner(new SpinnerDateModel());
     targetEndTimeSpinner = new JSpinner(new SpinnerDateModel());
-    
+
     // Configure copy options spinners
     targetDateSpinner.setEditor(new JSpinner.DateEditor(targetDateSpinner, "MM/dd/yyyy"));
     targetStartTimeSpinner.setEditor(new JSpinner.DateEditor(targetStartTimeSpinner, "HH:mm"));
     targetEndTimeSpinner.setEditor(new JSpinner.DateEditor(targetEndTimeSpinner, "HH:mm"));
-    
+
     // Hide copy options panel by default
     copyOptionsPanel.setVisible(false);
 
@@ -278,34 +283,225 @@ public class GUIEventPanel extends JPanel {
     errorLabels.put(untilDateSpinner, untilDateErrorLabel);
   }
 
+  private void setupCopyOptionsPanel() {
+    // Set up the copy options panel
+    copyOptionsPanel = new JPanel(new GridBagLayout());
+    copyOptionsPanel.setBorder(BorderFactory.createTitledBorder("Copy Options"));
+    
+    // Create components
+    JLabel targetCalendarLabel = new JLabel("Target Calendar:");
+    targetCalendarCombo = new JComboBox<>();
+    
+    JLabel targetDateLabel = new JLabel("Target Date:");
+    targetDateSpinner = new JSpinner(new SpinnerDateModel());
+    targetDateSpinner.setEditor(new JSpinner.DateEditor(targetDateSpinner, "MM/dd/yyyy"));
+    
+    JLabel targetStartTimeLabel = new JLabel("Start Time:");
+    targetStartTimeSpinner = new JSpinner(new SpinnerDateModel());
+    targetStartTimeSpinner.setEditor(new JSpinner.DateEditor(targetStartTimeSpinner, "HH:mm"));
+    
+    JLabel targetEndTimeLabel = new JLabel("End Time:");
+    targetEndTimeSpinner = new JSpinner(new SpinnerDateModel());
+    targetEndTimeSpinner.setEditor(new JSpinner.DateEditor(targetEndTimeSpinner, "HH:mm"));
+    
+    // Create copy options for recurring events
+    JPanel copyTypePanel = new JPanel();
+    copyTypePanel.setLayout(new BoxLayout(copyTypePanel, BoxLayout.Y_AXIS));
+    copyTypePanel.setBorder(BorderFactory.createTitledBorder("Copy Options"));
+    
+    ButtonGroup copyTypeGroup = new ButtonGroup();
+    JRadioButton singleEventRadio = new JRadioButton("Copy as single event", true);
+    JRadioButton allEventsRadio = new JRadioButton("Copy all occurrences");
+    JRadioButton rangeEventsRadio = new JRadioButton("Copy date range");
+    
+    copyTypeGroup.add(singleEventRadio);
+    copyTypeGroup.add(allEventsRadio);
+    copyTypeGroup.add(rangeEventsRadio);
+    
+    copyTypePanel.add(singleEventRadio);
+    copyTypePanel.add(allEventsRadio);
+    copyTypePanel.add(rangeEventsRadio);
+    
+    // Add components to panel
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(5, 5, 5, 5);
+    
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    copyOptionsPanel.add(targetCalendarLabel, gbc);
+    
+    gbc.gridx = 1;
+    gbc.gridwidth = 2;
+    copyOptionsPanel.add(targetCalendarCombo, gbc);
+    
+    gbc.gridx = 0;
+    gbc.gridy = 1;
+    gbc.gridwidth = 1;
+    copyOptionsPanel.add(targetDateLabel, gbc);
+    
+    gbc.gridx = 1;
+    gbc.gridwidth = 2;
+    copyOptionsPanel.add(targetDateSpinner, gbc);
+    
+    gbc.gridx = 0;
+    gbc.gridy = 2;
+    gbc.gridwidth = 1;
+    copyOptionsPanel.add(targetStartTimeLabel, gbc);
+    
+    gbc.gridx = 1;
+    copyOptionsPanel.add(targetStartTimeSpinner, gbc);
+    
+    gbc.gridx = 0;
+    gbc.gridy = 3;
+    copyOptionsPanel.add(targetEndTimeLabel, gbc);
+    
+    gbc.gridx = 1;
+    copyOptionsPanel.add(targetEndTimeSpinner, gbc);
+    
+    // Add copy type options for recurring events
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    gbc.gridwidth = 3;
+    copyOptionsPanel.add(copyTypePanel, gbc);
+    
+    // Add listeners to radio buttons
+    singleEventRadio.addActionListener(e -> {
+      System.out.println("[DEBUG] Copy as single event selected");
+      targetDateSpinner.setEnabled(true);
+      targetStartTimeSpinner.setEnabled(true);
+      targetEndTimeSpinner.setEnabled(true);
+    });
+    
+    allEventsRadio.addActionListener(e -> {
+      System.out.println("[DEBUG] Copy all occurrences selected");
+      // When copying all occurrences, we don't need to specify a target date/time
+      targetDateSpinner.setEnabled(false);
+      targetStartTimeSpinner.setEnabled(false);
+      targetEndTimeSpinner.setEnabled(false);
+    });
+    
+    rangeEventsRadio.addActionListener(e -> {
+      System.out.println("[DEBUG] Copy date range selected");
+      targetDateSpinner.setEnabled(true);
+      targetStartTimeSpinner.setEnabled(true);
+      targetEndTimeSpinner.setEnabled(true);
+    });
+    
+    // Hide by default
+    copyOptionsPanel.setVisible(false);
+  }
+
   private void setupListeners() {
     // Edit button
     editButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Edit button clicked for event: " + (currentEvent != null ? currentEvent.getSubject() : "null"));
       if (currentEvent != null) {
         setPanelMode(PanelMode.EDIT);
-        saveButton.setText("Update");
-        editButton.setVisible(false);
-        copyButton.setVisible(false);
-        saveButton.setVisible(true);
-        cancelButton.setVisible(true);
         enableFormEditing(true);
+        
+        // Make sure the form is populated with the current event data
+        subjectField.setText(currentEvent.getSubject());
+        locationField.setText(currentEvent.getLocation());
+        descriptionArea.setText(currentEvent.getDescription());
+        
+        // Set date and time values
+        LocalDateTime startDateTime = currentEvent.getStartDateTime();
+        LocalDateTime endDateTime = currentEvent.getEndDateTime();
+        
+        // Update date spinner
+        Calendar cal = Calendar.getInstance();
+        cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1, startDateTime.getDayOfMonth());
+        dateSpinner.setValue(cal.getTime());
+        
+        // Update time spinners
+        cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
+        cal.set(Calendar.MINUTE, startDateTime.getMinute());
+        startTimeSpinner.setValue(cal.getTime());
+        
+        cal.set(Calendar.HOUR_OF_DAY, endDateTime.getHour());
+        cal.set(Calendar.MINUTE, endDateTime.getMinute());
+        endTimeSpinner.setValue(cal.getTime());
+        
+        // Set all day checkbox
+        allDayCheckBox.setSelected(currentEvent.isAllDay());
+        startTimeSpinner.setEnabled(!currentEvent.isAllDay());
+        endTimeSpinner.setEnabled(!currentEvent.isAllDay());
+        
+        // Handle recurring event
+        if (currentEvent instanceof RecurringEvent) {
+          RecurringEvent recurringEvent = (RecurringEvent) currentEvent;
+          recurringCheckBox.setSelected(true);
+          recurringOptionsPanel.setVisible(true);
+          
+          // Set weekdays
+          Set<DayOfWeek> weekdays = recurringEvent.getRepeatDays();
+          for (int i = 0; i < weekdayCheckboxes.size(); i++) {
+            weekdayCheckboxes.get(i).setSelected(weekdays.contains(DayOfWeek.of((i + 1) % 7 + 1)));
+          }
+          
+          // Set occurrences and until date
+          occurrencesSpinner.setValue(recurringEvent.getOccurrences());
+          Calendar untilCal = Calendar.getInstance();
+          untilCal.set(recurringEvent.getEndDate().getYear(), 
+                      recurringEvent.getEndDate().getMonthValue() - 1, 
+                      recurringEvent.getEndDate().getDayOfMonth());
+          untilDateSpinner.setValue(untilCal.getTime());
+        } else {
+          recurringCheckBox.setSelected(false);
+          recurringOptionsPanel.setVisible(false);
+        }
+        
+        System.out.println("[DEBUG] Event form populated for editing");
+      } else {
+        System.out.println("[DEBUG] Cannot edit: No event selected");
       }
     });
-    
+
     // Copy button
     copyButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Copy button clicked for event: " + (currentEvent != null ? currentEvent.getSubject() : "null"));
       if (currentEvent != null) {
         setPanelMode(PanelMode.COPY);
-        saveButton.setText("Copy");
-        editButton.setVisible(false);
-        copyButton.setVisible(false);
-        saveButton.setVisible(true);
-        cancelButton.setVisible(true);
-        enableFormEditing(true);
+        
+        // Populate the copy options panel with available calendars
+        if (listener != null) {
+          // Request available calendars from the controller
+          List<String> calendarNames = new ArrayList<>();
+          try {
+            // Get calendar names from the listener
+            calendarNames = listener.getAvailableCalendarNames();
+            setAvailableCalendars(calendarNames);
+            System.out.println("[DEBUG] Available calendars for copy: " + calendarNames);
+          } catch (Exception ex) {
+            System.out.println("[DEBUG] Error getting calendar names: " + ex.getMessage());
+          }
+        }
+        
+        // Set target date/time to match the current event
+        Calendar cal = Calendar.getInstance();
+        LocalDateTime startDateTime = currentEvent.getStartDateTime();
+        LocalDateTime endDateTime = currentEvent.getEndDateTime();
+        
+        cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1, startDateTime.getDayOfMonth());
+        targetDateSpinner.setValue(cal.getTime());
+        
+        cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
+        cal.set(Calendar.MINUTE, startDateTime.getMinute());
+        targetStartTimeSpinner.setValue(cal.getTime());
+        
+        cal.set(Calendar.HOUR_OF_DAY, endDateTime.getHour());
+        cal.set(Calendar.MINUTE, endDateTime.getMinute());
+        targetEndTimeSpinner.setValue(cal.getTime());
+        
+        // Show copy options panel
         copyOptionsPanel.setVisible(true);
+        System.out.println("[DEBUG] Copy options panel displayed");
+      } else {
+        System.out.println("[DEBUG] Cannot copy: No event selected");
       }
     });
-    
+
     // Add document listeners to text fields for real-time validation
     subjectField.getDocument().addDocumentListener(new DocumentListener() {
       public void changedUpdate(DocumentEvent e) {
@@ -438,12 +634,12 @@ public class GUIEventPanel extends JPanel {
         if (listener != null) {
           // Collect form data without any business logic
           EventFormData formData = collectFormData();
-          
+
           System.out.println("[DEBUG] Creating " + (formData.isRecurring() ? "recurring" : "single") + " event");
-          
+
           // Notify listeners with the form data
           listener.onEventSaved(formData);
-          
+
           JOptionPane.showMessageDialog(this,
                   String.format("Event '%s' created successfully at %s",
                           subjectField.getText().trim(),
@@ -459,7 +655,7 @@ public class GUIEventPanel extends JPanel {
         System.out.println("[DEBUG] Form validation failed");
       }
     });
-    
+
     // Cancel button
     cancelButton.addActionListener(e -> {
       System.out.println("[DEBUG] Cancel button clicked, clearing form");
@@ -472,11 +668,13 @@ public class GUIEventPanel extends JPanel {
   }
 
   private boolean validateForm() {
+    System.out.println("[DEBUG] Validating form");
     boolean isValid = true;
     clearErrorLabels();
 
     // Validate subject
     if (subjectField.getText().trim().isEmpty()) {
+      System.out.println("[DEBUG] Validation error: Subject is required");
       showError(subjectField, "Subject is required");
       isValid = false;
     }
@@ -505,6 +703,7 @@ public class GUIEventPanel extends JPanel {
     System.out.println("[DEBUG] End time: " + endDateTime);
 
     if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
+      System.out.println("[DEBUG] Validation error: End time must be after start time");
       showError(endTimeSpinner, "End time must be after start time");
       isValid = false;
     }
@@ -513,12 +712,14 @@ public class GUIEventPanel extends JPanel {
     if (recurringCheckBox.isSelected()) {
       boolean anyWeekdaySelected = weekdayCheckboxes.stream().anyMatch(JCheckBox::isSelected);
       if (!anyWeekdaySelected) {
+        System.out.println("[DEBUG] Validation error: Select at least one weekday");
         showError(weekdayCheckboxes.get(0), "Select at least one weekday");
         isValid = false;
       }
 
       Date untilDate = (Date) untilDateSpinner.getValue();
       if (untilDate.before(selectedDate)) {
+        System.out.println("[DEBUG] Validation error: Until date must be after start date");
         showError(untilDateSpinner, "Until date must be after start date");
         isValid = false;
       }
@@ -541,7 +742,7 @@ public class GUIEventPanel extends JPanel {
 
   /**
    * Enables or disables form editing.
-   * 
+   *
    * @param enabled true to enable editing, false to disable
    */
   private void enableFormEditing(boolean enabled) {
@@ -555,7 +756,7 @@ public class GUIEventPanel extends JPanel {
     recurringCheckBox.setEnabled(enabled);
     privateEventCheckBox.setEnabled(enabled);
     autoDeclineCheckBox.setEnabled(enabled);
-    
+
     // Enable/disable recurring options if visible
     if (recurringOptionsPanel.isVisible()) {
       for (JCheckBox cb : weekdayCheckboxes) {
@@ -565,7 +766,7 @@ public class GUIEventPanel extends JPanel {
       untilDateSpinner.setEnabled(enabled);
     }
   }
-  
+
   /**
    * Sets the panel mode.
    *
@@ -575,16 +776,19 @@ public class GUIEventPanel extends JPanel {
     System.out.println("[DEBUG] Setting panel mode to: " + mode);
     this.currentMode = mode;
     modeLabel.setText(mode.getDisplayName());
-    
+
     // Show/hide copy options based on mode
     copyOptionsPanel.setVisible(mode == PanelMode.COPY);
-    
+    if (mode == PanelMode.COPY) {
+      System.out.println("[DEBUG] Showing copy options panel");
+    }
+
     // Make all buttons visible all the time
     editButton.setVisible(true);
     copyButton.setVisible(true);
     saveButton.setVisible(true);
     cancelButton.setVisible(true);
-    
+
     // Set appropriate button text and form editing state based on mode
     if (mode == PanelMode.VIEW) {
       enableFormEditing(false);
@@ -599,16 +803,16 @@ public class GUIEventPanel extends JPanel {
       saveButton.setText("Copy");
       enableFormEditing(true);
     }
-    
+
     System.out.println("[DEBUG] After setPanelMode - Save button visibility: " + saveButton.isVisible());
     System.out.println("[DEBUG] After setPanelMode - Cancel button visibility: " + cancelButton.isVisible());
     System.out.println("[DEBUG] After setPanelMode - Edit button visibility: " + editButton.isVisible());
     System.out.println("[DEBUG] After setPanelMode - Copy button visibility: " + copyButton.isVisible());
-    
+
     revalidate();
     repaint();
   }
-  
+
   /**
    * Gets the current panel mode.
    *
@@ -617,7 +821,7 @@ public class GUIEventPanel extends JPanel {
   public PanelMode getPanelMode() {
     return currentMode;
   }
-  
+
   /**
    * Sets the available calendars for the target calendar combo box.
    *
@@ -629,7 +833,7 @@ public class GUIEventPanel extends JPanel {
       targetCalendarCombo.addItem(name);
     }
   }
-  
+
   /**
    * Gets the selected target calendar name.
    *
@@ -638,7 +842,7 @@ public class GUIEventPanel extends JPanel {
   public String getTargetCalendarName() {
     return (String) targetCalendarCombo.getSelectedItem();
   }
-  
+
   /**
    * Gets the target date and time for the copied event.
    *
@@ -648,7 +852,7 @@ public class GUIEventPanel extends JPanel {
     // Get date and time from target spinners
     Date selectedDate = (Date) targetDateSpinner.getValue();
     Date startTime = (Date) targetStartTimeSpinner.getValue();
-    
+
     // Combine date and time
     return selectedDate.toInstant()
             .atZone(ZoneOffset.UTC)
@@ -656,7 +860,7 @@ public class GUIEventPanel extends JPanel {
             .withHour(startTime.toInstant().atZone(ZoneOffset.UTC).getHour())
             .withMinute(startTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
   }
-  
+
   /**
    * Gets the target end date and time for the copied event.
    *
@@ -666,7 +870,7 @@ public class GUIEventPanel extends JPanel {
     // Get date and time from target spinners
     Date selectedDate = (Date) targetDateSpinner.getValue();
     Date endTime = (Date) targetEndTimeSpinner.getValue();
-    
+
     // Combine date and time
     return selectedDate.toInstant()
             .atZone(ZoneOffset.UTC)
@@ -674,7 +878,7 @@ public class GUIEventPanel extends JPanel {
             .withHour(endTime.toInstant().atZone(ZoneOffset.UTC).getHour())
             .withMinute(endTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
   }
-  
+
   /**
    * Gets the current event being edited or copied.
    *
@@ -683,7 +887,7 @@ public class GUIEventPanel extends JPanel {
   public Event getCurrentEvent() {
     return currentEvent;
   }
-  
+
   /**
    * Displays an event in the form.
    *
@@ -691,16 +895,21 @@ public class GUIEventPanel extends JPanel {
    */
   public void displayEvent(Event event) {
     System.out.println("[DEBUG] displayEvent called for event: " + event.getSubject());
+    System.out.println("[DEBUG] Event details: Start=" + event.getStartDateTime() + 
+                     ", End=" + event.getEndDateTime() + 
+                     ", Location=" + event.getLocation() + 
+                     ", AllDay=" + event.isAllDay() + 
+                     ", Type=" + (event instanceof RecurringEvent ? "Recurring" : "Single"));
     
     // Set the panel to view mode
     setPanelMode(PanelMode.VIEW);
-    
+
     // No need to explicitly set button visibility here as setPanelMode now makes all buttons visible
-    
+
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Edit button visibility: " + editButton.isVisible());
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Copy button visibility: " + copyButton.isVisible());
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Save button visibility: " + saveButton.isVisible());
-    
+
     // Force repaint to ensure buttons are visible
     revalidate();
     repaint();
@@ -716,7 +925,7 @@ public class GUIEventPanel extends JPanel {
     allDayCheckBox.setSelected(event.isAllDay());
     startTimeSpinner.setEnabled(!event.isAllDay());
     endTimeSpinner.setEnabled(!event.isAllDay());
-    
+
     // Also set the target date/time spinners for copy mode
     targetDateSpinner.setValue(Date.from(event.getStartDateTime().toInstant(ZoneOffset.UTC)));
     targetStartTimeSpinner.setValue(Date.from(event.getStartDateTime().toInstant(ZoneOffset.UTC)));
@@ -763,36 +972,47 @@ public class GUIEventPanel extends JPanel {
       dateSpinner.setValue(Date.from(date.atStartOfDay().toInstant(ZoneOffset.UTC)));
     }
   }
-  
+
   /**
    * Clears the form.
    */
   public void clearForm() {
-    this.currentEvent = null;
+    System.out.println("[DEBUG] Clearing form");
     subjectField.setText("");
-    descriptionArea.setText("");
     locationField.setText("");
+    descriptionArea.setText("");
     recurringCheckBox.setSelected(false);
     recurringOptionsPanel.setVisible(false);
-    weekdayCheckboxes.forEach(cb -> cb.setSelected(false));
-    occurrencesSpinner.setValue(1);
     allDayCheckBox.setSelected(false);
     startTimeSpinner.setEnabled(true);
     endTimeSpinner.setEnabled(true);
     
+    // Reset date and time spinners to current values
+    Calendar cal = Calendar.getInstance();
+    dateSpinner.setValue(cal.getTime());
+    cal.set(Calendar.MINUTE, (cal.get(Calendar.MINUTE) / 15) * 15); // Round to nearest 15 minutes
+    startTimeSpinner.setValue(cal.getTime());
+    cal.add(Calendar.HOUR_OF_DAY, 1);
+    endTimeSpinner.setValue(cal.getTime());
+    System.out.println("[DEBUG] Form fields reset to default values");
+    
     // Reset to create mode
     setPanelMode(PanelMode.CREATE);
-    
+
     // No need to explicitly set button visibility here as setPanelMode now makes all buttons visible
-    
+
     System.out.println("[DEBUG] clearForm - After setPanelMode - Save button visibility: " + saveButton.isVisible());
     System.out.println("[DEBUG] clearForm - After setPanelMode - Edit button visibility: " + editButton.isVisible());
     System.out.println("[DEBUG] clearForm - After setPanelMode - Copy button visibility: " + copyButton.isVisible());
     
+    // Reset current event
+    currentEvent = null;
+    System.out.println("[DEBUG] Current event reset to null");
+
     revalidate();
     repaint();
   }
-  
+
   /**
    * Adds a listener for event panel events.
    *
@@ -821,10 +1041,12 @@ public class GUIEventPanel extends JPanel {
   public void updateEvent(Event event) {
     // Only collect form data and pass it to the controller
     EventFormData formData = collectFormData();
-    
+
     // Notify the appropriate listener based on the current mode
     if (listener != null) {
       if (currentMode == PanelMode.EDIT) {
+        // Pass the current event ID through the form data
+        // The controller will use the current event for updating
         listener.onEventUpdated(formData);
       } else if (currentMode == PanelMode.COPY) {
         listener.onEventCopied(getTargetCalendarName(), getTargetDateTime(), getTargetEndDateTime());
@@ -833,11 +1055,11 @@ public class GUIEventPanel extends JPanel {
       }
     }
   }
-  
+
   /**
    * Collects all data from the form fields into a data transfer object.
    * This method does not contain any business logic, only UI data collection.
-   * 
+   *
    * @return EventFormData containing all the form field values
    */
   public EventFormData collectFormData() {
@@ -845,7 +1067,7 @@ public class GUIEventPanel extends JPanel {
     Date selectedDate = (Date) dateSpinner.getValue();
     Date startTime = (Date) startTimeSpinner.getValue();
     Date endTime = (Date) endTimeSpinner.getValue();
-    
+
     String subject = subjectField.getText().trim();
     String location = locationField.getText().trim();
     String description = descriptionArea.getText().trim();
@@ -853,37 +1075,37 @@ public class GUIEventPanel extends JPanel {
     boolean isAllDay = allDayCheckBox.isSelected();
     boolean isPrivate = privateEventCheckBox.isSelected();
     boolean autoDecline = autoDeclineCheckBox.isSelected();
-    
+
     // Collect recurring event data if applicable
     Set<DayOfWeek> weekdays = null;
     int occurrences = 0;
     LocalDate untilDate = null;
-    
+
     if (isRecurring) {
       weekdays = weekdayCheckboxes.stream()
-          .filter(JCheckBox::isSelected)
-          .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1)))
-          .collect(Collectors.toSet());
+              .filter(JCheckBox::isSelected)
+              .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1)))
+              .collect(Collectors.toSet());
       occurrences = (Integer) occurrencesSpinner.getValue();
       untilDate = ((Date) untilDateSpinner.getValue()).toInstant()
-          .atZone(ZoneOffset.UTC)
-          .toLocalDate();
+              .atZone(ZoneOffset.UTC)
+              .toLocalDate();
     }
-    
+
     return new EventFormData(
-        subject,
-        selectedDate,
-        startTime,
-        endTime,
-        location,
-        description,
-        isRecurring,
-        isAllDay,
-        weekdays,
-        occurrences,
-        untilDate,
-        isPrivate,
-        autoDecline
+            subject,
+            selectedDate,
+            startTime,
+            endTime,
+            location,
+            description,
+            isRecurring,
+            isAllDay,
+            weekdays,
+            occurrences,
+            untilDate,
+            isPrivate,
+            autoDecline
     );
   }
 
@@ -923,12 +1145,128 @@ public class GUIEventPanel extends JPanel {
     repaint();
   }
 
-  private void handleEventSelection() {
-    // Implementation of handleEventSelection method
+  /**
+   * Refreshes the event panel view.
+   */
+  public void refreshView() {
+    System.out.println("[DEBUG] Refreshing event panel view");
+    revalidate();
+    repaint();
   }
 
+  /**
+   * Handles the selection of an event from the event list.
+   * Updates the form with the selected event's data.
+   */
+  private void handleEventSelection() {
+    if (currentEvent != null) {
+      System.out.println("[DEBUG] Handling event selection: " + currentEvent.getSubject());
+      // Populate form fields with event data
+      subjectField.setText(currentEvent.getSubject());
+      locationField.setText(currentEvent.getLocation());
+      descriptionArea.setText(currentEvent.getDescription());
+
+      // Set date and time values
+      LocalDateTime startDateTime = currentEvent.getStartDateTime();
+      LocalDateTime endDateTime = currentEvent.getEndDateTime();
+      System.out.println("[DEBUG] Event times: Start=" + startDateTime + ", End=" + endDateTime);
+
+      // Update date spinner
+      Calendar cal = Calendar.getInstance();
+      cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1, startDateTime.getDayOfMonth());
+      dateSpinner.setValue(cal.getTime());
+
+      // Update time spinners
+      cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
+      cal.set(Calendar.MINUTE, startDateTime.getMinute());
+      startTimeSpinner.setValue(cal.getTime());
+
+      cal.set(Calendar.HOUR_OF_DAY, endDateTime.getHour());
+      cal.set(Calendar.MINUTE, endDateTime.getMinute());
+      endTimeSpinner.setValue(cal.getTime());
+
+      // Set recurring checkbox
+      boolean isRecurring = currentEvent instanceof RecurringEvent;
+      recurringCheckBox.setSelected(isRecurring);
+      handleRecurringCheckbox(); // Update recurring panel visibility
+
+      // Set panel mode to VIEW
+      setPanelMode(PanelMode.VIEW);
+    } else {
+      // Clear form if no event is selected
+      clearForm();
+      setPanelMode(PanelMode.CREATE);
+    }
+  }
+
+  /**
+   * Saves the current event using the form data.
+   * Collects data from form fields and notifies the listener.
+   */
   private void saveEvent() {
-    // Implementation of saveEvent method
+    try {
+      System.out.println("[DEBUG] Save event button clicked, current mode: " + currentMode);
+      if (!validateForm()) {
+        System.out.println("[DEBUG] Form validation failed");
+        return;
+      }
+      System.out.println("[DEBUG] Form validation successful");
+
+      // Collect data from form fields
+      EventFormData formData = collectFormData();
+      System.out.println("[DEBUG] Form data collected: Subject=" + formData.getSubject() + 
+                       ", Location=" + formData.getLocation() + 
+                       ", Description length=" + formData.getDescription().length() + 
+                       ", Recurring=" + formData.isRecurring() + 
+                       ", AllDay=" + formData.isAllDay());
+
+      // Notify listener based on current panel mode
+      if (currentMode == PanelMode.EDIT && currentEvent != null) {
+        // We're editing an existing event
+        System.out.println("[DEBUG] Editing existing event: " + currentEvent.getSubject());
+        if (listener != null) {
+          // Pass the current event ID through the form data
+          // The controller will use the current event for updating
+          listener.onEventUpdated(formData);
+        }
+      } else if (currentMode == PanelMode.COPY && currentEvent != null) {
+        // We're copying an event
+        System.out.println("[DEBUG] Copying event: " + currentEvent.getSubject());
+        if (listener != null) {
+          String targetCalendarName = getTargetCalendarName();
+          LocalDateTime targetStartDateTime = getTargetDateTime();
+          LocalDateTime targetEndDateTime = getTargetEndDateTime();
+          System.out.println("[DEBUG] Copy details: Target calendar=" + targetCalendarName + 
+                           ", Start=" + targetStartDateTime + 
+                           ", End=" + targetEndDateTime);
+          listener.onEventCopied(targetCalendarName, targetStartDateTime, targetEndDateTime);
+          
+          // After copying, reset the form and update the view
+          clearForm();
+          setPanelMode(PanelMode.CREATE);
+        }
+      } else {
+        // We're creating a new event
+        System.out.println("[DEBUG] Creating new event");
+        if (listener != null) {
+          listener.onEventSaved(formData);
+        }
+      }
+
+      // Clear the form after saving
+      clearForm();
+      currentEvent = null;
+      setPanelMode(PanelMode.CREATE);
+
+    } catch (Exception e) {
+      System.out.println("[ERROR] Failed to save event: " + e.getMessage());
+      e.printStackTrace();
+      // Display error to user
+      JOptionPane.showMessageDialog(this,
+              "Error saving event: " + e.getMessage(),
+              "Save Error",
+              JOptionPane.ERROR_MESSAGE);
+    }
   }
 
   private void setupLayout() {
@@ -938,7 +1276,6 @@ public class GUIEventPanel extends JPanel {
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
     ));
 
-    // Add mode label at the top
     JPanel headerPanel = new JPanel(new BorderLayout());
     headerPanel.setBackground(HEADER_LIGHT_COLOR);
     headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -1127,26 +1464,26 @@ public class GUIEventPanel extends JPanel {
     JPanel buttonPanel = new JPanel();
     buttonPanel.setLayout(new GridLayout(1, 4, 10, 5));
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    
+
     // Add all buttons to the panel
     buttonPanel.add(saveButton);
     buttonPanel.add(editButton);
     buttonPanel.add(copyButton);
     buttonPanel.add(cancelButton);
-    
+
     // Set preferred size for buttons to prevent squishing
     Dimension buttonSize = new Dimension(100, 30);
     editButton.setPreferredSize(buttonSize);
     copyButton.setPreferredSize(buttonSize);
     saveButton.setPreferredSize(buttonSize);
     cancelButton.setPreferredSize(buttonSize);
-    
+
     // Ensure all buttons are visible
     editButton.setVisible(true);
     copyButton.setVisible(true);
     saveButton.setVisible(true);
     cancelButton.setVisible(true);
-    
+
     System.out.println("[DEBUG] setupLayout - Edit button visibility: " + editButton.isVisible());
     System.out.println("[DEBUG] setupLayout - Copy button visibility: " + copyButton.isVisible());
     System.out.println("[DEBUG] setupLayout - Save button visibility: " + saveButton.isVisible());
@@ -1157,17 +1494,17 @@ public class GUIEventPanel extends JPanel {
     formPanel.setPreferredSize(new Dimension(fixedWidth, formPanel.getPreferredSize().height));
     formPanel.setMinimumSize(new Dimension(fixedWidth, 100));
     formPanel.setMaximumSize(new Dimension(fixedWidth, Short.MAX_VALUE));
-    
+
     // Configure scroll pane to completely disable horizontal scrolling
     JScrollPane scrollPane = new JScrollPane(formPanel);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.getViewport().setMinimumSize(new Dimension(fixedWidth, 100));
     scrollPane.getViewport().setPreferredSize(new Dimension(fixedWidth, formPanel.getPreferredSize().height));
-    
+
     // Disable horizontal scrolling at the viewport level
     scrollPane.getViewport().setView(formPanel);
-    
+
     add(scrollPane, BorderLayout.CENTER);
     add(buttonPanel, BorderLayout.SOUTH);
   }

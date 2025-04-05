@@ -1,21 +1,10 @@
 package view;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import model.event.Event;
 
@@ -31,7 +20,7 @@ public class EventEditDialog extends JDialog {
   private final Event event;
   private final boolean isRecurring;
   private boolean editConfirmed = false;
-  
+
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
   /**
@@ -45,10 +34,10 @@ public class EventEditDialog extends JDialog {
     super(parent, "Edit Event", true);
     this.event = event;
     this.isRecurring = isRecurring;
-    
+
     initComponents();
     layoutComponents();
-    
+
     setSize(500, 400);
     setLocationRelativeTo(parent);
   }
@@ -60,13 +49,13 @@ public class EventEditDialog extends JDialog {
     subjectField = new JTextField(event.getSubject(), 30);
     locationField = new JTextField(event.getLocation(), 30);
     descriptionArea = new JTextArea(event.getDescription(), 5, 30);
-    
+
     saveButton = new JButton("Save");
     saveButton.addActionListener(e -> {
       editConfirmed = true;
       dispose();
     });
-    
+
     cancelButton = new JButton("Cancel");
     cancelButton.addActionListener(e -> dispose());
   }
@@ -77,71 +66,71 @@ public class EventEditDialog extends JDialog {
   private void layoutComponents() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
     mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    
+
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = 0;
     gbc.gridy = 0;
     gbc.anchor = GridBagConstraints.WEST;
     gbc.insets = new Insets(5, 5, 5, 5);
-    
+
     // Event type
     mainPanel.add(new JLabel("Event Type:"), gbc);
-    
+
     gbc.gridx = 1;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weightx = 1.0;
     mainPanel.add(new JLabel(isRecurring ? "Recurring Event" : "Single Event"), gbc);
-    
+
     // Subject
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.weightx = 0.0;
     mainPanel.add(new JLabel("Subject:"), gbc);
-    
+
     gbc.gridx = 1;
     gbc.weightx = 1.0;
     mainPanel.add(subjectField, gbc);
-    
+
     // Date and time (read-only)
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.weightx = 0.0;
     mainPanel.add(new JLabel("Date & Time:"), gbc);
-    
+
     gbc.gridx = 1;
     gbc.weightx = 1.0;
     LocalDateTime startDateTime = event.getStartDateTime();
     LocalDateTime endDateTime = event.getEndDateTime();
-    String dateTimeText = startDateTime.format(DATE_TIME_FORMATTER) + " - " + 
-                         endDateTime.format(DATE_TIME_FORMATTER);
+    String dateTimeText = startDateTime.format(DATE_TIME_FORMATTER) + " - " +
+            endDateTime.format(DATE_TIME_FORMATTER);
     mainPanel.add(new JLabel(dateTimeText), gbc);
-    
+
     // Location
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.weightx = 0.0;
     mainPanel.add(new JLabel("Location:"), gbc);
-    
+
     gbc.gridx = 1;
     gbc.weightx = 1.0;
     mainPanel.add(locationField, gbc);
-    
+
     // Description
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.weightx = 0.0;
     mainPanel.add(new JLabel("Description:"), gbc);
-    
+
     gbc.gridx = 1;
     gbc.fill = GridBagConstraints.BOTH;
     gbc.weightx = 1.0;
     gbc.weighty = 1.0;
     mainPanel.add(descriptionArea, gbc);
-    
+
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     buttonPanel.add(saveButton);
     buttonPanel.add(cancelButton);
-    
+
     setLayout(new BorderLayout());
     add(mainPanel, BorderLayout.CENTER);
     add(buttonPanel, BorderLayout.SOUTH);

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.UUID;
 
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -199,6 +200,16 @@ public interface ICalendar {
   boolean editSingleEvent(String subject, LocalDateTime startDateTime, String property,
                           String newValue)
           throws EventNotFoundException, InvalidEventException, ConflictingEventException;
+
+  /**
+   * Updates an existing event with a new version.
+   *
+   * @param eventId The UUID of the event to update
+   * @param updatedEvent The new version of the event
+   * @return true if the event was successfully updated, false otherwise
+   * @throws ConflictingEventException if the updated event conflicts with existing events
+   */
+  boolean updateEvent(UUID eventId, Event updatedEvent) throws ConflictingEventException;
 
   /**
    * Edits all events in a recurring series starting from a specific date.

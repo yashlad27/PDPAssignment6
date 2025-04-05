@@ -105,23 +105,24 @@ public class EventFormData {
   public LocalDate getUntilDate() {
     return untilDate;
   }
-  
+
   /**
    * @return whether the event is private
    */
   public boolean isPrivateEvent() {
     return isPrivate;
   }
-  
+
   /**
    * @return whether auto-decline is enabled for the event
    */
   public boolean isAutoDecline() {
     return autoDecline;
   }
-  
+
   /**
    * Alias for getUntilDate() to match method name used in controller
+   *
    * @return the end date for recurring events
    */
   public LocalDate getRecurringEndDate() {

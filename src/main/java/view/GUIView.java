@@ -6,7 +6,9 @@ import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -47,8 +49,6 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public GUIView(CalendarController controller) {
     this.controller = controller;
     System.out.println("Creating GUIView...");
-    
-    // Status bar removed
     
     // Initialize view models
     calendarViewModel = new CalendarViewModel();
@@ -172,8 +172,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       
       @Override
       public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
-        System.out.println("[DEBUG] Attempting to copy event to calendar: " + targetCalendarName);
-        
+        System.out.println("[DEBUG] Event copy requested to calendar: " + targetCalendarName);
         try {
           // Get the current event from the event panel
           Event currentEvent = eventPanel.getCurrentEvent();
@@ -200,6 +199,26 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           showErrorMessage("Error copying event: " + e.getMessage());
         }
       }
+      
+      @Override
+      public List<String> getAvailableCalendarNames() {
+        System.out.println("[DEBUG] Getting available calendar names");
+        List<String> calendarNames = new ArrayList<>();
+        try {
+          // Get calendar names from the controller
+          if (controller != null) {
+            Set<String> names = controller.getCalendarNames();
+            if (names != null) {
+              calendarNames = new ArrayList<>(names);
+              System.out.println("[DEBUG] Found " + calendarNames.size() + " calendars from controller");
+            }
+          }
+        } catch (Exception ex) {
+          System.out.println("[DEBUG] Error getting calendar names: " + ex.getMessage());
+        }
+        return calendarNames;
+      }
+      
 
       @Override
       public void onEventUpdated(EventFormData formData) {
@@ -598,6 +617,31 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       calendarPanel.updateEvents(events);
       calendarPanel.updateEventList(LocalDate.now());
     }
+  }
+  
+  /**
+   * Refreshes the calendar view with current data.
+   */
+  public void refreshCalendarView() {
+    calendarPanel.repaint();
+    calendarPanel.revalidate();
+  }
+  
+  /**
+   * Refreshes the event view with current data.
+   */
+  public void refreshEventView() {
+    if (eventPanel != null) {
+      eventPanel.refreshView();
+    }
+  }
+  
+  /**
+   * Refreshes all calendar and event views.
+   */
+  public void refreshPanels() {
+    refreshCalendarView();
+    refreshEventView();
   }
 
   @Override

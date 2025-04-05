@@ -119,12 +119,30 @@ public class CalendarController {
   /**
    * Gets a calendar by name.
    *
-   * @param name the name of the calendar
-   * @return the calendar with the specified name
-   * @throws CalendarNotFoundException if no calendar with the specified name exists
+   * @param name the name of the calendar to get
+   * @return the calendar with the given name
+   * @throws CalendarNotFoundException if no calendar with the given name exists
    */
   public ICalendar getCalendar(String name) throws CalendarNotFoundException {
     return calendarManager.getCalendar(name);
+  }
+  
+  /**
+   * Gets the calendar manager.
+   *
+   * @return the calendar manager
+   */
+  public CalendarManager getCalendarManager() {
+    return calendarManager;
+  }
+  
+  /**
+   * Gets all calendar names.
+   *
+   * @return a set of all calendar names
+   */
+  public Set<String> getCalendarNames() {
+    return calendarManager.getCalendarRegistry().getCalendarNames();
   }
 
   /**

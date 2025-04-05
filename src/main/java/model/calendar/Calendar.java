@@ -708,6 +708,70 @@ public class Calendar implements ICalendar {
   public String toString() {
     return name;
   }
+  
+  /**
+   * Updates an existing event with a new version using the event's UUID.
+   *
+   * @param eventId The UUID of the event to update
+   * @param updatedEvent The new version of the event
+   * @return true if the event was successfully updated, false otherwise
+   * @throws ConflictingEventException if the updated event conflicts with existing events
+   */
+  @Override
+  public boolean updateEvent(UUID eventId, Event updatedEvent) throws ConflictingEventException {
+    if (eventId == null || updatedEvent == null) {
+      return false;
+    }
+    
+    // Check if the event exists
+    Event existingEvent = eventById.get(eventId);
+    if (existingEvent == null) {
+      return false; // Event not found
+    }
+    
+    // Temporarily remove the existing event to avoid false conflicts
+    events.remove(existingEvent);
+    eventById.remove(eventId);
+    
+    try {
+      // Check for conflicts with other events
+      if (hasConflict(updatedEvent)) {
+        // Put the original event back if there's a conflict
+        events.add(existingEvent);
+        eventById.put(eventId, existingEvent);
+        throw new ConflictingEventException("The updated event conflicts with existing events");
+      }
+      
+      // Create a new event with the same ID and updated data
+      Event newEvent = new Event(
+          updatedEvent.getSubject(), 
+          updatedEvent.getStartDateTime(), 
+          updatedEvent.getEndDateTime(),
+          updatedEvent.getDescription(), 
+          updatedEvent.getLocation(), 
+          updatedEvent.isPublic()
+      ) {
+        // Anonymous subclass to override the ID
+        @Override
+        public UUID getId() {
+          return eventId;
+        }
+      };
+      
+      // Add the updated event
+      events.add(newEvent);
+      eventById.put(eventId, newEvent);
+      
+      return true;
+    } catch (ConflictingEventException e) {
+      throw e;
+    } catch (Exception e) {
+      // Put the original event back if there's any other error
+      events.add(existingEvent);
+      eventById.put(eventId, existingEvent);
+      return false;
+    }
+  }
 
   /**
    * Sets the name of the calendar.
