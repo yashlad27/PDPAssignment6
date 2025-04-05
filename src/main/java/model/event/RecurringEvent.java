@@ -243,6 +243,61 @@ public class RecurringEvent extends Event {
 
     return occurrences;
   }
+  
+  /**
+   * Gets occurrences of this recurring event between the specified dates (inclusive).
+   *
+   * @param startDate the start date
+   * @param endDate the end date
+   * @return a list of occurrences between the specified dates
+   */
+  public List<Event> getOccurrencesBetween(LocalDate startDate, LocalDate endDate) {
+    if (startDate == null || endDate == null) {
+      throw new IllegalArgumentException("Start and end dates cannot be null");
+    }
+    
+    if (startDate.isAfter(endDate)) {
+      throw new IllegalArgumentException("Start date cannot be after end date");
+    }
+    
+    List<Event> occurrences = new ArrayList<>();
+    LocalDateTime currentDateTime = getStartDateTime();
+    LocalDate currentDate = currentDateTime.toLocalDate();
+    
+    // Adjust current date to start date if it's later
+    if (startDate.isAfter(currentDate)) {
+      currentDate = startDate;
+      currentDateTime = currentDate.atTime(getStartDateTime().toLocalTime());
+    }
+    
+    // Determine the end boundary
+    LocalDate eventEndDate = untilDate;
+    if (eventEndDate == null && this.occurrences > 0) {
+      // Calculate approximate end date based on occurrences
+      // This is a rough estimate - we'll still count occurrences below
+      int daysToAdd = this.occurrences * 7 / repeatDays.size(); // Approximate days needed
+      eventEndDate = getStartDateTime().toLocalDate().plusDays(daysToAdd);
+    }
+    
+    // Use the earlier of our calculated end date and the requested end date
+    LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate)) 
+        ? eventEndDate : endDate;
+    
+    int count = 0;
+    
+    // Iterate through dates and collect occurrences
+    while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0 || count < this.occurrences)) {
+      if (repeatDays.contains(currentDateTime.getDayOfWeek())) {
+        Event occurrence = createOccurrence(currentDateTime);
+        occurrences.add(occurrence);
+        count++;
+      }
+      currentDateTime = currentDateTime.plusDays(1);
+      currentDate = currentDateTime.toLocalDate();
+    }
+    
+    return occurrences;
+  }
 
   private Event createOccurrence(LocalDateTime date) {
     // Create occurrence using UTC times directly

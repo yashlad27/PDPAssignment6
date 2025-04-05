@@ -6,14 +6,17 @@ import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -33,8 +36,10 @@ public class GUICalendarPanel extends JPanel {
   private JSpinner endDateSpinner;
   private YearMonth currentMonth;
   private LocalDate selectedDate;
-  private CalendarPanelListener listener;
+  private Set<LocalDate> highlightedDates;
   private ICalendar selectedCalendar;
+  private ICalendar currentCalendar;
+  private CalendarPanelListener listener;
   private JLabel monthYearLabel;
   private static final int CELL_WIDTH = 78;
   private static final int CELL_HEIGHT = 60;
@@ -46,20 +51,72 @@ public class GUICalendarPanel extends JPanel {
   private static final Color TEXT_COLOR = new Color(0x333333);
 
   /**
-   * Interface for calendar panel events.
+   * Interface for calendar panel listeners.
    */
   public interface CalendarPanelListener {
+    /**
+     * Called when a date is selected.
+     *
+     * @param date the selected date
+     */
     void onDateSelected(LocalDate date);
 
-    void onEventSelected(Event event);
-
-    void onRecurringEventSelected(RecurringEvent event);
-
+    /**
+     * Called when a status check is requested.
+     *
+     * @param date the date to check status for
+     */
     void onStatusRequested(LocalDate date);
 
+    /**
+     * Called when events list is requested for a date.
+     *
+     * @param date the date to get events for
+     */
     void onEventsListRequested(LocalDate date);
 
+    /**
+     * Called when a date range is selected.
+     *
+     * @param startDate the start date
+     * @param endDate   the end date
+     */
     void onDateRangeSelected(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Called when an event edit is requested.
+     *
+     * @param event the event to edit
+     */
+    void onEditEvent(Event event);
+
+    /**
+     * Called when an event copy is requested.
+     *
+     * @param event the event to copy
+     */
+    void onCopyEvent(Event event);
+
+    /**
+     * Called when an event print is requested.
+     *
+     * @param event the event to print
+     */
+    void onPrintEvent(Event event);
+
+    /**
+     * Called when a recurring event is selected.
+     *
+     * @param event the recurring event that was selected
+     */
+    void onRecurringEventSelected(RecurringEvent event);
+
+    /**
+     * Called when an event is selected.
+     *
+     * @param event the event that was selected
+     */
+    void onEventSelected(Event event);
   }
 
   /**
@@ -495,6 +552,9 @@ public class GUICalendarPanel extends JPanel {
    */
   public void updateCalendar(ICalendar calendar) {
     try {
+      // Store reference to current calendar
+      this.currentCalendar = calendar;
+      
       // Get events directly from calendar
       List<Event> events = calendar.getAllEvents();
       updateEvents(events);
@@ -502,6 +562,11 @@ public class GUICalendarPanel extends JPanel {
       // Get recurring events directly from calendar
       List<RecurringEvent> recurringEvents = calendar.getAllRecurringEvents();
       updateRecurringEvents(recurringEvents);
+      
+      // If we have a selected date, update the event list for that date
+      if (selectedDate != null) {
+        updateEventList(selectedDate);
+      }
     } catch (Exception e) {
       // Handle any errors appropriately
       System.err.println("Error updating calendar: " + e.getMessage());
@@ -514,7 +579,17 @@ public class GUICalendarPanel extends JPanel {
    * @param events the list of events to display
    */
   public void updateEvents(List<Event> events) {
-    eventsByDate.clear();
+    // Keep the existing events if this is an update rather than a full refresh
+    if (currentCalendar != null && !eventsByDate.isEmpty()) {
+      // Only clear dates that are being updated
+      for (Event event : events) {
+        LocalDate date = event.getStartDateTime().toLocalDate();
+        eventsByDate.put(date, new ArrayList<>());
+      }
+    } else {
+      eventsByDate.clear();
+    }
+    
     for (Event event : events) {
       LocalDate date = event.getStartDateTime().toLocalDate();
       eventsByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(event);
@@ -593,8 +668,17 @@ public class GUICalendarPanel extends JPanel {
    *
    * @param listener the listener to add
    */
-  public void addCalendarPanelListener(CalendarPanelListener listener) {
+  public void setListener(CalendarPanelListener listener) {
     this.listener = listener;
+  }
+
+  /**
+   * Adds a calendar panel listener.
+   *
+   * @param listener the listener to add
+   */
+  public void addCalendarPanelListener(CalendarPanelListener listener) {
+    setListener(listener);
   }
 
   /**
@@ -610,31 +694,41 @@ public class GUICalendarPanel extends JPanel {
    * @param date the date to show events for
    */
   public void updateEventList(LocalDate date) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<html><b>Events for ").append(date).append(":</b><br><br>");
-
-    if (eventsByDate.containsKey(date)) {
-      List<Event> events = eventsByDate.get(date);
-      for (Event event : events) {
-        sb.append("• ").append(event.getSubject())
-                .append(" <i>(").append(event.getStartDateTime().toLocalTime())
-                .append(" - ").append(event.getEndDateTime().toLocalTime())
-                .append(")</i><br>");
-        if (event.getLocation() != null && !event.getLocation().isEmpty()) {
-          sb.append("  Location: ").append(event.getLocation()).append("<br>");
-        }
-        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
-          sb.append("  ").append(event.getDescription()).append("<br>");
-        }
-        sb.append("<br>");
-      }
-    } else {
-      sb.append("<i>No events scheduled for this date.</i>");
+    System.out.println("[DEBUG] Updating event list for date: " + date);
+    // Use currentCalendar instead of selectedCalendar for consistency
+    if (currentCalendar == null) {
+      System.out.println("[DEBUG] No calendar selected");
+      eventListArea.setText("No calendar selected");
+      return;
     }
 
-    sb.append("</html>");
+    // Get events for this date from the map
+    List<Event> events = eventsByDate.getOrDefault(date, new ArrayList<>());
+    System.out.println("[DEBUG] Found " + events.size() + " events for date " + date);
+    
+    if (events.isEmpty()) {
+      System.out.println("[DEBUG] No events for date " + date);
+      eventListArea.setText("No events for " + date);
+      return;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html><body style='font-family:Arial; font-size:12px;'>").append("<h3 style='color:#4a86e8;'>Events for ").append(date).append("</h3>");
+
+    for (Event event : events) {
+      String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
+      sb.append("<div id='" + currentEventId + "' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>").append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>").append("<span style='color:#666;'>").append(event.getStartDateTime().toLocalTime()).append(" - ").append(event.getEndDateTime().toLocalTime()).append("</span><br>").append("<span>").append(event.getDescription()).append("</span><br>").append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>").append("<div style='margin-top:5px;'>").append("<button onclick='printEvent(\"" + currentEventId + "\")' style='background-color:#4a86e8; color:white; border:none; padding:5px 10px; cursor:pointer;'>Print</button>").append("</div>").append("</div>");
+    }
+
+    sb.append("<script>");
+    sb.append("function editEvent(id) { window.location.href='edit:' + id; }\n");
+    sb.append("function copyEvent(id) { window.location.href='copy:' + id; }\n");
+    sb.append("function printEvent(id) { window.location.href='print:' + id; }\n");
+    sb.append("</script>");
+    sb.append("</body></html>");
     eventListArea.setContentType("text/html");
     eventListArea.setText(sb.toString());
+    addEventListeners(events);
   }
 
   /**
@@ -646,30 +740,68 @@ public class GUICalendarPanel extends JPanel {
    */
   public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<html><b>Events from ").append(startDate).append(" to ").append(endDate).append(":</b><br><br>");
+    sb.append("<html><body style='font-family:Arial; font-size:12px;'>");
+    sb.append("<h3 style='color:#4a86e8;'>Events from ").append(startDate).append(" to ").append(endDate).append(":</h3>");
 
-    if (!events.isEmpty()) {
-      for (Event event : events) {
-        sb.append("• ").append(event.getSubject())
-                .append(" <i>(").append(event.getStartDateTime().toLocalDate())
-                .append(" ").append(event.getStartDateTime().toLocalTime())
-                .append(" - ").append(event.getEndDateTime().toLocalTime())
-                .append(")</i><br>");
-        if (event.getLocation() != null && !event.getLocation().isEmpty()) {
-          sb.append("  Location: ").append(event.getLocation()).append("<br>");
-        }
-        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
-          sb.append("  ").append(event.getDescription()).append("<br>");
-        }
-        sb.append("<br>");
-      }
-    } else {
-      sb.append("<i>No events scheduled in this date range.</i>");
+    for (Event event : events) {
+      String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
+      sb.append("<div id='" + currentEventId + "' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>");
+      sb.append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>");
+      sb.append("<span style='color:#666;'>").append(event.getStartDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+      sb.append(" - ").append(event.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("</span><br>");
+      sb.append("<span>").append(event.getDescription() != null ? event.getDescription() : "").append("</span><br>");
+      sb.append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>");
+      sb.append("<div style='margin-top:5px;'>");
+      sb.append("<button onclick='printEvent(\"" + currentEventId + "\")' style='background-color:#4a86e8; color:white; border:none; padding:5px 10px; cursor:pointer;'>Print</button>");
+      sb.append("</div>").append("</div>");
     }
 
-    sb.append("</html>");
+    sb.append("<script>");
+    sb.append("function printEvent(id) { window.location.href='print:' + id; }\n");
+    sb.append("</script>");
+    sb.append("</body></html>");
     eventListArea.setContentType("text/html");
     eventListArea.setText(sb.toString());
+    addEventListeners(events);
+  }
+
+  /**
+   * Adds event listeners for the hyperlinks in the event list.
+   *
+   * @param events the list of events
+   */
+  private void addEventListeners(List<Event> events) {
+    eventListArea.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        String url = e.getDescription();
+        System.out.println("[DEBUG] Event link clicked: " + url);
+        if (url.startsWith("edit:")) {
+          String eventIdStr = url.substring(5);
+          for (Event event : events) {
+            String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
+            if (currentEventId.equals(eventIdStr)) {
+              if (listener != null) {
+                System.out.println("[DEBUG] Edit requested for event: " + event.getSubject());
+                listener.onEditEvent(event);
+              }
+              break;
+            }
+          }
+        } else if (url.startsWith("copy:")) {
+          String eventIdStr = url.substring(5);
+          for (Event event : events) {
+            String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
+            if (currentEventId.equals(eventIdStr)) {
+              if (listener != null) {
+                System.out.println("[DEBUG] Copy requested for event: " + event.getSubject());
+                listener.onCopyEvent(event);
+              }
+              break;
+            }
+          }
+        }
+      }
+    });
   }
 
   /**

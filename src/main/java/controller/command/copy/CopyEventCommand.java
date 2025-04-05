@@ -1,8 +1,8 @@
 package controller.command.copy;
 
 import controller.command.ICommand;
+import controller.command.copy.strategy.ConsolidatedCopyStrategy;
 import controller.command.copy.strategy.CopyStrategy;
-import controller.command.copy.strategy.CopyStrategyFactory;
 import model.calendar.CalendarManager;
 import model.exceptions.ConflictingEventException;
 import model.exceptions.EventNotFoundException;
@@ -15,7 +15,8 @@ import utilities.TimeZoneHandler;
  */
 public class CopyEventCommand implements ICommand {
 
-  private final CopyStrategyFactory strategyFactory;
+  private final CalendarManager calendarManager;
+  private final TimeZoneHandler timezoneHandler;
 
   /**
    * Constructs a new CopyEventCommand.
@@ -31,7 +32,8 @@ public class CopyEventCommand implements ICommand {
       throw new IllegalArgumentException("TimeZoneHandler cannot be null");
     }
 
-    this.strategyFactory = new CopyStrategyFactory(calendarManager, timezoneHandler);
+    this.calendarManager = calendarManager;
+    this.timezoneHandler = timezoneHandler;
   }
 
   @Override
@@ -42,7 +44,19 @@ public class CopyEventCommand implements ICommand {
     }
 
     try {
-      CopyStrategy strategy = strategyFactory.getStrategy(args);
+      CopyStrategy strategy = null;
+      
+      // Determine the appropriate strategy based on the command format
+      if (args.length >= 2 && args[1].equals("event")) {
+        strategy = ConsolidatedCopyStrategy.createSingleEventStrategy(
+                calendarManager, timezoneHandler, args);
+      } else if (args.length >= 3 && args[1].equals("events") && args[2].equals("on")) {
+        strategy = ConsolidatedCopyStrategy.createDayEventsStrategy(
+                calendarManager, timezoneHandler, args);
+      } else if (args.length >= 3 && args[1].equals("events") && args[2].equals("between")) {
+        strategy = ConsolidatedCopyStrategy.createRangeEventsStrategy(
+                calendarManager, timezoneHandler, args);
+      }
 
       if (strategy == null) {
         return "Error: Unknown copy command format";

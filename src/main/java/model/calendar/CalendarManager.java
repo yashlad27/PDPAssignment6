@@ -1,10 +1,12 @@
 package model.calendar;
 
+import java.util.Set;
 import model.exceptions.CalendarNotFoundException;
 import model.exceptions.DuplicateCalendarException;
 import model.exceptions.InvalidTimezoneException;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
+import model.calendar.iterator.CalendarIterator;
 
 /**
  * Manages calendar operations and coordinates between the CalendarRegistry and TimeZoneHandler.
@@ -182,6 +184,38 @@ public class CalendarManager {
    */
   public TimeZoneHandler getTimezoneHandler() {
     return timezoneHandler;
+  }
+
+  /**
+   * Gets all calendar names.
+   *
+   * @return a set of calendar names
+   */
+  public Set<String> getCalendarNames() {
+    return calendarRegistry.getCalendarNames();
+  }
+
+  /**
+   * Gets the first available calendar, or null if none exists.
+   *
+   * @return the first available calendar, or null if none exists
+   */
+  public ICalendar getFirstAvailableCalendar() {
+    // Use the iterator pattern to get the first available calendar
+    CalendarIterator iterator = getCalendarIterator();
+    if (iterator.hasNext()) {
+      return iterator.next();
+    }
+    return null;
+  }
+
+  /**
+   * Gets an iterator for all calendars in this manager.
+   *
+   * @return an iterator for all calendars
+   */
+  public CalendarIterator getCalendarIterator() {
+    return calendarRegistry.getCalendarIterator();
   }
 
   /**

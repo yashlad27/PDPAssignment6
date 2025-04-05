@@ -5,12 +5,15 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
 import controller.CalendarController;
-import controller.command.edit.strategy.EventEditor;
+import controller.GUIController;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -24,10 +27,8 @@ import viewmodel.ExportImportViewModel;
  */
 public class GUIView extends JFrame implements ICalendarView, IGUIView {
   private static final Color THEME_COLOR = new Color(0x4a86e8);
-  private static final Color THEME_LIGHT = new Color(0xe6f2ff);
   private static final Color BORDER_COLOR = new Color(0xcccccc);
   private static final int SIDEBAR_WIDTH = 180;
-  private static final int MAIN_WIDTH = 590;
 
   private final GUICalendarPanel calendarPanel;
   private final GUIEventPanel eventPanel;
@@ -38,6 +39,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   private CalendarViewModel calendarViewModel;
   private EventViewModel eventViewModel;
   private ExportImportViewModel exportImportViewModel;
+  private GUIController guiController;
 
   /**
    * Constructs a new GUIView.
@@ -47,7 +49,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public GUIView(CalendarController controller) {
     this.controller = controller;
     System.out.println("Creating GUIView...");
-
+    
     // Initialize view models
     calendarViewModel = new CalendarViewModel();
     eventViewModel = new EventViewModel(controller);
@@ -126,11 +128,11 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
             displayMessage("Calendar created successfully: " + name);
             refreshView();
           } else {
-            showError("Failed to create calendar");
+            showErrorMessage("Could not create calendar");
           }
         } catch (Exception ex) {
           System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
-          showError("Could not create calendar: " + ex.getMessage());
+          showErrorMessage("Could not create calendar: " + ex.getMessage());
         }
       }
     });
@@ -138,39 +140,27 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     // Set up event panel listener
     eventPanel.addEventPanelListener(new GUIEventPanel.EventPanelListener() {
       @Override
-      public void onEventSaved(String[] args, boolean isRecurring) {
-        System.out.println("[DEBUG] Attempting to save event. Recurring: " + isRecurring);
-        if (args != null) {
-          System.out.println("[DEBUG] Event args: " + String.join(", ", args));
-        }
+      public void onEventSaved(EventFormData formData) {
+        System.out.println("[DEBUG] Attempting to save event. Recurring: " + formData.isRecurring());
+        
+        try {
+          ICalendar currentCalendar = controller.getCurrentCalendar();
+          System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
 
-        if (args != null && args.length >= 2) {
-          try {
-            ICalendar currentCalendar = controller.getCurrentCalendar();
-            System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
-
-            if (currentCalendar == null) {
-              showError("Please select a calendar first");
-              return;
-            }
-
-            if (isRecurring) {
-              System.out.println("[DEBUG] Creating recurring event");
-              EventEditor editor = EventEditor.forType("series_from_date", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Recurring event creation result: " + result);
-              handleEventResult(result);
-            } else {
-              System.out.println("[DEBUG] Creating single event");
-              EventEditor editor = EventEditor.forType("single", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Single event creation result: " + result);
-              handleEventResult(result);
-            }
-          } catch (Exception e) {
-            System.out.println("[DEBUG] Event creation error: " + e.getMessage());
-            showError("Error creating event: " + e.getMessage());
+          if (currentCalendar == null) {
+            showErrorMessage("Please select a calendar first");
+            return;
           }
+
+          // Pass the form data to the GUI controller
+          if (guiController != null) {
+            guiController.onEventSaved(formData);
+          } else {
+            showErrorMessage("GUI Controller not initialized");
+          }
+        } catch (Exception e) {
+          showErrorMessage("Error creating event: " + e.getMessage());
+          e.printStackTrace();
         }
       }
 
@@ -179,46 +169,85 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         System.out.println("[DEBUG] Event creation cancelled");
         eventPanel.clearForm();
       }
+      
+      @Override
+      public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+        System.out.println("[DEBUG] Event copy requested to calendar: " + targetCalendarName);
+        try {
+          // Get the current event from the event panel
+          Event currentEvent = eventPanel.getCurrentEvent();
+          if (currentEvent == null) {
+            showErrorMessage("No event selected to copy");
+            return;
+          }
+          
+          // Call the controller to handle the copy operation
+          if (guiController != null) {
+            boolean success = guiController.copyEvent(currentEvent, targetCalendarName, targetStartDateTime, targetEndDateTime);
+            if (success) {
+              showInfoMessage("Event copied successfully");
+              eventPanel.clearForm();
+              refreshView(); // Refresh to show the copied event
+            } else {
+              showErrorMessage("Failed to copy event");
+            }
+          } else {
+            showErrorMessage("Controller not initialized");
+          }
+        } catch (Exception e) {
+          System.out.println("[DEBUG] Event copy error: " + e.getMessage());
+          showErrorMessage("Error copying event: " + e.getMessage());
+        }
+      }
+      
+      @Override
+      public List<String> getAvailableCalendarNames() {
+        System.out.println("[DEBUG] Getting available calendar names");
+        List<String> calendarNames = new ArrayList<>();
+        try {
+          // Get calendar names from the controller
+          if (controller != null) {
+            Set<String> names = controller.getCalendarNames();
+            if (names != null) {
+              calendarNames = new ArrayList<>(names);
+              System.out.println("[DEBUG] Found " + calendarNames.size() + " calendars from controller");
+            }
+          }
+        } catch (Exception ex) {
+          System.out.println("[DEBUG] Error getting calendar names: " + ex.getMessage());
+        }
+        return calendarNames;
+      }
+      
 
       @Override
-      public void onEventUpdated(String[] args, boolean isRecurring) {
-        System.out.println("[DEBUG] Attempting to update event. Recurring: " + isRecurring);
-        if (args != null) {
-          System.out.println("[DEBUG] Update args: " + String.join(", ", args));
-        }
-
-        if (args != null && args.length >= 2) {
-          try {
-            ICalendar currentCalendar = controller.getCurrentCalendar();
-            System.out.println("[DEBUG] Current calendar for update: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
-
-            if (currentCalendar == null) {
-              showError("Please select a calendar first");
-              return;
-            }
-
-            if (isRecurring) {
-              EventEditor editor = EventEditor.forType("series_from_date", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Recurring event update result: " + result);
-              handleEventResult(result);
-            } else {
-              EventEditor editor = EventEditor.forType("single", args);
-              String result = editor.executeEdit(currentCalendar);
-              System.out.println("[DEBUG] Single event update result: " + result);
-              handleEventResult(result);
-            }
-          } catch (Exception e) {
-            System.out.println("[DEBUG] Event update error: " + e.getMessage());
-            showError("Error updating event: " + e.getMessage());
+      public void onEventUpdated(EventFormData formData) {
+        System.out.println("[DEBUG] Attempting to update event. Recurring: " + formData.isRecurring());
+        
+        try {
+          ICalendar currentCalendar = controller.getCurrentCalendar();
+          if (currentCalendar == null) {
+            showErrorMessage("Please select a calendar first");
+            return;
           }
+
+          // Pass the form data to the GUI controller
+          if (guiController != null) {
+            guiController.onEventUpdated(formData);
+          } else {
+            showErrorMessage("GUI Controller not initialized");
+          }
+        } catch (Exception e) {
+          System.out.println("[DEBUG] Event update error: " + e.getMessage());
+          showErrorMessage("Error updating event: " + e.getMessage());
+          e.printStackTrace();
         }
       }
 
       private void handleEventResult(String result) {
         System.out.println("[DEBUG] Handling event result: " + result);
         if (result.startsWith("Error")) {
-          showError(result);
+          showErrorMessage(result);
         } else {
           displayMessage(result);
           refreshView();
@@ -239,7 +268,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
               }
             } catch (Exception e) {
               System.out.println("[DEBUG] Error updating event list: " + e.getMessage());
-              showError("Error updating event list: " + e.getMessage());
+              showErrorMessage("Error updating event list: " + e.getMessage());
             }
           }
         }
@@ -283,6 +312,30 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       public void onDateRangeSelected(LocalDate startDate, LocalDate endDate) {
         calendarPanel.updateEventListRange(startDate, endDate, null);
       }
+
+      @Override
+      public void onEditEvent(Event event) {
+        System.out.println("[DEBUG] Edit event requested in view: " + event.getSubject());
+        if (guiController != null) {
+          guiController.editEvent(event);
+        }
+      }
+
+      @Override
+      public void onCopyEvent(Event event) {
+        System.out.println("[DEBUG] Copy event requested in view: " + event.getSubject());
+        if (guiController != null) {
+          guiController.showCopyEventDialog(event);
+        }
+      }
+
+      @Override
+      public void onPrintEvent(Event event) {
+        System.out.println("[DEBUG] Print event requested in view: " + event.getSubject());
+        if (guiController != null) {
+          guiController.printEvent(event);
+        }
+      }
     });
 
     // Set up export/import listeners
@@ -294,7 +347,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
             controller.importCalendarFromCSV(file.getAbsolutePath());
             // Success message will be shown by the ExportImportViewModel
           } catch (Exception ex) {
-            exportImportPanel.showError("Import failed: " + ex.getMessage());
+            exportImportPanel.showErrorMessage("Import failed: " + ex.getMessage());
           }
         }
       }
@@ -306,7 +359,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
             controller.exportCalendarToCSV(file.getAbsolutePath());
             exportImportPanel.showExportSuccess();
           } catch (Exception ex) {
-            exportImportPanel.showError("Export failed: " + ex.getMessage());
+            exportImportPanel.showErrorMessage("Export failed: " + ex.getMessage());
           }
         }
       }
@@ -423,6 +476,75 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   }
 
   /**
+   * Sets the controller for this view.
+   *
+   * @param controller the controller to set
+   */
+  public void setController(CalendarController controller) {
+    // No-op since we already have the controller from the constructor
+  }
+
+  /**
+   * Sets the GUI controller for this view.
+   *
+   * @param guiController the GUI controller to set
+   */
+  public void setGUIController(GUIController guiController) {
+    this.guiController = guiController;
+  }
+
+  /**
+   * Shows an event edit dialog.
+   *
+   * @param event       the event to edit
+   * @param isRecurring whether the event is recurring
+   */
+  public void showEventEditDialog(Event event, boolean isRecurring) {
+    EventEditDialog dialog = new EventEditDialog(this, event, isRecurring);
+    boolean confirmed = dialog.showDialog();
+
+    if (confirmed) {
+      // Update the event with the new values
+      String subject = dialog.getSubject();
+      String location = dialog.getEventLocation();
+      String description = dialog.getDescription();
+
+      // Create a copy of the event with the new values
+      Event updatedEvent = event;
+      updatedEvent.setSubject(subject);
+      updatedEvent.setLocation(location);
+      updatedEvent.setDescription(description);
+
+      // Notify the controller that the event has been updated
+      if (guiController != null) {
+        guiController.onEventUpdated(updatedEvent);
+      }
+    }
+  }
+
+  /**
+   * Shows an event copy dialog.
+   *
+   * @param event     the event to copy
+   * @param calendars the list of available calendars
+   */
+  public void showEventCopyDialog(Event event, List<ICalendar> calendars) {
+    EventCopyDialog dialog = new EventCopyDialog(this, event, calendars);
+    boolean confirmed = dialog.showDialog();
+
+    if (confirmed) {
+      // Get the target calendar name
+      String targetCalendarName = dialog.getTargetCalendarName();
+
+      // Notify the controller that the event should be copied
+      if (guiController != null) {
+        String result = guiController.executeCopyEvent(event, targetCalendarName);
+        showInfoMessage(result);
+      }
+    }
+  }
+
+  /**
    * Gets the event panel.
    *
    * @return the event panel
@@ -496,6 +618,31 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       calendarPanel.updateEventList(LocalDate.now());
     }
   }
+  
+  /**
+   * Refreshes the calendar view with current data.
+   */
+  public void refreshCalendarView() {
+    calendarPanel.repaint();
+    calendarPanel.revalidate();
+  }
+  
+  /**
+   * Refreshes the event view with current data.
+   */
+  public void refreshEventView() {
+    if (eventPanel != null) {
+      eventPanel.refreshView();
+    }
+  }
+  
+  /**
+   * Refreshes all calendar and event views.
+   */
+  public void refreshPanels() {
+    refreshCalendarView();
+    refreshEventView();
+  }
 
   @Override
   public void updateRecurringEventList(List<RecurringEvent> recurringEvents) {
@@ -506,6 +653,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
 
   @Override
   public void showEventDetails(Event event) {
+    System.out.println("[DEBUG] GUIView.showEventDetails called for event: " + (event != null ? event.getSubject() : "null"));
     eventPanel.displayEvent(event);
   }
 
@@ -570,6 +718,29 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
             JOptionPane.ERROR_MESSAGE
     );
   }
+  
+  /**
+   * Shows an error message dialog.
+   *
+   * @param message the error message to display
+   */
+  public void showErrorMessage(String message) {
+    displayError(message);
+  }
+  
+  /**
+   * Shows an information message dialog.
+   *
+   * @param message the information message to display
+   */
+  public void showInfoMessage(String message) {
+    JOptionPane.showMessageDialog(
+            this,
+            message,
+            "Information",
+            JOptionPane.INFORMATION_MESSAGE
+    );
+  }
 
   // CalendarViewModelListener implementation
   public void onCalendarChanged(ICalendar calendar) {
@@ -625,44 +796,31 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public void onImportSuccess(String message) {
     System.out.println("[DEBUG] GUIView.onImportSuccess called with message: " + message);
     displayMessage(message);
-    
+
     // Show success popup
     System.out.println("[DEBUG] Showing import success popup");
     exportImportPanel.showImportSuccess(message);
-    
+
     // Refresh the calendar view to show the imported events
     LocalDate currentDate = calendarPanel.getSelectedDate();
     System.out.println("[DEBUG] Refreshing calendar view after import for date: " + currentDate);
-    
+
     // Get the current calendar's events
     if (calendarViewModel.getCurrentCalendar() != null) {
       // Get all events for the current calendar
       List<Event> events = calendarViewModel.getCurrentCalendar().getAllEvents();
       System.out.println("[DEBUG] Found " + events.size() + " events in calendar after import");
-      
+
       // Update the calendar panel with all events
       calendarPanel.updateEvents(events);
-      
+
       // Force a complete refresh of the calendar display
       calendarPanel.updateCalendar(calendarViewModel.getCurrentCalendar());
       System.out.println("[DEBUG] Calendar panel updated with imported events");
-      
+
       // Refresh the entire view
       refreshView();
     }
-  }
-
-  public void onExportSuccess() {
-    displayMessage("Calendar exported successfully");
-  }
-
-  /**
-   * Shows an error message.
-   *
-   * @param message the error message to display
-   */
-  public void showError(String message) {
-    JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
   }
 
   /**
