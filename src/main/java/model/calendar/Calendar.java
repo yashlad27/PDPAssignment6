@@ -14,6 +14,9 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import model.calendar.iterator.ConsolidatedEventIterator;
+import model.calendar.iterator.EventIterator;
+
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
@@ -301,7 +304,15 @@ public class Calendar implements ICalendar {
    */
   @Override
   public List<Event> getAllEvents() {
-    return new ArrayList<>(events);
+    // Use the iterator pattern to get all events
+    EventIterator iterator = getEventIterator();
+    List<Event> allEvents = new ArrayList<>();
+    
+    while (iterator.hasNext()) {
+      allEvents.add(iterator.next());
+    }
+    
+    return allEvents;
   }
 
   /**
@@ -410,7 +421,10 @@ public class Calendar implements ICalendar {
    * @return true if there is a conflict, false otherwise
    */
   private boolean hasConflict(Event event) {
-    return events.stream().anyMatch(event::conflictsWith);
+    // Use the iterator pattern to check for conflicts
+    EventFilter conflictFilter = existingEvent -> event.conflictsWith(existingEvent);
+    EventIterator iterator = getFilteredEventIterator(conflictFilter);
+    return iterator.hasNext();
   }
 
   /**
@@ -473,20 +487,32 @@ public class Calendar implements ICalendar {
   @Override
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {
-      throw new IllegalArgumentException("Start and end dates cannot be null");
+      throw new IllegalArgumentException("Dates cannot be null");
     }
 
-    return getFilteredEvents(event -> {
+    if (startDate.isAfter(endDate)) {
+      throw new IllegalArgumentException("Start date cannot be after end date");
+    }
+
+    // Use the iterator pattern to get events between dates
+    EventFilter dateRangeFilter = event -> {
       if (event.getStartDateTime() != null) {
-        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
-        LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
-        return !eventStartDate.isAfter(endDate) && !eventEndDate.isBefore(startDate);
-      } else if (event.getDate() != null) {
-        return !event.getDate().isBefore(startDate) && !event.getDate().isAfter(endDate);
+        LocalDate eventDate = event.getStartDateTime().toLocalDate();
+        return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
       }
       return false;
-    });
+    };
+    
+    EventIterator iterator = getFilteredEventIterator(dateRangeFilter);
+    List<Event> result = new ArrayList<>();
+    
+    while (iterator.hasNext()) {
+      result.add(iterator.next());
+    }
+    
+    return result;
   }
+
 
   /**
    * Gets the name of this calendar.
@@ -594,7 +620,60 @@ public class Calendar implements ICalendar {
    * @return a list of events that match the filter
    */
   public List<Event> getFilteredEvents(EventFilter filter) {
-    return events.stream().filter(filter::matches).collect(Collectors.toList());
+    // Use the iterator pattern to filter events
+    EventIterator iterator = getFilteredEventIterator(filter);
+    List<Event> result = new ArrayList<>();
+    
+    while (iterator.hasNext()) {
+      result.add(iterator.next());
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Gets an iterator for all events in this calendar.
+   * This includes both regular and recurring events.
+   *
+   * @return an iterator for all events
+   */
+  public EventIterator getEventIterator() {
+    List<EventIterator> iterators = new ArrayList<>();
+    iterators.add(ConsolidatedEventIterator.createRegularIterator(events));
+    iterators.add(ConsolidatedEventIterator.createRecurringIterator(recurringEvents));
+    return ConsolidatedEventIterator.createCompositeIterator(iterators);
+  }
+  
+  /**
+   * Gets an iterator for events that match a specific filter.
+   *
+   * @param filter the filter to apply
+   * @return a filtered iterator
+   */
+  public EventIterator getFilteredEventIterator(EventFilter filter) {
+    return ConsolidatedEventIterator.createFilteredIterator(getEventIterator(), filter);
+  }
+  
+  /**
+   * Gets an iterator for events on a specific date.
+   *
+   * @param date the date to get events for
+   * @return an iterator for events on the specified date
+   */
+  public EventIterator getEventsOnDateIterator(LocalDate date) {
+    if (date == null) {
+      throw new IllegalArgumentException("Date cannot be null");
+    }
+    
+    EventFilter dateFilter = event -> {
+      if (event.getStartDateTime() != null) {
+        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
+        return eventStartDate.equals(date);
+      }
+      return false;
+    };
+    
+    return getFilteredEventIterator(dateFilter);
   }
 
   @Override
@@ -617,12 +696,78 @@ public class Calendar implements ICalendar {
       return false;
     };
 
-    return events.stream().anyMatch(busyFilter::matches);
+    // Use the iterator pattern to check if busy
+    EventIterator iterator = getFilteredEventIterator(busyFilter);
+    return iterator.hasNext();
   }
 
   @Override
   public String toString() {
     return name;
+  }
+  
+  /**
+   * Updates an existing event with a new version using the event's UUID.
+   *
+   * @param eventId The UUID of the event to update
+   * @param updatedEvent The new version of the event
+   * @return true if the event was successfully updated, false otherwise
+   * @throws ConflictingEventException if the updated event conflicts with existing events
+   */
+  @Override
+  public boolean updateEvent(UUID eventId, Event updatedEvent) throws ConflictingEventException {
+    if (eventId == null || updatedEvent == null) {
+      return false;
+    }
+    
+    // Check if the event exists
+    Event existingEvent = eventById.get(eventId);
+    if (existingEvent == null) {
+      return false; // Event not found
+    }
+    
+    // Temporarily remove the existing event to avoid false conflicts
+    events.remove(existingEvent);
+    eventById.remove(eventId);
+    
+    try {
+      // Check for conflicts with other events
+      if (hasConflict(updatedEvent)) {
+        // Put the original event back if there's a conflict
+        events.add(existingEvent);
+        eventById.put(eventId, existingEvent);
+        throw new ConflictingEventException("The updated event conflicts with existing events");
+      }
+      
+      // Create a new event with the same ID and updated data
+      Event newEvent = new Event(
+          updatedEvent.getSubject(), 
+          updatedEvent.getStartDateTime(), 
+          updatedEvent.getEndDateTime(),
+          updatedEvent.getDescription(), 
+          updatedEvent.getLocation(), 
+          updatedEvent.isPublic()
+      ) {
+        // Anonymous subclass to override the ID
+        @Override
+        public UUID getId() {
+          return eventId;
+        }
+      };
+      
+      // Add the updated event
+      events.add(newEvent);
+      eventById.put(eventId, newEvent);
+      
+      return true;
+    } catch (ConflictingEventException e) {
+      throw e;
+    } catch (Exception e) {
+      // Put the original event back if there's any other error
+      events.add(existingEvent);
+      eventById.put(eventId, existingEvent);
+      return false;
+    }
   }
 
   /**

@@ -34,7 +34,7 @@ public class CalendarFactory {
       case "gui":
         return new GUIView(controller);
       case "text":
-        return new TextView();
+        return new TextView(controller);
       default:
         throw new IllegalArgumentException("Invalid mode: " + mode);
     }

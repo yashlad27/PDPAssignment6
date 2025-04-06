@@ -22,25 +22,4 @@ public interface EventEditor {
    */
   String executeEdit(ICalendar calendar) throws EventNotFoundException,
           InvalidEventException, ConflictingEventException;
-
-  /**
-   * Factory method to create the appropriate editor based on edit type.
-   *
-   * @param type the type of edit operation
-   * @param args the arguments for the edit operation
-   * @return the appropriate editor for the specified edit type
-   * @throws IllegalArgumentException if the edit type is unknown or arguments are invalid
-   */
-  static EventEditor forType(String type, String[] args) {
-    switch (type) {
-      case "single":
-        return new SingleEventEditor(args);
-      case "series_from_date":
-        return new SeriesFromDateEditor(args);
-      case "all":
-        return new AllEventsEditor(args);
-      default:
-        throw new IllegalArgumentException("Unknown edit type: " + type);
-    }
-  }
 }

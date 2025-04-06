@@ -1,0 +1,267 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+  <!-- Background container -->
+  <rect width="1000" height="700" fill="#f5f5f5" rx="10" ry="10"/>
+  
+  <!-- App header -->
+  <rect x="0" y="0" width="1000" height="50" fill="#4a75e6" rx="10" ry="10"/>
+  <text x="20" y="32" font-family="Arial" font-size="18" fill="white" font-weight="bold">Calendar Application</text>
+  
+  <!-- Left sidebar -->
+  <rect x="10" y="60" width="200" height="630" fill="white" rx="5" ry="5" stroke="#ddd" stroke-width="1"/>
+  
+  <!-- Calendars section -->
+  <text x="20" y="85" font-family="Arial" font-size="16" fill="#333" font-weight="bold">Calendars</text>
+  
+  <!-- Calendar list -->
+  <rect x="20" y="95" width="180" height="30" fill="#f0f0f0" rx="3" ry="3"/>
+  <text x="30" y="115" font-family="Arial" font-size="12" fill="#333">Calendars</text>
+  
+  <rect x="20" y="125" width="180" height="30" fill="#e6e6e6" rx="3" ry="3"/>
+  <text x="30" y="145" font-family="Arial" font-size="12" fill="#333">Default_Calendar</text>
+  
+  <!-- Add and Use buttons -->
+  <rect x="20" y="170" width="80" height="30" fill="#f0f0f0" rx="3" ry="3"/>
+  <text x="43" y="190" font-family="Arial" font-size="12" fill="#333">Add ...</text>
+  
+  <rect x="110" y="170" width="80" height="30" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="133" y="190" font-family="Arial" font-size="12" fill="white">Use</text>
+  
+  <!-- Import/Export section -->
+  <text x="20" y="230" font-family="Arial" font-size="16" fill="#333" font-weight="bold">Import/Export</text>
+  
+  <text x="30" y="255" font-family="Arial" font-size="12" fill="#333">Import from CSV</text>
+  <rect x="20" y="265" width="170" height="30" fill="#f0f0f0" rx="3" ry="3"/>
+  <text x="70" y="285" font-family="Arial" font-size="12" fill="#333">Choose File...</text>
+  
+  <text x="30" y="320" font-family="Arial" font-size="12" fill="#333">Export to CSV</text>
+  <rect x="20" y="330" width="170" height="30" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="70" y="350" font-family="Arial" font-size="12" fill="white">Export Calendar</text>
+  
+  <!-- Main calendar area -->
+  <rect x="220" y="60" width="560" height="520" fill="white" rx="5" ry="5" stroke="#ddd" stroke-width="1"/>
+  
+  <!-- Calendar navigation -->
+  <rect x="240" y="80" width="520" height="40" fill="white" rx="3" ry="3"/>
+  <path d="M270,100 L250,100 L260,85 Z" fill="#4a75e6"/> <!-- Back arrow -->
+  <text x="300" y="105" font-family="Arial" font-size="18" fill="#333" font-weight="bold">NOVEMBER 2025</text>
+  <path d="M460,100 L480,100 L470,85 Z" fill="#4a75e6"/> <!-- Forward arrow -->
+  
+  <rect x="650" y="85" width="80" height="30" fill="#f0f0f0" rx="3" ry="3"/>
+  <text x="673" y="105" font-family="Arial" font-size="12" fill="#333">Today</text>
+  
+  <!-- Days of week header -->
+  <rect x="240" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="280" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Sun</text>
+  
+  <rect x="320" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="360" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Mon</text>
+  
+  <rect x="400" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="440" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Tue</text>
+  
+  <rect x="480" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="520" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Wed</text>
+  
+  <rect x="560" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="600" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Thu</text>
+  
+  <rect x="640" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="680" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Fri</text>
+  
+  <rect x="720" y="130" width="80" height="30" fill="#e6f0ff" rx="0" ry="0"/>
+  <text x="760" y="150" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">Sat</text>
+  
+  <!-- Calendar grid -->
+  <!-- Row 1 -->
+  <rect x="720" y="160" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="730" y="180" font-family="Arial" font-size="14" fill="#333">1</text>
+  
+  <!-- Row 2 -->
+  <rect x="240" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="250" y="260" font-family="Arial" font-size="14" fill="#333">2</text>
+  
+  <rect x="320" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="330" y="260" font-family="Arial" font-size="14" fill="#333">3</text>
+  
+  <rect x="400" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="410" y="260" font-family="Arial" font-size="14" fill="#333">4</text>
+  
+  <rect x="480" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="490" y="260" font-family="Arial" font-size="14" fill="#333">5</text>
+  
+  <rect x="560" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="570" y="260" font-family="Arial" font-size="14" fill="#333">6</text>
+  
+  <rect x="640" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="650" y="260" font-family="Arial" font-size="14" fill="#333">7</text>
+  
+  <rect x="720" y="240" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="730" y="260" font-family="Arial" font-size="14" fill="#333">8</text>
+  
+  <!-- Row 3 -->
+  <rect x="240" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="250" y="340" font-family="Arial" font-size="14" fill="#333">9</text>
+  
+  <rect x="320" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="325" y="340" font-family="Arial" font-size="14" fill="#333">10</text>
+  
+  <rect x="400" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="405" y="340" font-family="Arial" font-size="14" fill="#333">11</text>
+  
+  <rect x="480" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="485" y="340" font-family="Arial" font-size="14" fill="#333">12</text>
+  
+  <rect x="560" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="565" y="340" font-family="Arial" font-size="14" fill="#333">13</text>
+  
+  <rect x="640" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="645" y="340" font-family="Arial" font-size="14" fill="#333">14</text>
+  
+  <rect x="720" y="320" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="725" y="340" font-family="Arial" font-size="14" fill="#333">15</text>
+  
+  <!-- Row 4 -->
+  <rect x="240" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="245" y="420" font-family="Arial" font-size="14" fill="#333">16</text>
+  
+  <rect x="320" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="325" y="420" font-family="Arial" font-size="14" fill="#333">17</text>
+  
+  <rect x="400" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="405" y="420" font-family="Arial" font-size="14" fill="#333">18</text>
+  
+  <rect x="480" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="485" y="420" font-family="Arial" font-size="14" fill="#333">19</text>
+  
+  <rect x="560" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="565" y="420" font-family="Arial" font-size="14" fill="#333">20</text>
+  
+  <rect x="640" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="645" y="420" font-family="Arial" font-size="14" fill="#333">21</text>
+  
+  <rect x="720" y="400" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="725" y="420" font-family="Arial" font-size="14" fill="#333">22</text>
+  
+  <!-- Row 5 -->
+  <rect x="240" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="245" y="500" font-family="Arial" font-size="14" fill="#333">23</text>
+  
+  <rect x="320" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="325" y="500" font-family="Arial" font-size="14" fill="#333">24</text>
+  
+  <rect x="400" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="405" y="500" font-family="Arial" font-size="14" fill="#333">25</text>
+  
+  <rect x="480" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="485" y="500" font-family="Arial" font-size="14" fill="#333">26</text>
+  
+  <rect x="560" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="565" y="500" font-family="Arial" font-size="14" fill="#333">27</text>
+  
+  <rect x="640" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="645" y="500" font-family="Arial" font-size="14" fill="#333">28</text>
+  
+  <rect x="720" y="480" width="80" height="80" fill="white" stroke="#ddd" stroke-width="1" stroke-dasharray="5,5" stroke-width="2" stroke="#4a75e6"/>
+  <text x="725" y="500" font-family="Arial" font-size="14" fill="#333">29</text>
+  
+  <!-- Sample event on calendar -->
+  <rect x="730" y="505" width="60" height="20" fill="#a1c7ff" rx="3" ry="3"/>
+  <text x="733" y="519" font-family="Arial" font-size="8" fill="#333">Meeting 16:08</text>
+  
+  <!-- Row 6 (partial) -->
+  <rect x="240" y="560" width="80" height="20" fill="white" stroke="#ddd" stroke-width="1"/>
+  <text x="245" y="575" font-family="Arial" font-size="14" fill="#333">30</text>
+  
+  <!-- Calendar action buttons -->
+  <rect x="240" y="600" width="100" height="35" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="260" y="623" font-family="Arial" font-size="12" fill="white">Check Status</text>
+  
+  <rect x="350" y="600" width="80" height="35" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="369" y="623" font-family="Arial" font-size="12" fill="white">List Events</text>
+  
+  <rect x="440" y="600" width="90" height="35" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="454" y="623" font-family="Arial" font-size="12" fill="white">Show Range</text>
+  
+  <!-- New Edit and Copy buttons -->
+  <rect x="540" y="600" width="70" height="35" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="563" y="623" font-family="Arial" font-size="12" fill="white">Edit</text>
+  
+  <rect x="620" y="600" width="70" height="35" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="643" y="623" font-family="Arial" font-size="12" fill="white">Copy</text>
+  
+  <!-- Bottom command area -->
+  <rect x="220" y="645" width="560" height="45" fill="white" rx="5" ry="5" stroke="#ddd" stroke-width="1"/>
+  <text x="240" y="673" font-family="Arial" font-size="12" fill="#333">No calendar selected</text>
+  
+  <!-- Right panel - Event Details -->
+  <rect x="790" y="60" width="200" height="630" fill="white" rx="5" ry="5" stroke="#ddd" stroke-width="1"/>
+  
+  <!-- Event details panel header with mode indicator -->
+  <rect x="790" y="60" width="200" height="35" fill="#f0f0f0" rx="5" ry="5"/>
+  <text x="800" y="83" font-family="Arial" font-size="14" fill="#333" font-weight="bold">Event Details</text>
+  <rect x="900" y="68" width="80" height="20" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="913" y="83" font-family="Arial" font-size="10" fill="white">Edit Mode</text>
+  
+  <!-- Event form fields matching your current UI -->
+  <text x="800" y="115" font-family="Arial" font-size="12" fill="#333">Subject:</text>
+  <rect x="800" y="125" width="180" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="805" y="142" font-family="Arial" font-size="10" fill="#333">Team Meeting</text>
+  
+  <text x="800" y="165" font-family="Arial" font-size="12" fill="#333">Date:</text>
+  <rect x="800" y="175" width="150" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="805" y="192" font-family="Arial" font-size="10" fill="#333">11/28/2025</text>
+  <polygon points="960,175 970,185 950,185" fill="#666"/>
+  <polygon points="960,200 970,190 950,190" fill="#666"/>
+  
+  <text x="800" y="215" font-family="Arial" font-size="12" fill="#333">Start Time:</text>
+  <rect x="800" y="225" width="150" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="805" y="242" font-family="Arial" font-size="10" fill="#333">16:08</text>
+  <polygon points="960,225 970,235 950,235" fill="#666"/>
+  <polygon points="960,250 970,240 950,240" fill="#666"/>
+  
+  <text x="800" y="265" font-family="Arial" font-size="12" fill="#333">End Time:</text>
+  <rect x="800" y="275" width="150" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="805" y="292" font-family="Arial" font-size="10" fill="#333">16:08</text>
+  <polygon points="960,275 970,285 950,285" fill="#666"/>
+  <polygon points="960,300 970,290 950,290" fill="#666"/>
+  
+  <text x="800" y="315" font-family="Arial" font-size="12" fill="#333">Location:</text>
+  <rect x="800" y="325" width="180" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  
+  <!-- Description area -->
+  <rect x="800" y="365" width="180" height="80" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  
+  <!-- Event options -->
+  <rect x="800" y="460" width="15" height="15" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="820" y="473" font-family="Arial" font-size="10" fill="#333">All Day Event</text>
+  
+  <rect x="940" y="460" width="15" height="15" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="870" y="473" font-family="Arial" font-size="10" fill="#333">Recurring Event</text>
+  
+  <rect x="800" y="485" width="15" height="15" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="820" y="498" font-family="Arial" font-size="10" fill="#333">Private Event</text>
+  
+  <rect x="940" y="485" width="15" height="15" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="870" y="498" font-family="Arial" font-size="10" fill="#333">Auto-decline</text>
+  
+  <!-- Copy Event Section (only visible in Copy mode) -->
+  <rect x="800" y="515" width="180" height="1" stroke="#ccc" stroke-width="1"/>
+  <text x="800" y="530" font-family="Arial" font-size="12" fill="#333" font-weight="bold">Copy Options</text>
+  
+  <text x="800" y="550" font-family="Arial" font-size="10" fill="#333">Target Calendar:</text>
+  <rect x="800" y="560" width="180" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="805" y="577" font-family="Arial" font-size="10" fill="#333">Default_Calendar</text>
+  <polygon points="970,572 980,562 960,562" fill="#666"/>
+  
+  <text x="800" y="595" font-family="Arial" font-size="10" fill="#333">Target Date/Time:</text>
+  <rect x="800" y="605" width="180" height="25" fill="white" stroke="#ccc" stroke-width="1" rx="3" ry="3"/>
+  <text x="805" y="622" font-family="Arial" font-size="10" fill="#333">12/05/2025 16:08</text>
+  <polygon points="970,617 980,607 960,607" fill="#666"/>
+  
+  <!-- Action buttons -->
+  <rect x="800" y="645" width="80" height="35" fill="#4a75e6" rx="3" ry="3"/>
+  <text x="830" y="668" font-family="Arial" font-size="12" fill="white">Save</text>
+  
+  <rect x="900" y="645" width="80" height="35" fill="#f0f0f0" rx="3" ry="3"/>
+  <text x="923" y="668" font-family="Arial" font-size="12" fill="#333">Cancel</text>
+</svg>

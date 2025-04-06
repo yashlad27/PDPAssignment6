@@ -5,8 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -44,8 +42,6 @@ public class CalendarController {
   private final CalendarManager calendarManager;
   private ICommandFactory commandFactory;
   private static final String EXIT_COMMAND = "exit";
-  private static final Set<String> VALID_COMMANDS = new HashSet<>(
-          Arrays.asList("create", "use", "show", "edit", "copy", "exit"));
 
   /**
    * Constructs a new CalendarController with all necessary dependencies.
@@ -119,12 +115,30 @@ public class CalendarController {
   /**
    * Gets a calendar by name.
    *
-   * @param name the name of the calendar
-   * @return the calendar with the specified name
-   * @throws CalendarNotFoundException if no calendar with the specified name exists
+   * @param name the name of the calendar to get
+   * @return the calendar with the given name
+   * @throws CalendarNotFoundException if no calendar with the given name exists
    */
   public ICalendar getCalendar(String name) throws CalendarNotFoundException {
     return calendarManager.getCalendar(name);
+  }
+  
+  /**
+   * Gets the calendar manager.
+   *
+   * @return the calendar manager
+   */
+  public CalendarManager getCalendarManager() {
+    return calendarManager;
+  }
+  
+  /**
+   * Gets all calendar names.
+   *
+   * @return a set of all calendar names
+   */
+  public Set<String> getCalendarNames() {
+    return calendarManager.getCalendarRegistry().getCalendarNames();
   }
 
   /**

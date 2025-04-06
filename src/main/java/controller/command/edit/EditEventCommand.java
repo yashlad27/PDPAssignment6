@@ -1,7 +1,7 @@
 package controller.command.edit;
 
 import controller.command.ICommand;
-import controller.command.edit.strategy.EventEditor;
+import controller.command.edit.strategy.ConsolidatedEventEditor;
 import model.calendar.ICalendar;
 import model.exceptions.ConflictingEventException;
 import model.exceptions.EventNotFoundException;
@@ -54,47 +54,47 @@ public class EditEventCommand implements ICommand {
     String editType = args[0];
 
     try {
-      // Get the appropriate editor for this edit type
-      EventEditor editor = EventEditor.forType(editType, args);
-
-      // Execute the edit operation
-      return editor.executeEdit(calendar);
-
-    } catch (EventNotFoundException e) {
-      return formatExceptionMessage("Event not found", e);
-    } catch (InvalidEventException e) {
-      return formatExceptionMessage("Invalid property or value", e);
-    } catch (ConflictingEventException e) {
-      return formatExceptionMessage("Would create a conflict", e);
+      // Handle edit commands based on type
+      if ("single".equalsIgnoreCase(editType)) {
+        // Format from headlessCmd.txt: 
+        // edit event subject "Gym" from 2024-03-26T18:00 with "Weightlifting Session"
+        // args[] = ["single", "subject", "Gym", "2024-03-26T18:00", "Weightlifting Session"]
+        String property = args[1]; // e.g., "subject"
+        String subject = args[2];  // e.g., "Gym"
+        String startDateTime = args[3]; // e.g., "2024-03-26T18:00"
+        String newValue = args[4]; // e.g., "Weightlifting Session"
+        
+        try {
+          ConsolidatedEventEditor editor = new ConsolidatedEventEditor(calendar, subject, 
+                                                startDateTime, property, newValue);
+          return editor.editEvent(subject, startDateTime, property, newValue);
+        } catch (EventNotFoundException | InvalidEventException | ConflictingEventException e) {
+          return String.format("Failed to edit event: %s", e.getMessage());
+        }
+      }
+      
+      // For UUID-based edits (if needed in the future)
+      else {
+        return "Error: Unknown edit type: " + editType;
+      }
     } catch (IllegalArgumentException e) {
-      return "Error in command arguments: " + e.getMessage();
+      return String.format("Error in command arguments: %s", e.getMessage());
     } catch (Exception e) {
-      return "Unexpected error: " + e.getMessage();
+      return String.format("Error editing event: %s", e.getMessage());
     }
   }
 
   /**
-   * Checks if the args array has at least the minimum required arguments.
+   * Checks if the command has the required minimum number of arguments.
    *
-   * @param args    the arguments array to check
-   * @param minArgs the minimum number of required arguments
-   * @return true if args has at least minArgs elements
+   * @param args           the command arguments
+   * @param minimumRequired the minimum required number of arguments
+   * @return true if the command has the minimum required arguments, false otherwise
    */
-  private boolean hasMinimumArgs(String[] args, int minArgs) {
-    return args != null && args.length >= minArgs;
+  private boolean hasMinimumArgs(String[] args, int minimumRequired) {
+    return args != null && args.length >= minimumRequired;
   }
-
-  /**
-   * Formats an exception message with a consistent pattern.
-   *
-   * @param context the context of the failure
-   * @param e       the exception that was thrown
-   * @return a formatted error message
-   */
-  private String formatExceptionMessage(String context, Exception e) {
-    return String.format("Failed to edit event: %s - %s", context, e.getMessage());
-  }
-
+  
   /**
    * Returns the name of this command.
    *
