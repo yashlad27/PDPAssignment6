@@ -6,6 +6,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -176,25 +177,32 @@ public class GUIController {
           view.updateCalendarView(calendar);
           view.setSelectedCalendar(calendarName);
           
-          // Get events from the new calendar
+          // Get current date and month
           LocalDate currentDate = view.getCalendarPanel().getSelectedDate();
-          System.out.println("[DEBUG] Getting events for date: " + currentDate);
+          YearMonth currentMonth = YearMonth.from(currentDate);
+          System.out.println("[DEBUG] Getting events for current month: " + currentMonth);
           
-          // Update events display - using the correct method names from ICalendar
-          List<Event> events = currentCalendar.getEventsOnDate(currentDate);
+          // Get ALL events from the calendar to ensure we show all events in the grid
+          List<Event> allEvents = currentCalendar.getAllEvents();
           List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
-          System.out.println("[DEBUG] Found " + events.size() + " events for date " + currentDate);
+          System.out.println("[DEBUG] Found " + allEvents.size() + " total events in calendar");
           System.out.println("[DEBUG] Calendar has " + recurringEvents.size() + " recurring events in total");
           
-          // First clear the view to remove any previously displayed events
-          view.getCalendarPanel().clearEvents();
-          
-          // Then update with the events from the newly selected calendar
-          view.getCalendarPanel().updateEvents(events);
+          // Update the UI with all events for proper display in the grid
+          view.getCalendarPanel().updateEvents(allEvents);
           view.getCalendarPanel().updateRecurringEvents(recurringEvents);
+          
+          // Also update the event list for the current selected date
+          List<Event> eventsOnDate = currentCalendar.getEventsOnDate(currentDate);
+          view.updateEventList(eventsOnDate);
+          
+          // Update the status message
           view.displayMessage("Selected calendar: " + calendarName);
           
-          // Force refresh the view
+          // Force refresh all views
+          view.refreshView();
+          
+          // Force refresh the calendar display to ensure events are visible
           view.refreshView();
         } catch (Exception e) {
           System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
