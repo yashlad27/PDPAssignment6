@@ -2,6 +2,9 @@ package view;
 
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.swing.*;
 
@@ -16,11 +19,11 @@ public class DateTimeSelectionDialog extends JDialog {
 
     // Initialize components
     dateSpinner = new JSpinner(new SpinnerDateModel(
-            java.util.Date.from(initialDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()),
+            Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
             null, null, java.util.Calendar.DAY_OF_MONTH));
     timeSpinner = new JSpinner(new SpinnerDateModel(
-            java.util.Date.from(initialDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()),
-            null, null, java.util.Calendar.MINUTE));
+            Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
+            null, null, Calendar.MINUTE));
 
     // Format spinners
     JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
@@ -41,11 +44,11 @@ public class DateTimeSelectionDialog extends JDialog {
     JButton cancelButton = new JButton("Cancel");
 
     okButton.addActionListener(e -> {
-      java.util.Date date = (java.util.Date) dateSpinner.getValue();
-      java.util.Date time = (java.util.Date) timeSpinner.getValue();
+      Date date = (Date) dateSpinner.getValue();
+      Date time = (Date) timeSpinner.getValue();
       selectedDateTime = LocalDateTime.of(
-              date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate(),
-              time.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalTime()
+              date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+              time.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
       );
       dispose();
     });

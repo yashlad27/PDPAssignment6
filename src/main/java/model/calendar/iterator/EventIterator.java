@@ -7,23 +7,23 @@ import model.event.Event;
  * Provides a unified way to access different types of events.
  */
 public interface EventIterator {
-    /**
-     * Checks if there are more events to iterate over.
-     *
-     * @return true if there are more events, false otherwise
-     */
-    boolean hasNext();
+  /**
+   * Checks if there are more events to iterate over.
+   *
+   * @return true if there are more events, false otherwise
+   */
+  boolean hasNext();
 
-    /**
-     * Returns the next event in the iteration.
-     *
-     * @return the next event
-     * @throws java.util.NoSuchElementException if there are no more events
-     */
-    Event next();
+  /**
+   * Returns the next event in the iteration.
+   *
+   * @return the next event
+   * @throws java.util.NoSuchElementException if there are no more events
+   */
+  Event next();
 
-    /**
-     * Resets the iterator to the beginning of the collection.
-     */
-    void reset();
+  /**
+   * Resets the iterator to the beginning of the collection.
+   */
+  void reset();
 }

@@ -121,7 +121,7 @@ public class EventViewModel implements IViewModel {
       // Use ConsolidatedEventEditor to create a new event
       UUID eventId = UUID.randomUUID();
       ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "subject", subject);
+              eventId, subject, "subject", subject);
       editor.executeEdit(controller.getCurrentCalendar());
 
       Event event = new Event(subject, startDateTime, endDateTime, description, location, true);
@@ -151,35 +151,35 @@ public class EventViewModel implements IViewModel {
       // Create a UUID for the new event
       UUID eventId = UUID.randomUUID();
       ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "subject", subject);
+              eventId, subject, "subject", subject);
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "start", startDateTime.toString());
+              eventId, subject, "start", startDateTime.toString());
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "end", endDateTime.toString());
+              eventId, subject, "end", endDateTime.toString());
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "location", location);
+              eventId, subject, "location", location);
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "description", description);
+              eventId, subject, "description", description);
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "frequency", String.valueOf(frequency));
+              eventId, subject, "frequency", String.valueOf(frequency));
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "weekdays", weekdays.toString());
+              eventId, subject, "weekdays", weekdays.toString());
       editor.executeEdit(controller.getCurrentCalendar());
 
       editor = ConsolidatedEventEditor.createSingleEventEditor(
-          eventId, subject, "endDate", endDate.toString());
+              eventId, subject, "endDate", endDate.toString());
       editor.executeEdit(controller.getCurrentCalendar());
 
       RecurringEvent event = new RecurringEvent.Builder(subject, startDateTime, endDateTime, Set.copyOf(weekdays))
@@ -210,23 +210,23 @@ public class EventViewModel implements IViewModel {
       try {
         // Use ConsolidatedEventEditor to update the event
         ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
-            selectedEvent.getId(), selectedEvent.getSubject(), "subject", subject);
+                selectedEvent.getId(), selectedEvent.getSubject(), "subject", subject);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-            selectedEvent.getId(), selectedEvent.getSubject(), "start", startDateTime.toString());
+                selectedEvent.getId(), selectedEvent.getSubject(), "start", startDateTime.toString());
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-            selectedEvent.getId(), selectedEvent.getSubject(), "end", endDateTime.toString());
+                selectedEvent.getId(), selectedEvent.getSubject(), "end", endDateTime.toString());
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-            selectedEvent.getId(), selectedEvent.getSubject(), "location", location);
+                selectedEvent.getId(), selectedEvent.getSubject(), "location", location);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-            selectedEvent.getId(), selectedEvent.getSubject(), "description", description);
+                selectedEvent.getId(), selectedEvent.getSubject(), "description", description);
         editor.executeEdit(controller.getCurrentCalendar());
 
         notifyEventUpdated(selectedEvent);
@@ -256,35 +256,35 @@ public class EventViewModel implements IViewModel {
         // Use ConsolidatedEventEditor to update the recurring event
         LocalDate fromLocalDate = startDateTime.toLocalDate();
         ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "subject", subject, fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "subject", subject, fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "start", startDateTime.toString(), fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "start", startDateTime.toString(), fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "end", endDateTime.toString(), fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "end", endDateTime.toString(), fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "location", location, fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "location", location, fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "description", description, fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "description", description, fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "frequency", String.valueOf(frequency), fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "frequency", String.valueOf(frequency), fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "weekdays", weekdays.toString(), fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "weekdays", weekdays.toString(), fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-            selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "endDate", endDate.toString(), fromLocalDate);
+                selectedRecurringEvent.getId(), selectedRecurringEvent.getSubject(), "endDate", endDate.toString(), fromLocalDate);
         editor.executeEdit(controller.getCurrentCalendar());
 
         notifyRecurringEventUpdated(selectedRecurringEvent);

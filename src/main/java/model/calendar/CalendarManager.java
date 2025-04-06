@@ -1,12 +1,13 @@
 package model.calendar;
 
 import java.util.Set;
+
+import model.calendar.iterator.CalendarIterator;
 import model.exceptions.CalendarNotFoundException;
 import model.exceptions.DuplicateCalendarException;
 import model.exceptions.InvalidTimezoneException;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
-import model.calendar.iterator.CalendarIterator;
 
 /**
  * Manages calendar operations and coordinates between the CalendarRegistry and TimeZoneHandler.

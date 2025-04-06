@@ -41,11 +41,11 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param copyType the type of copy operation
-   * @param args the command arguments
+   * @param copyType        the type of copy operation
+   * @param args            the command arguments
    */
   private ConsolidatedCopyStrategy(CalendarManager calendarManager, TimeZoneHandler timezoneHandler,
-                                  CopyType copyType, String[] args) {
+                                   CopyType copyType, String[] args) {
     if (calendarManager == null) {
       throw new IllegalArgumentException("CalendarManager cannot be null");
     }
@@ -62,7 +62,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param args the command arguments
+   * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for single event copying
    */
   public static ConsolidatedCopyStrategy createSingleEventStrategy(
@@ -75,7 +75,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param args the command arguments
+   * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for day events copying
    */
   public static ConsolidatedCopyStrategy createDayEventsStrategy(
@@ -88,7 +88,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param args the command arguments
+   * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for range events copying
    */
   public static ConsolidatedCopyStrategy createRangeEventsStrategy(
@@ -139,9 +139,9 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args the command arguments
    * @return result message of the copy operation
    * @throws CalendarNotFoundException if the target calendar is not found
-   * @throws EventNotFoundException if the source event is not found
+   * @throws EventNotFoundException    if the source event is not found
    * @throws ConflictingEventException if there's a conflict in the target calendar
-   * @throws InvalidEventException if the event parameters are invalid
+   * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeSingleEventCopy(String[] args) throws CalendarNotFoundException,
           EventNotFoundException, ConflictingEventException, InvalidEventException {
@@ -183,7 +183,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args the command arguments
    * @return result message of the copy operation
    * @throws CalendarNotFoundException if the target calendar is not found
-   * @throws InvalidEventException if the event parameters are invalid
+   * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeDayEventsCopy(String[] args) throws CalendarNotFoundException, InvalidEventException {
     // Validate format: copy events on <dateString> --target <calendarName> to <dateString>
@@ -222,7 +222,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args the command arguments
    * @return result message of the copy operation
    * @throws CalendarNotFoundException if the target calendar is not found
-   * @throws InvalidEventException if the event parameters are invalid
+   * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeRangeEventsCopy(String[] args) throws CalendarNotFoundException, InvalidEventException {
     if (args.length < 10) {
@@ -265,7 +265,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Copies a single event from the active calendar to a target calendar.
    */
   private String copySingleEvent(String eventName, String dateTimeStr, String targetCalendarName,
-                                String targetDateTimeStr) throws Exception {
+                                 String targetDateTimeStr) throws Exception {
     LocalDateTime sourceDateTime = DateTimeUtil.parseDateTime(dateTimeStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
@@ -387,7 +387,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Copies events within a date range from the active calendar to a target calendar.
    */
   private String copyRangeEvents(String startDateStr, String endDateStr, String targetCalendarName,
-                                String targetStartDateStr) throws Exception {
+                                 String targetStartDateStr) throws Exception {
     LocalDate sourceStartDate = DateTimeUtil.parseDate(startDateStr);
     LocalDate sourceEndDate = DateTimeUtil.parseDate(endDateStr);
 

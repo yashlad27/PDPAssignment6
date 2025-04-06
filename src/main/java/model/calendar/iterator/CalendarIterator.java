@@ -7,23 +7,23 @@ import model.calendar.ICalendar;
  * Provides a unified way to access different calendars.
  */
 public interface CalendarIterator {
-    /**
-     * Checks if there are more calendars to iterate over.
-     *
-     * @return true if there are more calendars, false otherwise
-     */
-    boolean hasNext();
+  /**
+   * Checks if there are more calendars to iterate over.
+   *
+   * @return true if there are more calendars, false otherwise
+   */
+  boolean hasNext();
 
-    /**
-     * Returns the next calendar in the iteration.
-     *
-     * @return the next calendar
-     * @throws java.util.NoSuchElementException if there are no more calendars
-     */
-    ICalendar next();
+  /**
+   * Returns the next calendar in the iteration.
+   *
+   * @return the next calendar
+   * @throws java.util.NoSuchElementException if there are no more calendars
+   */
+  ICalendar next();
 
-    /**
-     * Resets the iterator to the beginning of the collection.
-     */
-    void reset();
+  /**
+   * Resets the iterator to the beginning of the collection.
+   */
+  void reset();
 }

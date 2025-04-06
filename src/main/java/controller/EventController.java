@@ -11,7 +11,6 @@ import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
-
 import view.EventFormData;
 import view.GUIView;
 
@@ -58,7 +57,7 @@ public class EventController {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     // Show the event panel - but we need to use the existing UI mechanism
     // The view doesn't have showEventForm method
     // Will be handled by the GUIView's existing UI flow
@@ -78,15 +77,15 @@ public class EventController {
     try {
       // Create event from form data
       Event event = createEventFromFormData(formData);
-      
+
       // Add event to calendar
       boolean added = currentCalendar.addEvent(event, false);
-      
+
       if (added) {
         updateEventList(event.getStartDateTime().toLocalDate());
-        String locationMsg = event.getLocation() != null && !event.getLocation().isEmpty() 
-            ? " at " + event.getLocation() 
-            : " at no location";
+        String locationMsg = event.getLocation() != null && !event.getLocation().isEmpty()
+                ? " at " + event.getLocation()
+                : " at no location";
         view.displayMessage("Event \"" + event.getSubject() + "\" created successfully" + locationMsg);
         return "Event created successfully";
       } else {
@@ -110,24 +109,24 @@ public class EventController {
   private Event createEventFromFormData(EventFormData formData) {
     // Extract basic event information
     String subject = formData.getSubject();
-    
+
     // Convert Date to LocalDateTime
     java.util.Date selectedDate = formData.getSelectedDate();
     java.util.Date startTime = formData.getStartTime();
     java.util.Date endTime = formData.getEndTime();
-    
+
     // Combine date and time
     LocalDate date = selectedDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
     LocalTime startLocalTime = startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalTime();
     LocalTime endLocalTime = endTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalTime();
-    
+
     LocalDateTime startDateTime = LocalDateTime.of(date, startLocalTime);
     LocalDateTime endDateTime = LocalDateTime.of(date, endLocalTime);
-    
+
     String description = formData.getDescription();
     String location = formData.getLocation();
     boolean isPublic = !formData.isPrivateEvent();
-    
+
     // Create and return the appropriate event type
     if (formData.isRecurring()) {
       return new RecurringEvent.Builder(
@@ -164,12 +163,12 @@ public class EventController {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     if (event == null) {
       view.showErrorMessage("No event selected");
       return;
     }
-    
+
     // Show the edit event panel - but we need to use the existing UI mechanism
     // The view doesn't have showEditEventForm method
     // Will be handled by the GUIView's existing UI flow
@@ -185,12 +184,12 @@ public class EventController {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     if (event == null) {
       view.showErrorMessage("No event selected");
       return;
     }
-    
+
     // Show the edit recurring event panel - but we need to use the existing UI mechanism
     // The view doesn't have showEditRecurringEventForm method
     // Will be handled by the GUIView's existing UI flow
@@ -206,7 +205,7 @@ public class EventController {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     try {
       // Get the event ID from the view or stored context, since EventFormData doesn't have getEventId
       // This is a workaround since we don't have access to the event ID directly
@@ -216,13 +215,13 @@ public class EventController {
         view.showErrorMessage("Error updating event: No event ID provided");
         return;
       }
-      
+
       // Create updated event from form data
       Event updatedEvent = createEventFromFormData(formData);
-      
+
       // Update the event in the calendar
       boolean updated = currentCalendar.updateEvent(java.util.UUID.fromString(eventIdStr), updatedEvent);
-      
+
       if (updated) {
         updateEventList(updatedEvent.getStartDateTime().toLocalDate());
         view.displayMessage("Event updated successfully");
@@ -246,17 +245,17 @@ public class EventController {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     if (event == null) {
       view.showErrorMessage("No event selected");
       return;
     }
-    
+
     try {
       // Since ICalendar doesn't have a direct removeEvent method, we need to use alternate approaches
       // Try using reflection to see if the implementation has a removeEvent method
       boolean removed = false;
-      
+
       try {
         // Using reflection to access potential removeEvent method in the implementation
         java.lang.reflect.Method method = currentCalendar.getClass().getMethod("removeEvent", UUID.class);
@@ -272,7 +271,7 @@ public class EventController {
           }
         }
       }
-      
+
       if (removed) {
         updateEventList(event.getStartDateTime().toLocalDate());
         view.displayMessage("Event deleted successfully");
@@ -283,17 +282,18 @@ public class EventController {
       view.showErrorMessage("Error deleting event: " + e.getMessage());
     }
   }
+
   public void showCopyEventDialog(Event event) {
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     if (event == null) {
       view.showErrorMessage("No event selected");
       return;
     }
-    
+
     // The view doesn't have showCopyEventDialog method
     // Will be handled by the GUIView's existing UI flow
   }
@@ -301,24 +301,24 @@ public class EventController {
   /**
    * Handles copying an event.
    *
-   * @param event             the event to copy
-   * @param targetCalendarName the name of the target calendar
+   * @param event               the event to copy
+   * @param targetCalendarName  the name of the target calendar
    * @param targetStartDateTime the target start date/time
-   * @param targetEndDateTime the target end date/time
+   * @param targetEndDateTime   the target end date/time
    * @return true if the copy was successful, false otherwise
    */
-  public boolean copyEvent(Event event, String targetCalendarName, 
-                         LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+  public boolean copyEvent(Event event, String targetCalendarName,
+                           LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return false;
     }
-    
+
     if (event == null) {
       view.showErrorMessage("No event selected");
       return false;
     }
-    
+
     // Create a new copy of the event with the target date/time
     Event copiedEvent = new Event(
             event.getSubject(),
@@ -328,7 +328,7 @@ public class EventController {
             event.getLocation(),
             event.isPublic()
     );
-    
+
     try {
       // Add the copied event to the calendar
       boolean added = currentCalendar.addEvent(copiedEvent, false);
@@ -356,7 +356,7 @@ public class EventController {
       view.showErrorMessage("No event selected");
       return;
     }
-    
+
     // Format the event details for printing
     StringBuilder sb = new StringBuilder();
     sb.append("Event: ").append(event.getSubject()).append("\n");
@@ -369,7 +369,7 @@ public class EventController {
       sb.append("Description: ").append(event.getDescription()).append("\n");
     }
     sb.append("Public: ").append(event.isPublic() ? "Yes" : "No").append("\n");
-    
+
     if (event instanceof RecurringEvent) {
       RecurringEvent recurringEvent = (RecurringEvent) event;
       sb.append("Recurring: Yes\n");
@@ -383,7 +383,7 @@ public class EventController {
         sb.append("Until: ").append(endDate).append("\n");
       }
     }
-    
+
     view.displayMessage(sb.toString());
   }
 
@@ -397,7 +397,7 @@ public class EventController {
     if (currentCalendar == null) {
       return new ArrayList<>();
     }
-    
+
     return currentCalendar.getEventsOnDate(date);
   }
 
@@ -412,7 +412,7 @@ public class EventController {
     if (currentCalendar == null) {
       return new ArrayList<>();
     }
-    
+
     return currentCalendar.getEventsInRange(startDate, endDate);
   }
 
@@ -425,7 +425,7 @@ public class EventController {
     if (currentCalendar == null) {
       return new ArrayList<>();
     }
-    
+
     return currentCalendar.getAllEvents();
   }
 
@@ -438,7 +438,7 @@ public class EventController {
     if (currentCalendar == null) {
       return new ArrayList<>();
     }
-    
+
     return currentCalendar.getAllRecurringEvents();
   }
 
@@ -451,7 +451,7 @@ public class EventController {
     if (currentCalendar == null || date == null) {
       return;
     }
-    
+
     List<Event> events = getEventsOnDate(date);
     // This needs to match GUIView's actual interface
     view.updateEventList(events);

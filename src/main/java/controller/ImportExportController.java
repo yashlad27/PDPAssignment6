@@ -51,12 +51,12 @@ public class ImportExportController {
       view.showErrorMessage("Invalid file selected");
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     // Simply display the message - no try-catch needed for a basic UI message
     view.displayMessage("Import functionality is not yet implemented.");
   }
@@ -71,18 +71,18 @@ public class ImportExportController {
       view.showErrorMessage("Invalid file selected");
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     try {
       String filePath = file.getPath();
       if (!filePath.toLowerCase().endsWith(".csv")) {
         filePath += ".csv";
       }
-      
+
       CSVExporter exporter = new CSVExporter();
       // Get events from the calendar and export them to the file
       File exportFile = new File(filePath);

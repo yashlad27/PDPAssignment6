@@ -27,7 +27,7 @@ public class CalendarViewController {
    * Constructs a new CalendarViewController.
    *
    * @param calendarManager the calendar manager
-   * @param view the GUI view
+   * @param view            the GUI view
    * @param timezoneHandler the timezone handler
    */
   public CalendarViewController(CalendarManager calendarManager, GUIView view, TimeZoneHandler timezoneHandler) {
@@ -64,10 +64,10 @@ public class CalendarViewController {
       view.showErrorMessage("Invalid calendar selected");
       return;
     }
-    
+
     this.currentCalendar = calendar;
     view.updateCalendarView(calendar);
-    
+
     // Update the view to reflect the newly selected calendar
     LocalDate today = LocalDate.now();
     updateEvents(today);
@@ -77,19 +77,19 @@ public class CalendarViewController {
   /**
    * Handles the creation of a new calendar.
    *
-   * @param name the name of the new calendar
+   * @param name     the name of the new calendar
    * @param timezone the timezone for the new calendar
    */
   public void onCalendarCreated(String name, String timezone) {
     try {
       ICalendar newCalendar = calendarManager.createCalendar(name, timezone);
       this.currentCalendar = newCalendar;
-      
+
       // Update the view to reflect the newly created calendar
       view.setSelectedCalendar(name);
       view.updateCalendarView(newCalendar);
       view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
-      
+
       view.displayMessage("Calendar created: " + name);
     } catch (Exception e) {
       view.showErrorMessage("Error creating calendar: " + e.getMessage());
@@ -105,12 +105,12 @@ public class CalendarViewController {
     if (date == null) {
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     setSelectedDate(date);
   }
 
@@ -123,12 +123,12 @@ public class CalendarViewController {
     if (date == null) {
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     listEvents(date);
   }
 
@@ -136,18 +136,18 @@ public class CalendarViewController {
    * Handles a request for events in a date range.
    *
    * @param startDate the start date of the range
-   * @param endDate the end date of the range
+   * @param endDate   the end date of the range
    */
   public void onDateRangeSelected(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     showRange(startDate, endDate);
   }
 
@@ -160,12 +160,12 @@ public class CalendarViewController {
     if (date == null) {
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     updateStatus(date);
   }
 
@@ -178,10 +178,10 @@ public class CalendarViewController {
     if (currentCalendar == null || date == null) {
       return;
     }
-    
+
     List<Event> events = currentCalendar.getEventsOnDate(date);
     boolean isBusy = !events.isEmpty();
-    
+
     view.updateStatus(date, isBusy, events.size());
   }
 
@@ -194,7 +194,7 @@ public class CalendarViewController {
     if (currentCalendar == null || date == null) {
       return;
     }
-    
+
     List<Event> events = currentCalendar.getEventsOnDate(date);
     view.updateEvents(date, events);
   }
@@ -208,7 +208,7 @@ public class CalendarViewController {
     if (currentCalendar == null || date == null) {
       return;
     }
-    
+
     List<Event> events = currentCalendar.getEventsOnDate(date);
     view.updateEventList(events);
   }
@@ -217,13 +217,13 @@ public class CalendarViewController {
    * Shows events in the specified date range.
    *
    * @param startDate the start date of the range
-   * @param endDate the end date of the range
+   * @param endDate   the end date of the range
    */
   public void showRange(LocalDate startDate, LocalDate endDate) {
     if (currentCalendar == null || startDate == null || endDate == null) {
       return;
     }
-    
+
     List<Event> events = currentCalendar.getEventsInRange(startDate, endDate);
     view.updateEventListRange(startDate, endDate, events);
   }
@@ -237,10 +237,10 @@ public class CalendarViewController {
     if (date == null) {
       return;
     }
-    
+
     // Update the view
     view.setSelectedDate(date);
-    
+
     // Update events and status for this date
     updateEvents(date);
     updateStatus(date);
@@ -290,7 +290,7 @@ public class CalendarViewController {
     view.setSelectedCalendar(defaultCalendar);
     view.updateCalendarView(currentCalendar);
     view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
-    
+
     // Set the initial date to today
     setSelectedDate(LocalDate.now());
   }

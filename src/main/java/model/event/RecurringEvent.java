@@ -23,7 +23,7 @@ public class RecurringEvent extends Event {
   private final UUID recurringId;
   // The isAllDay field determines if the event spans the entire day
   private final boolean isAllDay;
-  
+
   /**
    * @return true if this event spans the entire day
    */
@@ -47,8 +47,8 @@ public class RecurringEvent extends Event {
    * @param isAllDay      whether the event is an all-day event
    */
   private RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                       String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
-                       int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
+                         String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
+                         int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
     super(subject, startDateTime, endDateTime, description, location, isPublic);
     this.repeatDays = new HashSet<>(repeatDays);
     this.occurrences = occurrences;
@@ -271,7 +271,7 @@ public class RecurringEvent extends Event {
    * Gets occurrences of this recurring event between the specified dates (inclusive).
    *
    * @param startDate the start date
-   * @param endDate the end date
+   * @param endDate   the end date
    * @return a list of occurrences between the specified dates
    */
   public List<Event> getOccurrencesBetween(LocalDate startDate, LocalDate endDate) {
@@ -297,8 +297,8 @@ public class RecurringEvent extends Event {
     LocalDate eventEndDate = endDate;
 
     // Use the earlier of our calculated end date and the requested end date
-    LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate)) 
-        ? eventEndDate : endDate;
+    LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate))
+            ? eventEndDate : endDate;
 
     int count = 0;
 
@@ -375,7 +375,7 @@ public class RecurringEvent extends Event {
   public LocalDate getEndDate() {
     return endDate;
   }
-  
+
   /**
    * Gets the end date of the recurring event (alias for getEndDate()).
    *

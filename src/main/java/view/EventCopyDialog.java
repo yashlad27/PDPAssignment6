@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import model.calendar.Calendar;
 import model.calendar.ICalendar;
 import model.event.Event;
 
@@ -58,7 +59,7 @@ public class EventCopyDialog extends JDialog {
     // Calendar combo box
     calendarComboBox = new JComboBox<>();
     for (ICalendar calendar : calendars) {
-      String calendarName = ((model.calendar.Calendar) calendar).getName();
+      String calendarName = ((Calendar) calendar).getName();
       calendarComboBox.addItem(calendarName);
     }
 

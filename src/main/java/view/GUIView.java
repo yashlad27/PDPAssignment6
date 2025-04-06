@@ -49,7 +49,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public GUIView(CalendarController controller) {
     this.controller = controller;
     System.out.println("Creating GUIView...");
-    
+
     // Initialize view models
     calendarViewModel = new CalendarViewModel();
     eventViewModel = new EventViewModel(controller);
@@ -142,7 +142,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       @Override
       public void onEventSaved(EventFormData formData) {
         System.out.println("[DEBUG] Attempting to save event. Recurring: " + formData.isRecurring());
-        
+
         try {
           ICalendar currentCalendar = controller.getCurrentCalendar();
           System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.toString() : "null"));
@@ -169,7 +169,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         System.out.println("[DEBUG] Event creation cancelled");
         eventPanel.clearForm();
       }
-      
+
       @Override
       public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
         System.out.println("[DEBUG] Event copy requested to calendar: " + targetCalendarName);
@@ -180,7 +180,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
             showErrorMessage("No event selected to copy");
             return;
           }
-          
+
           // Call the controller to handle the copy operation
           if (guiController != null) {
             boolean success = guiController.copyEvent(currentEvent, targetCalendarName, targetStartDateTime, targetEndDateTime);
@@ -199,7 +199,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           showErrorMessage("Error copying event: " + e.getMessage());
         }
       }
-      
+
       @Override
       public List<String> getAvailableCalendarNames() {
         System.out.println("[DEBUG] Getting available calendar names");
@@ -218,12 +218,12 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         }
         return calendarNames;
       }
-      
+
 
       @Override
       public void onEventUpdated(EventFormData formData) {
         System.out.println("[DEBUG] Attempting to update event. Recurring: " + formData.isRecurring());
-        
+
         try {
           ICalendar currentCalendar = controller.getCurrentCalendar();
           if (currentCalendar == null) {
@@ -241,7 +241,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           System.out.println("[DEBUG] Event update error: " + e.getMessage());
           showErrorMessage("Error updating event: " + e.getMessage());
           e.printStackTrace();
-          
+
           // Still try to refresh the view even after error
           refreshView();
           // Update the event list for the selected date
@@ -506,19 +506,19 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       LocalDateTime updatedEndDateTime = dialog.getEndDateTime();
       boolean updatedPrivate = dialog.isPrivate();
       boolean updatedAllDay = dialog.isAllDay();
-      
+
       // Note: Recurring flag is captured but not implemented in this version
       // This would be used in a future enhancement
 
       // Create a new event with the updated values
       Event updatedEvent = new Event(updatedSubject, updatedStartDateTime, updatedEndDateTime,
-          updatedDescription, updatedLocation, !updatedPrivate);
-      
+              updatedDescription, updatedLocation, !updatedPrivate);
+
       // Handle all-day events by setting appropriate start and end times
       if (updatedAllDay) {
-          // Update to full-day time range if marked as all-day event
-          updatedEvent.setStartDateTime(updatedStartDateTime.toLocalDate().atStartOfDay());
-          updatedEvent.setEndDateTime(updatedStartDateTime.toLocalDate().atTime(23, 59, 59));
+        // Update to full-day time range if marked as all-day event
+        updatedEvent.setStartDateTime(updatedStartDateTime.toLocalDate().atStartOfDay());
+        updatedEvent.setEndDateTime(updatedStartDateTime.toLocalDate().atTime(23, 59, 59));
       }
       // Notify the controller that the event has been updated
       if (guiController != null) {
@@ -526,9 +526,9 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           guiController.onEventUpdated(updatedEvent);
         } catch (Exception e) {
           // If an exception occurs (likely ConflictingEventException), show error to user
-          showErrorMessage("Cannot update event: " + e.getMessage() + 
-                        "\n\nEvents cannot conflict with each other. Editing an existing event " + 
-                        "that would create a conflict with another existing event is not allowed.");
+          showErrorMessage("Cannot update event: " + e.getMessage() +
+                  "\n\nEvents cannot conflict with each other. Editing an existing event " +
+                  "that would create a conflict with another existing event is not allowed.");
         }
       }
     }
@@ -563,9 +563,9 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
           showInfoMessage(result);
         } catch (Exception e) {
           // If an exception occurs (likely ConflictingEventException), show error to user
-          showErrorMessage("Cannot copy event: " + e.getMessage() + 
-                        "\n\nEvents cannot conflict with each other. A conflict with any instance " + 
-                        "of a recurring event is treated as a conflict with the recurring event itself, and is prohibited.");
+          showErrorMessage("Cannot copy event: " + e.getMessage() +
+                  "\n\nEvents cannot conflict with each other. A conflict with any instance " +
+                  "of a recurring event is treated as a conflict with the recurring event itself, and is prohibited.");
         }
       }
     }
@@ -624,23 +624,23 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public ExportImportViewModel getExportImportViewModel() {
     return exportImportViewModel;
   }
-  
+
   /**
    * Updates the status for a specific date.
    *
-   * @param date the date for which to update status
-   * @param isBusy whether the date has events
+   * @param date       the date for which to update status
+   * @param isBusy     whether the date has events
    * @param eventCount the number of events on that date
    */
   public void updateStatus(LocalDate date, boolean isBusy, int eventCount) {
     System.out.println("[DEBUG] Updating status for date " + date + ": " + (isBusy ? "Busy" : "Available") + ", " + eventCount + " events");
     calendarPanel.updateDateStatus(date, isBusy, eventCount);
   }
-  
+
   /**
    * Updates the events for a specific date.
    *
-   * @param date the date for which to update events
+   * @param date   the date for which to update events
    * @param events the list of events on that date
    */
   public void updateEvents(LocalDate date, List<Event> events) {
@@ -648,17 +648,17 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     calendarPanel.updateDateEvents(date, events);
     updateEventList(events);
   }
-  
+
   /**
    * Updates the event list for a date range.
    *
    * @param startDate the start date of the range
-   * @param endDate the end date of the range
-   * @param events the list of events in the range
+   * @param endDate   the end date of the range
+   * @param events    the list of events in the range
    */
   public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
-    System.out.println("[DEBUG] Updating event list for date range " + startDate + " to " + endDate + 
-        " with " + (events != null ? events.size() : 0) + " events");
+    System.out.println("[DEBUG] Updating event list for date range " + startDate + " to " + endDate +
+            " with " + (events != null ? events.size() : 0) + " events");
     // Highlight the date range in the calendar panel
     calendarPanel.setSelectedDateRange(startDate, endDate);
     // Update the event list
@@ -685,7 +685,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       calendarPanel.updateEventList(LocalDate.now());
     }
   }
-  
+
   /**
    * Refreshes the calendar view with current data.
    */
@@ -693,7 +693,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     calendarPanel.repaint();
     calendarPanel.revalidate();
   }
-  
+
   /**
    * Refreshes the event view with current data.
    */
@@ -702,7 +702,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       eventPanel.refreshView();
     }
   }
-  
+
   /**
    * Refreshes all calendar and event views.
    */
@@ -785,7 +785,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
             JOptionPane.ERROR_MESSAGE
     );
   }
-  
+
   /**
    * Shows an error message dialog.
    *
@@ -794,7 +794,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public void showErrorMessage(String message) {
     displayError(message);
   }
-  
+
   /**
    * Shows an information message dialog.
    *

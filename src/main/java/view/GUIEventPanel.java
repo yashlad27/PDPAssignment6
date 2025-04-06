@@ -172,7 +172,7 @@ public class GUIEventPanel extends JPanel {
     cancelButton = new JButton("Cancel");
     editButton = new JButton("Edit");
     copyButton = new JButton("Copy");
-    
+
     // Hide edit and copy buttons as per requirements
     editButton.setVisible(false);
     copyButton.setVisible(false);
@@ -301,59 +301,59 @@ public class GUIEventPanel extends JPanel {
       if (currentEvent != null) {
         setPanelMode(PanelMode.EDIT);
         enableFormEditing(true);
-        
+
         // Make sure the form is populated with the current event data
         subjectField.setText(currentEvent.getSubject());
         locationField.setText(currentEvent.getLocation());
         descriptionArea.setText(currentEvent.getDescription());
-        
+
         // Set date and time values
         LocalDateTime startDateTime = currentEvent.getStartDateTime();
         LocalDateTime endDateTime = currentEvent.getEndDateTime();
-        
+
         // Update date spinner
         Calendar cal = Calendar.getInstance();
         cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1, startDateTime.getDayOfMonth());
         dateSpinner.setValue(cal.getTime());
-        
+
         // Update time spinners
         cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
         cal.set(Calendar.MINUTE, startDateTime.getMinute());
         startTimeSpinner.setValue(cal.getTime());
-        
+
         cal.set(Calendar.HOUR_OF_DAY, endDateTime.getHour());
         cal.set(Calendar.MINUTE, endDateTime.getMinute());
         endTimeSpinner.setValue(cal.getTime());
-        
+
         // Set all day checkbox
         allDayCheckBox.setSelected(currentEvent.isAllDay());
         startTimeSpinner.setEnabled(!currentEvent.isAllDay());
         endTimeSpinner.setEnabled(!currentEvent.isAllDay());
-        
+
         // Handle recurring event
         if (currentEvent instanceof RecurringEvent) {
           RecurringEvent recurringEvent = (RecurringEvent) currentEvent;
           recurringCheckBox.setSelected(true);
           recurringOptionsPanel.setVisible(true);
-          
+
           // Set weekdays
           Set<DayOfWeek> weekdays = recurringEvent.getRepeatDays();
           for (int i = 0; i < weekdayCheckboxes.size(); i++) {
             weekdayCheckboxes.get(i).setSelected(weekdays.contains(DayOfWeek.of((i + 1) % 7 + 1)));
           }
-          
+
           // Set occurrences and until date
           occurrencesSpinner.setValue(recurringEvent.getOccurrences());
           Calendar untilCal = Calendar.getInstance();
-          untilCal.set(recurringEvent.getEndDate().getYear(), 
-                      recurringEvent.getEndDate().getMonthValue() - 1, 
-                      recurringEvent.getEndDate().getDayOfMonth());
+          untilCal.set(recurringEvent.getEndDate().getYear(),
+                  recurringEvent.getEndDate().getMonthValue() - 1,
+                  recurringEvent.getEndDate().getDayOfMonth());
           untilDateSpinner.setValue(untilCal.getTime());
         } else {
           recurringCheckBox.setSelected(false);
           recurringOptionsPanel.setVisible(false);
         }
-        
+
         System.out.println("[DEBUG] Event form populated for editing");
       } else {
         System.out.println("[DEBUG] Cannot edit: No event selected");
@@ -365,7 +365,7 @@ public class GUIEventPanel extends JPanel {
       System.out.println("[DEBUG] Copy button clicked for event: " + (currentEvent != null ? currentEvent.getSubject() : "null"));
       if (currentEvent != null) {
         setPanelMode(PanelMode.COPY);
-        
+
         // Populate the copy options panel with available calendars
         if (listener != null) {
           // Request available calendars from the controller
@@ -379,23 +379,23 @@ public class GUIEventPanel extends JPanel {
             System.out.println("[DEBUG] Error getting calendar names: " + ex.getMessage());
           }
         }
-        
+
         // Set target date/time to match the current event
         Calendar cal = Calendar.getInstance();
         LocalDateTime startDateTime = currentEvent.getStartDateTime();
         LocalDateTime endDateTime = currentEvent.getEndDateTime();
-        
+
         cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1, startDateTime.getDayOfMonth());
         targetDateSpinner.setValue(cal.getTime());
-        
+
         cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
         cal.set(Calendar.MINUTE, startDateTime.getMinute());
         targetStartTimeSpinner.setValue(cal.getTime());
-        
+
         cal.set(Calendar.HOUR_OF_DAY, endDateTime.getHour());
         cal.set(Calendar.MINUTE, endDateTime.getMinute());
         targetEndTimeSpinner.setValue(cal.getTime());
-        
+
         // Show copy options panel
         copyOptionsPanel.setVisible(true);
         System.out.println("[DEBUG] Copy options panel displayed");
@@ -752,12 +752,12 @@ public class GUIEventPanel extends JPanel {
    */
   public void displayEvent(Event event) {
     System.out.println("[DEBUG] displayEvent called for event: " + event.getSubject());
-    System.out.println("[DEBUG] Event details: Start=" + event.getStartDateTime() + 
-                     ", End=" + event.getEndDateTime() + 
-                     ", Location=" + event.getLocation() + 
-                     ", AllDay=" + event.isAllDay() + 
-                     ", Type=" + (event instanceof RecurringEvent ? "Recurring" : "Single"));
-    
+    System.out.println("[DEBUG] Event details: Start=" + event.getStartDateTime() +
+            ", End=" + event.getEndDateTime() +
+            ", Location=" + event.getLocation() +
+            ", AllDay=" + event.isAllDay() +
+            ", Type=" + (event instanceof RecurringEvent ? "Recurring" : "Single"));
+
     // Set the panel to view mode
     setPanelMode(PanelMode.VIEW);
 
@@ -843,7 +843,7 @@ public class GUIEventPanel extends JPanel {
     allDayCheckBox.setSelected(false);
     startTimeSpinner.setEnabled(true);
     endTimeSpinner.setEnabled(true);
-    
+
     // Reset date and time spinners to current values
     Calendar cal = Calendar.getInstance();
     dateSpinner.setValue(cal.getTime());
@@ -852,7 +852,7 @@ public class GUIEventPanel extends JPanel {
     cal.add(Calendar.HOUR_OF_DAY, 1);
     endTimeSpinner.setValue(cal.getTime());
     System.out.println("[DEBUG] Form fields reset to default values");
-    
+
     // Reset to create mode
     setPanelMode(PanelMode.CREATE);
 
@@ -861,7 +861,7 @@ public class GUIEventPanel extends JPanel {
     System.out.println("[DEBUG] clearForm - After setPanelMode - Save button visibility: " + saveButton.isVisible());
     System.out.println("[DEBUG] clearForm - After setPanelMode - Edit button visibility: " + editButton.isVisible());
     System.out.println("[DEBUG] clearForm - After setPanelMode - Copy button visibility: " + copyButton.isVisible());
-    
+
     // Reset current event
     currentEvent = null;
     System.out.println("[DEBUG] Current event reset to null");
@@ -946,7 +946,7 @@ public class GUIEventPanel extends JPanel {
   private void handleRecurringCheckbox() {
     // Toggle visibility of recurring options panel based on checkbox state
     recurringPanel.setVisible(recurringCheckBox.isSelected());
-    
+
     // Update UI to reflect the current state
     revalidate();
     repaint();
@@ -972,11 +972,11 @@ public class GUIEventPanel extends JPanel {
       clearEventDisplay();
       return;
     }
-    
+
     // Update the event display with the new events
     displayEvents(events);
   }
-  
+
   /**
    * Displays a list of events in the event panel.
    *
@@ -985,24 +985,24 @@ public class GUIEventPanel extends JPanel {
   private void displayEvents(List<Event> events) {
     // Clear current display
     clearEventDisplay();
-    
+
     // Create a panel to hold all event items
     JPanel eventsContainer = new JPanel();
     eventsContainer.setLayout(new BoxLayout(eventsContainer, BoxLayout.Y_AXIS));
     eventsContainer.setBackground(Color.WHITE);
-    
+
     // Add each event to the display
     for (Event event : events) {
       JPanel eventItem = createEventDisplayItem(event);
       eventsContainer.add(eventItem);
       eventsContainer.add(Box.createVerticalStrut(5));
     }
-    
+
     // Add the events container to the scroll pane
     JScrollPane scrollPane = new JScrollPane(eventsContainer);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    
+
     // Add to the panel
     removeAll();
     setLayout(new BorderLayout());
@@ -1010,7 +1010,7 @@ public class GUIEventPanel extends JPanel {
     revalidate();
     repaint();
   }
-  
+
   /**
    * Creates a display item for an event.
    *
@@ -1024,40 +1024,40 @@ public class GUIEventPanel extends JPanel {
             BorderFactory.createLineBorder(new Color(230, 230, 230)),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)));
     panel.setBackground(Color.WHITE);
-    
+
     // Create a label for the event title
     JLabel titleLabel = new JLabel(event.getSubject());
     titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
     panel.add(titleLabel, BorderLayout.NORTH);
-    
+
     // Create a formatted string for the event details
     StringBuilder details = new StringBuilder();
     details.append("<html>");
-    
+
     // Add time details
     String startTime = event.getStartDateTime().toLocalTime().toString();
     String endTime = event.getEndDateTime().toLocalTime().toString();
     details.append(String.format("<b>Time:</b> %s - %s<br/>", startTime, endTime));
-    
+
     // Add location if present
     if (event.getLocation() != null && !event.getLocation().isEmpty()) {
       details.append(String.format("<b>Location:</b> %s<br/>", event.getLocation()));
     }
-    
+
     // Add description if present
     if (event.getDescription() != null && !event.getDescription().isEmpty()) {
       details.append(String.format("<b>Description:</b> %s<br/>", event.getDescription()));
     }
-    
+
     details.append("</html>");
-    
+
     // Create a label for the event details
     JLabel detailsLabel = new JLabel(details.toString());
     panel.add(detailsLabel, BorderLayout.CENTER);
-    
+
     return panel;
   }
-  
+
   /**
    * Clears the event display area.
    */
@@ -1087,11 +1087,11 @@ public class GUIEventPanel extends JPanel {
 
       // Collect data from form fields
       EventFormData formData = collectFormData();
-      System.out.println("[DEBUG] Form data collected: Subject=" + formData.getSubject() + 
-                       ", Location=" + formData.getLocation() + 
-                       ", Description length=" + formData.getDescription().length() + 
-                       ", Recurring=" + formData.isRecurring() + 
-                       ", AllDay=" + formData.isAllDay());
+      System.out.println("[DEBUG] Form data collected: Subject=" + formData.getSubject() +
+              ", Location=" + formData.getLocation() +
+              ", Description length=" + formData.getDescription().length() +
+              ", Recurring=" + formData.isRecurring() +
+              ", AllDay=" + formData.isAllDay());
 
       // Notify listener based on current panel mode
       if (listener != null) {
@@ -1107,9 +1107,9 @@ public class GUIEventPanel extends JPanel {
           String targetCalendarName = getTargetCalendarName();
           LocalDateTime targetStartDateTime = getTargetDateTime();
           LocalDateTime targetEndDateTime = getTargetEndDateTime();
-          System.out.println("[DEBUG] Copy details: Target calendar=" + targetCalendarName + 
-                           ", Start=" + targetStartDateTime + 
-                           ", End=" + targetEndDateTime);
+          System.out.println("[DEBUG] Copy details: Target calendar=" + targetCalendarName +
+                  ", Start=" + targetStartDateTime +
+                  ", End=" + targetEndDateTime);
           listener.onEventCopied(targetCalendarName, targetStartDateTime, targetEndDateTime);
         } else {
           // We're creating a new event

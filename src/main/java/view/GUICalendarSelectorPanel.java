@@ -65,7 +65,6 @@ public class GUICalendarSelectorPanel extends JPanel {
   private class CalendarItem extends JPanel {
     private final ICalendar calendar;
     private final JLabel nameLabel;
-    private final JLabel timezoneLabel;
     private boolean isSelected;
 
     public CalendarItem(ICalendar calendar) {
@@ -80,7 +79,7 @@ public class GUICalendarSelectorPanel extends JPanel {
       nameLabel = new JLabel(calendar.toString());
       nameLabel.setFont(nameLabel.getFont().deriveFont(11f));
 
-      timezoneLabel = new JLabel("(" + calendar.getTimeZone().getID() + ")");
+      JLabel timezoneLabel = new JLabel("(" + calendar.getTimeZone().getID() + ")");
       timezoneLabel.setFont(timezoneLabel.getFont().deriveFont(11f));
       timezoneLabel.setForeground(Color.GRAY);
 

@@ -63,16 +63,16 @@ public class EditEventCommand implements ICommand {
         String subject = args[2];  // e.g., "Gym"
         String startDateTime = args[3]; // e.g., "2024-03-26T18:00"
         String newValue = args[4]; // e.g., "Weightlifting Session"
-        
+
         try {
-          ConsolidatedEventEditor editor = new ConsolidatedEventEditor(calendar, subject, 
-                                                startDateTime, property, newValue);
+          ConsolidatedEventEditor editor = new ConsolidatedEventEditor(calendar, subject,
+                  startDateTime, property, newValue);
           return editor.editEvent(subject, startDateTime, property, newValue);
         } catch (EventNotFoundException | InvalidEventException | ConflictingEventException e) {
           return String.format("Failed to edit event: %s", e.getMessage());
         }
       }
-      
+
       // For UUID-based edits (if needed in the future)
       else {
         return "Error: Unknown edit type: " + editType;
@@ -87,14 +87,14 @@ public class EditEventCommand implements ICommand {
   /**
    * Checks if the command has the required minimum number of arguments.
    *
-   * @param args           the command arguments
+   * @param args            the command arguments
    * @param minimumRequired the minimum required number of arguments
    * @return true if the command has the minimum required arguments, false otherwise
    */
   private boolean hasMinimumArgs(String[] args, int minimumRequired) {
     return args != null && args.length >= minimumRequired;
   }
-  
+
   /**
    * Returns the name of this command.
    *

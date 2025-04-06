@@ -24,25 +24,25 @@ public class CoreGUIController {
   private final CalendarManager calendarManager;
   private final GUIView view;
   private final TimeZoneHandler timezoneHandler;
-  
+
   // Specialized controllers
   private final EventController eventController;
   private final CalendarViewController calendarViewController;
   private final ImportExportController importExportController;
-  
+
   private ICalendar currentCalendar;
 
   /**
    * Constructs a new CoreGUIController.
    *
    * @param calendarManager the calendar manager
-   * @param view the GUI view
+   * @param view            the GUI view
    */
   public CoreGUIController(CalendarManager calendarManager, GUIView view) {
     this.calendarManager = calendarManager;
     this.view = view;
     this.timezoneHandler = new TimeZoneHandler();
-    
+
     // Initialize specialized controllers
     this.eventController = new EventController(view);
     this.calendarViewController = new CalendarViewController(calendarManager, view, timezoneHandler);
@@ -54,17 +54,17 @@ public class CoreGUIController {
    */
   public void initialize() throws CalendarNotFoundException {
     System.out.println("Initializing GUI controller...");
-    
+
     // Initialize the calendar view
     calendarViewController.initializeCalendarView();
-    
+
     // Get the current calendar from the calendar view controller
     this.currentCalendar = calendarViewController.getCurrentCalendar();
-    
+
     // Set the current calendar in all controllers
     eventController.setCurrentCalendar(currentCalendar);
     importExportController.setCurrentCalendar(currentCalendar);
-    
+
     // Set up event listeners
     setupEventListeners();
   }
@@ -84,7 +84,7 @@ public class CoreGUIController {
    */
   public void onCalendarSelected(ICalendar calendar) {
     calendarViewController.onCalendarSelected(calendar);
-    
+
     // Update the current calendar and propagate to other controllers
     this.currentCalendar = calendar;
     eventController.setCurrentCalendar(calendar);
@@ -94,12 +94,12 @@ public class CoreGUIController {
   /**
    * Handles the creation of a new calendar.
    *
-   * @param name the name of the new calendar
+   * @param name     the name of the new calendar
    * @param timezone the timezone for the new calendar
    */
   public void onCalendarCreated(String name, String timezone) {
     calendarViewController.onCalendarCreated(name, timezone);
-    
+
     // Update the current calendar and propagate to other controllers
     this.currentCalendar = calendarViewController.getCurrentCalendar();
     eventController.setCurrentCalendar(currentCalendar);
@@ -165,7 +165,7 @@ public class CoreGUIController {
    * Handles a request for events in a date range.
    *
    * @param startDate the start date of the range
-   * @param endDate the end date of the range
+   * @param endDate   the end date of the range
    */
   public void onDateRangeSelected(LocalDate startDate, LocalDate endDate) {
     calendarViewController.onDateRangeSelected(startDate, endDate);
@@ -231,24 +231,24 @@ public class CoreGUIController {
   /**
    * Handles copying an event.
    *
-   * @param event the event to copy
-   * @param targetCalendarName the name of the target calendar
+   * @param event               the event to copy
+   * @param targetCalendarName  the name of the target calendar
    * @param targetStartDateTime the target start date/time
-   * @param targetEndDateTime the target end date/time
+   * @param targetEndDateTime   the target end date/time
    */
   public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     // Get event data from the event panel
     Event eventToCopy = view.getEventPanel().getCurrentEvent();
     if (eventToCopy == null) {
       view.showErrorMessage("No event selected");
       return;
     }
-    
+
     // Delegate to event controller
     try {
       eventController.copyEvent(eventToCopy, targetCalendarName, targetStartDateTime, targetEndDateTime);

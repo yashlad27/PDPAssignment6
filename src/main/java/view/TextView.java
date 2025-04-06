@@ -94,14 +94,14 @@ public class TextView implements ICalendarView {
       displayMessage("No calendar selected.");
       return;
     }
-    
+
     // Note: ICalendar doesn't have getName() method, so we print the current calendar name
     displayMessage("Calendar: " + currentCalendar);
     displayMessage("Date: " + selectedDate);
-    
+
     List<Event> events = calendar.getEventsOnDate(selectedDate);
     displayMessage("Events for " + selectedDate + ":");
-    
+
     if (events.isEmpty()) {
       displayMessage("  No events for this date.");
     } else {
@@ -112,9 +112,9 @@ public class TextView implements ICalendarView {
   }
 
   private String formatEvent(Event event) {
-    return event.getSubject() + " (" 
-        + event.getStartDateTime().toLocalTime() + " - " 
-        + event.getEndDateTime().toLocalTime() + ")";
+    return event.getSubject() + " ("
+            + event.getStartDateTime().toLocalTime() + " - "
+            + event.getEndDateTime().toLocalTime() + ")";
   }
 
   @Override
@@ -147,7 +147,7 @@ public class TextView implements ICalendarView {
       displayMessage("No event selected.");
       return;
     }
-    
+
     displayMessage("Event Details:");
     displayMessage("  Name: " + event.getSubject());
     displayMessage("  Description: " + (event.getDescription() != null ? event.getDescription() : "None"));
@@ -156,7 +156,7 @@ public class TextView implements ICalendarView {
     displayMessage("  End: " + event.getEndDateTime());
     displayMessage("  Public: " + (event.isPublic() ? "Yes" : "No"));
     displayMessage("  ID: " + event.getId());
-    
+
     if (event instanceof RecurringEvent) {
       RecurringEvent recurringEvent = (RecurringEvent) event;
       displayMessage("  Recurring: Yes");
@@ -208,20 +208,20 @@ public class TextView implements ICalendarView {
   public LocalDate getSelectedDate() {
     return selectedDate;
   }
-  
+
   @Override
   public void updateSelectedDate(LocalDate date) {
     this.selectedDate = date;
     displayMessage("Display date updated to: " + date);
   }
-  
+
   @Override
   public void refreshView() {
     displayMessage("View refreshed.");
     // For text view, just display current status message
     // The actual refresh will happen when controller calls the appropriate update methods
   }
-  
+
   /**
    * Closes and cleans up resources used by this view.
    */

@@ -56,7 +56,7 @@ public class CommandFactory implements ICommandFactory {
     commands.put("show", new ShowStatusCommand(calendar)::execute);
 
     commands.put("export", new ExportCalendarCommand(calendar)::execute);
-    
+
     commands.put("import", new ImportCalendarCommand(calendar)::execute);
 
     commands.put("copy", args -> "Command forwarded to CalendarCommandFactory");

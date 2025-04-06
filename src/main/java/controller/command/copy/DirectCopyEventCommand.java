@@ -4,7 +4,6 @@ import controller.command.ICommand;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.exceptions.ConflictingEventException;
-import model.exceptions.InvalidEventException;
 
 /**
  * Command for directly copying an event to a target calendar.
@@ -19,7 +18,7 @@ public class DirectCopyEventCommand implements ICommand {
    * Constructs a new DirectCopyEventCommand.
    *
    * @param targetCalendar the target calendar to copy the event to
-   * @param eventToCopy the event to copy
+   * @param eventToCopy    the event to copy
    */
   public DirectCopyEventCommand(ICalendar targetCalendar, Event eventToCopy) {
     if (targetCalendar == null) {

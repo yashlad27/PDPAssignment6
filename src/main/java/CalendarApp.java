@@ -30,8 +30,8 @@ public class CalendarApp {
    * @param args Command line arguments:
    *             --mode interactive : Starts the application in interactive mode
    *             --mode headless file : Starts the application in headless mode
-   *                with the specified command file
-   *             --mode gui : Starts the application in GUI mode
+   *                    with the specified command file
+   *             --no args : Starts the application in GUI mode
    */
   public static void main(String[] args) {
     commandLineArgs = args;
@@ -101,7 +101,7 @@ public class CalendarApp {
    */
   private static void setModeFromArguments(String[] args) {
     String modeValue = args.length > 1 ? args[1].toLowerCase() : "";
-    
+
     switch (modeValue) {
       case "interactive":
         setInteractiveMode();
@@ -195,17 +195,17 @@ public class CalendarApp {
    */
   private static void startHeadlessMode(String[] args) {
     String filename = args[2];
-    
+
     // Set up the TextView for headless mode
     if (view instanceof TextView) {
       boolean setupSuccess = ((TextView) view).setupHeadlessMode(filename);
-      
+
       if (!setupSuccess) {
         System.err.println("Failed to set up headless mode with file: " + filename);
         System.exit(1);
       }
     }
-    
+
     boolean success = controller.startHeadlessMode(filename);
     if (!success) {
       System.err.println("Headless mode execution failed.");

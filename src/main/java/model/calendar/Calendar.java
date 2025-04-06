@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import model.calendar.iterator.ConsolidatedEventIterator;
 import model.calendar.iterator.EventIterator;
-
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
@@ -307,11 +306,11 @@ public class Calendar implements ICalendar {
     // Use the iterator pattern to get all events
     EventIterator iterator = getEventIterator();
     List<Event> allEvents = new ArrayList<>();
-    
+
     while (iterator.hasNext()) {
       allEvents.add(iterator.next());
     }
-    
+
     return allEvents;
   }
 
@@ -502,14 +501,14 @@ public class Calendar implements ICalendar {
       }
       return false;
     };
-    
+
     EventIterator iterator = getFilteredEventIterator(dateRangeFilter);
     List<Event> result = new ArrayList<>();
-    
+
     while (iterator.hasNext()) {
       result.add(iterator.next());
     }
-    
+
     return result;
   }
 
@@ -623,14 +622,14 @@ public class Calendar implements ICalendar {
     // Use the iterator pattern to filter events
     EventIterator iterator = getFilteredEventIterator(filter);
     List<Event> result = new ArrayList<>();
-    
+
     while (iterator.hasNext()) {
       result.add(iterator.next());
     }
-    
+
     return result;
   }
-  
+
   /**
    * Gets an iterator for all events in this calendar.
    * This includes both regular and recurring events.
@@ -643,7 +642,7 @@ public class Calendar implements ICalendar {
     iterators.add(ConsolidatedEventIterator.createRecurringIterator(recurringEvents));
     return ConsolidatedEventIterator.createCompositeIterator(iterators);
   }
-  
+
   /**
    * Gets an iterator for events that match a specific filter.
    *
@@ -653,7 +652,7 @@ public class Calendar implements ICalendar {
   public EventIterator getFilteredEventIterator(EventFilter filter) {
     return ConsolidatedEventIterator.createFilteredIterator(getEventIterator(), filter);
   }
-  
+
   /**
    * Gets an iterator for events on a specific date.
    *
@@ -664,7 +663,7 @@ public class Calendar implements ICalendar {
     if (date == null) {
       throw new IllegalArgumentException("Date cannot be null");
     }
-    
+
     EventFilter dateFilter = event -> {
       if (event.getStartDateTime() != null) {
         LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
@@ -672,7 +671,7 @@ public class Calendar implements ICalendar {
       }
       return false;
     };
-    
+
     return getFilteredEventIterator(dateFilter);
   }
 
@@ -705,11 +704,11 @@ public class Calendar implements ICalendar {
   public String toString() {
     return name;
   }
-  
+
   /**
    * Updates an existing event with a new version using the event's UUID.
    *
-   * @param eventId The UUID of the event to update
+   * @param eventId      The UUID of the event to update
    * @param updatedEvent The new version of the event
    * @return true if the event was successfully updated, false otherwise
    * @throws ConflictingEventException if the updated event conflicts with existing events
@@ -719,17 +718,17 @@ public class Calendar implements ICalendar {
     if (eventId == null || updatedEvent == null) {
       return false;
     }
-    
+
     // Check if the event exists
     Event existingEvent = eventById.get(eventId);
     if (existingEvent == null) {
       return false; // Event not found
     }
-    
+
     // Temporarily remove the existing event to avoid false conflicts
     events.remove(existingEvent);
     eventById.remove(eventId);
-    
+
     try {
       // Check for conflicts with other events
       if (hasConflict(updatedEvent)) {
@@ -738,15 +737,15 @@ public class Calendar implements ICalendar {
         eventById.put(eventId, existingEvent);
         throw new ConflictingEventException("The updated event conflicts with existing events");
       }
-      
+
       // Create a new event with the same ID and updated data
       Event newEvent = new Event(
-          updatedEvent.getSubject(), 
-          updatedEvent.getStartDateTime(), 
-          updatedEvent.getEndDateTime(),
-          updatedEvent.getDescription(), 
-          updatedEvent.getLocation(), 
-          updatedEvent.isPublic()
+              updatedEvent.getSubject(),
+              updatedEvent.getStartDateTime(),
+              updatedEvent.getEndDateTime(),
+              updatedEvent.getDescription(),
+              updatedEvent.getLocation(),
+              updatedEvent.isPublic()
       ) {
         // Anonymous subclass to override the ID
         @Override
@@ -754,11 +753,11 @@ public class Calendar implements ICalendar {
           return eventId;
         }
       };
-      
+
       // Add the updated event
       events.add(newEvent);
       eventById.put(eventId, newEvent);
-      
+
       return true;
     } catch (ConflictingEventException e) {
       throw e;
