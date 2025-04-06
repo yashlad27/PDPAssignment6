@@ -596,6 +596,21 @@ public class GUICalendarPanel extends JPanel {
    *
    * @param events the list of events to display
    */
+  /**
+   * Clears all events from the calendar view.
+   * This is useful when switching between calendars to ensure no events from the previous calendar remain.
+   */
+  public void clearEvents() {
+    System.out.println("[DEBUG] Clearing all events from calendar view");
+    eventsByDate.clear();
+    updateCalendarDisplay();
+    
+    // Also clear any event list displays
+    if (eventListArea != null) {
+      eventListArea.setText("");
+    }
+  }
+
   public void updateEvents(List<Event> events) {
     // Keep the existing events if this is an update rather than a full refresh
     if (currentCalendar != null && !eventsByDate.isEmpty()) {

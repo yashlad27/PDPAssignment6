@@ -123,7 +123,7 @@ public class GUIController {
     view.getCalendarSelectorPanel().addCalendarSelectorListener(new GUICalendarSelectorPanel.CalendarSelectorListener() {
       @Override
       public void onCalendarSelected(ICalendar calendar) {
-        System.out.println("[DEBUG] Calendar selected: " + calendar);
+        System.out.println("[DEBUG] Calendar selected (ICalendar): " + calendar);
         try {
           if (calendar == null) {
             view.displayError("Please select a valid calendar");
@@ -142,6 +142,63 @@ public class GUIController {
           view.displayMessage("Selected calendar: " + calendar.toString());
         } catch (Exception e) {
           System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
+          view.displayError("Failed to select calendar: " + e.getMessage());
+        }
+      }
+      
+      @Override
+      public void onCalendarSelected(String calendarName) {
+        System.out.println("[DEBUG] Calendar selected by name: " + calendarName);
+        try {
+          if (calendarName == null || calendarName.isEmpty()) {
+            view.displayError("Please select a valid calendar");
+            return;
+          }
+          
+          // Get the calendar by name
+          ICalendar calendar = calendarManager.getCalendar(calendarName);
+          if (calendar == null) {
+            System.out.println("[ERROR] Could not find calendar with name: " + calendarName);
+            view.displayError("Could not find calendar: " + calendarName);
+            return;
+          }
+          
+          System.out.println("[DEBUG] Found calendar: " + calendar.toString());
+          System.out.println("[DEBUG] Calendar has " + calendar.getAllEvents().size() + " events");
+          
+          // Set as current calendar
+          currentCalendar = calendar;
+          
+          // First clear any existing events in the view
+          view.getCalendarPanel().clearEvents();
+          
+          // Then update the view with the new calendar
+          view.updateCalendarView(calendar);
+          view.setSelectedCalendar(calendarName);
+          
+          // Get events from the new calendar
+          LocalDate currentDate = view.getCalendarPanel().getSelectedDate();
+          System.out.println("[DEBUG] Getting events for date: " + currentDate);
+          
+          // Update events display - using the correct method names from ICalendar
+          List<Event> events = currentCalendar.getEventsOnDate(currentDate);
+          List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
+          System.out.println("[DEBUG] Found " + events.size() + " events for date " + currentDate);
+          System.out.println("[DEBUG] Calendar has " + recurringEvents.size() + " recurring events in total");
+          
+          // First clear the view to remove any previously displayed events
+          view.getCalendarPanel().clearEvents();
+          
+          // Then update with the events from the newly selected calendar
+          view.getCalendarPanel().updateEvents(events);
+          view.getCalendarPanel().updateRecurringEvents(recurringEvents);
+          view.displayMessage("Selected calendar: " + calendarName);
+          
+          // Force refresh the view
+          view.refreshView();
+        } catch (Exception e) {
+          System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
+          e.printStackTrace();
           view.displayError("Failed to select calendar: " + e.getMessage());
         }
       }
@@ -457,10 +514,30 @@ public class GUIController {
     }
 
     try {
-      List<Event> events = getEventsOnDate(date);
+      System.out.println("[DEBUG] Listing events for date: " + date);
+      System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.getName() : "null"));
+      
+      if (currentCalendar == null) {
+        view.displayError("No calendar selected");
+        return;
+      }
+      
+      // Get events for the selected date from the current calendar
+      List<Event> events = currentCalendar.getEventsOnDate(date);
+      System.out.println("[DEBUG] Found " + events.size() + " events for date " + date);
+      
+      // Update the event list display
       view.updateEventList(events);
       view.getCalendarPanel().updateEventList(date);
+      
+      if (events.isEmpty()) {
+        view.displayMessage("No events found for " + date);
+      } else {
+        view.displayMessage("Found " + events.size() + " events for " + date);
+      }
     } catch (Exception e) {
+      System.err.println("[ERROR] Failed to list events: " + e.getMessage());
+      e.printStackTrace();
       view.displayError("Failed to list events: " + e.getMessage());
     }
   }
@@ -482,10 +559,30 @@ public class GUIController {
         view.displayError("Start date must be before or equal to end date");
         return;
       }
+      
+      System.out.println("[DEBUG] Showing events in range: " + startDate + " to " + endDate);
+      System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.getName() : "null"));
+      
+      if (currentCalendar == null) {
+        view.displayError("No calendar selected");
+        return;
+      }
 
-      List<Event> events = getEventsInRange(startDate, endDate);
+      // Get events in the date range from the current calendar
+      List<Event> events = currentCalendar.getEventsInRange(startDate, endDate);
+      System.out.println("[DEBUG] Found " + events.size() + " events in date range");
+      
+      // Update the event list with the range of events
       view.getCalendarPanel().updateEventListRange(startDate, endDate, events);
+      
+      if (events.isEmpty()) {
+        view.displayMessage("No events found in selected date range");
+      } else {
+        view.displayMessage("Found " + events.size() + " events in selected date range");
+      }
     } catch (Exception e) {
+      System.err.println("[ERROR] Failed to get events in range: " + e.getMessage());
+      e.printStackTrace();
       view.displayError("Failed to get events in range: " + e.getMessage());
     }
   }
