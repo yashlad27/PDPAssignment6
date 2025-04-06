@@ -4,10 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
@@ -33,21 +32,21 @@ public class CalendarEventHandler {
      * @param date the selected date
      */
     void onDateSelected(LocalDate date);
-
+    
     /**
      * Called when an event is selected.
      *
      * @param event the selected event
      */
     void onEventSelected(Event event);
-
+    
     /**
      * Called when the month is changed.
      *
      * @param yearMonth the new year-month
      */
     void onMonthChanged(YearMonth yearMonth);
-
+    
     /**
      * Called when the print button is clicked for an event.
      *
@@ -86,10 +85,10 @@ public class CalendarEventHandler {
       public void actionPerformed(ActionEvent e) {
         String dateStr = e.getActionCommand();
         LocalDate date = LocalDate.parse(dateStr);
-
+        
         // Update the selected date in the display manager
         displayManager.setSelectedDate(date);
-
+        
         // Notify the listener
         if (listener != null) {
           listener.onDateSelected(date);
@@ -109,13 +108,13 @@ public class CalendarEventHandler {
       public void actionPerformed(ActionEvent e) {
         YearMonth currentMonth = displayManager.getCurrentMonth();
         YearMonth newMonth = currentMonth.minusMonths(1);
-
+        
         // Update the calendar grid
         displayManager.updateCalendarGrid(newMonth, createDateButtonListener());
-
+        
         // Update the date buttons with events
         displayManager.updateDateButtons(eventsByDate);
-
+        
         // Notify the listener
         if (listener != null) {
           listener.onMonthChanged(newMonth);
@@ -135,13 +134,13 @@ public class CalendarEventHandler {
       public void actionPerformed(ActionEvent e) {
         YearMonth currentMonth = displayManager.getCurrentMonth();
         YearMonth newMonth = currentMonth.plusMonths(1);
-
+        
         // Update the calendar grid
         displayManager.updateCalendarGrid(newMonth, createDateButtonListener());
-
+        
         // Update the date buttons with events
         displayManager.updateDateButtons(eventsByDate);
-
+        
         // Notify the listener
         if (listener != null) {
           listener.onMonthChanged(newMonth);
@@ -161,12 +160,12 @@ public class CalendarEventHandler {
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           String href = e.getDescription();
-
+          
           // Handle print event links
           if (href.startsWith("print:")) {
             String eventId = href.substring(6);
             Event event = findEventById(eventId);
-
+            
             if (event != null && listener != null) {
               listener.onPrintEvent(event);
             }
@@ -175,7 +174,7 @@ public class CalendarEventHandler {
           else {
             String eventId = href;
             Event event = findEventById(eventId);
-
+            
             if (event != null && listener != null) {
               listener.onEventSelected(event);
             }
@@ -188,13 +187,13 @@ public class CalendarEventHandler {
   /**
    * Updates the events map with events for a date.
    *
-   * @param date   the date
+   * @param date the date
    * @param events the events for the date
    */
   public void updateEvents(LocalDate date, List<Event> events) {
     if (date != null && events != null) {
       eventsByDate.put(date, events);
-
+      
       // Update the date buttons to show event indicators
       displayManager.updateDateButtons(eventsByDate);
     }
@@ -209,7 +208,7 @@ public class CalendarEventHandler {
     if (eventMap != null) {
       eventsByDate.clear();
       eventsByDate.putAll(eventMap);
-
+      
       // Update the date buttons to show event indicators
       displayManager.updateDateButtons(eventsByDate);
     }

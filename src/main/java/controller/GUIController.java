@@ -28,7 +28,6 @@ import model.exceptions.CalendarNotFoundException;
 import model.exceptions.ConflictingEventException;
 import model.exceptions.EventNotFoundException;
 import model.exceptions.InvalidEventException;
-import model.export.CSVExporter;
 import utilities.CalendarNameValidator;
 import utilities.PopupImageHandler;
 import utilities.TimeZoneHandler;
@@ -385,15 +384,24 @@ public class GUIController {
 
       @Override
       public void onExport(File file) {
+        System.out.println("[DEBUG] GUIController.onExport called with file: " + 
+            (file != null ? file.getAbsolutePath() : "null"));
+            
         try {
-          // Export current calendar to CSV file
-          ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
-          if (currentCalendar != null) {
-            CSVExporter exporter = new CSVExporter();
-            exporter.exportEvents(currentCalendar.getAllEvents(), file);
-          } else {
+          // Get the current calendar for export
+          if (GUIController.this.currentCalendar == null) {
+            System.out.println("[DEBUG] No current calendar set in GUIController");
             view.displayError("Please select a calendar first");
+            return;
           }
+          
+          System.out.println("[DEBUG] Using ImportExportController to export calendar: " + 
+              GUIController.this.currentCalendar.getName());
+          
+          // Create ImportExportController and use it for export
+          ImportExportController exportController = new ImportExportController(
+              GUIController.this.currentCalendar, view);
+          exportController.onExport(file);
         } catch (Exception e) {
           view.showErrorMessage("Failed to export calendar data: " + e.getMessage());
         }
