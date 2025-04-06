@@ -39,6 +39,7 @@ public class GUICalendarPanel extends JPanel {
   private ICalendar currentCalendar;
   private CalendarPanelListener listener;
   private JLabel monthYearLabel;
+  private Event currentSelectedEvent = null;
   private static final int CELL_WIDTH = 78;
   private static final int CELL_HEIGHT = 60;
   private static final int GRID_WIDTH = 550;
@@ -498,10 +499,30 @@ public class GUICalendarPanel extends JPanel {
     // Add click listener
     button.addActionListener(e -> {
       selectedDate = date;
+      
+      // Automatically select the first event on this date if available
+      if (eventsByDate.containsKey(date) && !eventsByDate.get(date).isEmpty()) {
+        Event firstEvent = eventsByDate.get(date).get(0);
+        currentSelectedEvent = firstEvent;
+        System.out.println("[DEBUG] Auto-selected event: " + firstEvent.getSubject() + " from date: " + date);
+        
+        // Also notify the listener about the selected event
+        if (listener != null) {
+          listener.onEventSelected(firstEvent);
+        }
+      } else {
+        // Clear current selection if no events on this date
+        currentSelectedEvent = null;
+        System.out.println("[DEBUG] No events found on date: " + date + ", clearing current selection");
+      }
+      
       if (listener != null) {
         listener.onDateSelected(date);
       }
       updateCalendarDisplay();
+      
+      // Update the event list to reflect the selection
+      updateEventList(date);
     });
 
     // If there are events on this date, add indicators
@@ -705,8 +726,15 @@ public class GUICalendarPanel extends JPanel {
     
     if (events.isEmpty()) {
       System.out.println("[DEBUG] No events for date " + date);
+      currentSelectedEvent = null; // Clear selection if no events
       displayMessageInEventList("No events for " + date);
       return;
+    }
+    
+    // Auto-select first event if nothing is currently selected
+    if (currentSelectedEvent == null && !events.isEmpty()) {
+      currentSelectedEvent = events.get(0);
+      System.out.println("[DEBUG] Auto-selected first event: " + currentSelectedEvent.getSubject());
     }
 
     // Create a panel to hold all event panels
@@ -842,9 +870,11 @@ public class GUICalendarPanel extends JPanel {
     editButton.addActionListener(e -> {
       System.out.println("[DEBUG] Edit button clicked for event: " + event.getSubject());
       highlightEvent(panel);
-      // Store the event as the currently selected one
+      // Store the event as the currently selected one FIRST, then perform action
       currentSelectedEvent = eventInstance;
-      handleEventAction(event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString(), "edit");
+      System.out.println("[DEBUG] Stored current event reference: " + 
+          (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+      handleEventAction("edit", "edit");
     });
     buttonPanel.add(editButton);
     
@@ -857,9 +887,11 @@ public class GUICalendarPanel extends JPanel {
     copyButton.addActionListener(e -> {
       System.out.println("[DEBUG] Copy button clicked for event: " + event.getSubject());
       highlightEvent(panel);
-      // Store the event as the currently selected one
+      // Store the event as the currently selected one FIRST, then perform action
       currentSelectedEvent = eventInstance;
-      handleEventAction(event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString(), "copy");
+      System.out.println("[DEBUG] Stored current event reference: " + 
+          (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+      handleEventAction("copy", "copy");
     });
     buttonPanel.add(copyButton);
     
@@ -872,9 +904,11 @@ public class GUICalendarPanel extends JPanel {
     printButton.addActionListener(e -> {
       System.out.println("[DEBUG] Print button clicked for event: " + event.getSubject());
       highlightEvent(panel);
-      // Store the event as the currently selected one
+      // Store the event as the currently selected one FIRST, then perform action
       currentSelectedEvent = eventInstance;
-      handleEventAction(event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString(), "print");
+      System.out.println("[DEBUG] Stored current event reference: " + 
+          (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+      handleEventAction("print", "print");
     });
     buttonPanel.add(printButton);
     
@@ -898,27 +932,19 @@ public class GUICalendarPanel extends JPanel {
     eventPanel.setBackground(HEADER_LIGHT_COLOR);
   }
   
-  // Store the currently selected event for reference
-  private Event currentSelectedEvent = null;
+  // The event action handler - uses the stored reference to the currently selected event
   
   private void handleEventAction(String eventId, String action) {
-    // Find the corresponding event
-    Event targetEvent = null;
-    for (List<Event> eventList : eventsByDate.values()) {
-      for (Event event : eventList) {
-        String currentId = event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString();
-        if (currentId.equals(eventId)) {
-          targetEvent = event;
-          break;
-        }
-      }
-      if (targetEvent != null) break;
-    }
+    // Use the directly stored event reference instead of looking it up by ID
+    Event targetEvent = currentSelectedEvent;
+    
+    System.out.println("[DEBUG] Current selected event ID: " + 
+        (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+    System.out.println("[DEBUG] Event action requested: " + action);
     
     if (targetEvent != null && listener != null) {
-      // Store the selected event for reference
-      this.currentSelectedEvent = targetEvent;
-      System.out.println("[DEBUG] Selected event: " + targetEvent.getSubject());
+      System.out.println("[DEBUG] Selected event: " + targetEvent.getSubject() +
+                        " with ID: " + targetEvent.getId());
       
       switch (action) {
         case "edit":
@@ -935,7 +961,7 @@ public class GUICalendarPanel extends JPanel {
           break;
       }
     } else {
-      System.out.println("[ERROR] Could not find event with ID: " + eventId);
+      System.out.println("[ERROR] No event selected or listener not set");
     }
   }
   

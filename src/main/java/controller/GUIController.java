@@ -8,6 +8,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
+import javax.swing.JFrame;
+
+import utilities.PopupImageHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -633,9 +636,27 @@ public class GUIController {
   public void editEvent(Event event) {
     System.out.println("[DEBUG] GUIController.editEvent called for: " + event.getSubject());
     System.out.println("[DEBUG] Editing event: " + event.getSubject());
+    System.out.println("[DEBUG] Event details: ID=" + event.getId() + ", start=" + event.getStartDateTime() + ", end=" + event.getEndDateTime());
 
-    // Show the event edit dialog
-    view.showEventEditDialog(event, false);
+    try {
+      System.out.println("[DEBUG] About to show edit popup image");
+      // Show the image popup first
+      PopupImageHandler.showEditEventPopup((JFrame) view);
+      System.out.println("[DEBUG] Edit popup image display method called");
+    } catch (Exception e) {
+      System.err.println("[ERROR] Error showing edit popup: " + e.getMessage());
+      e.printStackTrace();
+    }
+    
+    try {
+      System.out.println("[DEBUG] About to show event edit dialog");
+      // Then show the event edit dialog
+      view.showEventEditDialog(event, false);
+      System.out.println("[DEBUG] Event edit dialog displayed");
+    } catch (Exception e) {
+      System.err.println("[ERROR] Error showing edit dialog: " + e.getMessage());
+      e.printStackTrace();
+    }
 
     // The view will handle the editing process and call back to the controller
     // when the edit is confirmed via the onEventUpdated method
@@ -664,10 +685,23 @@ public class GUIController {
   public void showCopyEventDialog(Event event) {
     System.out.println("[DEBUG] GUIController.showCopyEventDialog called for: " + event.getSubject());
     System.out.println("[DEBUG] Showing copy dialog for event: " + event.getSubject());
+    System.out.println("[DEBUG] Event details: ID=" + event.getId() + ", start=" + event.getStartDateTime() + ", end=" + event.getEndDateTime());
     
     if (currentCalendar == null) {
+      System.out.println("[DEBUG] No current calendar selected");
       view.displayError("Please select a calendar first");
       return;
+    }
+    System.out.println("[DEBUG] Current calendar: " + currentCalendar.getName());
+    
+    try {
+      System.out.println("[DEBUG] About to show copy popup image");
+      // Show the image popup first
+      PopupImageHandler.showCopyEventPopup((JFrame) view);
+      System.out.println("[DEBUG] Copy popup image display method called");
+    } catch (Exception e) {
+      System.err.println("[ERROR] Error showing copy popup: " + e.getMessage());
+      e.printStackTrace();
     }
     
     try {
