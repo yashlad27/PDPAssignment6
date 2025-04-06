@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import model.calendar.ICalendar;
 
@@ -312,53 +311,45 @@ public class GUICalendarSelectorPanel extends JPanel {
     });
 
     useCalendarButton.addActionListener(e -> {
-      // Open file chooser for importing events into the selected calendar
-      if (selectedCalendar != null) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select CSV File to Import");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
-
-        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-          File importFile = fileChooser.getSelectedFile();
-          System.out.println("[DEBUG] Selected import file: " + importFile.getAbsolutePath());
-
-          // Confirm import with user
-          int result = JOptionPane.showConfirmDialog(
-                  this,
-                  "Import events from " + importFile.getName() + " into calendar '" + selectedCalendar.toString() + "'?",
-                  "Confirm Import",
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE);
-
-          if (result == JOptionPane.YES_OPTION) {
-            System.out.println("[DEBUG] User confirmed import, proceeding...");
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-            // Notify listener to handle the import
-            if (listener != null) {
-              try {
-                // The listener will handle the import process
-                listener.onImport(importFile);
-              } catch (Exception ex) {
-                System.err.println("[ERROR] Import failed: " + ex.getMessage());
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Import failed: " + ex.getMessage(),
-                        "Import Error",
-                        JOptionPane.ERROR_MESSAGE);
-              } finally {
-                setCursor(Cursor.getDefaultCursor());
-              }
-            }
+      System.out.println("[DEBUG] Use Calendar button clicked");
+      
+      // Get the selected calendar from the list
+      int selectedIndex = calendarList.getSelectedIndex();
+      if (selectedIndex >= 0) {
+        String calendarName = calendarListModel.getElementAt(selectedIndex);
+        System.out.println("[DEBUG] Selected calendar from list: " + calendarName);
+        
+        // Notify listener to switch to the selected calendar
+        if (listener != null) {
+          try {
+            System.out.println("[DEBUG] Notifying listener to switch to calendar: " + calendarName);
+            listener.onCalendarSelected(calendarName);
+            
+            // Show confirmation message
+            JOptionPane.showMessageDialog(
+                this,
+                "Switched to calendar: " + calendarName,
+                "Calendar Selected",
+                JOptionPane.INFORMATION_MESSAGE);
+          } catch (Exception ex) {
+            System.err.println("[ERROR] Failed to switch calendar: " + ex.getMessage());
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(
+                this,
+                "Failed to switch calendar: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
           }
+        } else {
+          System.out.println("[WARNING] No calendar selection listener registered");
         }
       } else {
+        System.out.println("[DEBUG] No calendar selected in the list");
         JOptionPane.showMessageDialog(
-                this,
-                "Please select a calendar first",
-                "No Calendar Selected",
-                JOptionPane.WARNING_MESSAGE);
+            this,
+            "Please select a calendar from the list first",
+            "No Calendar Selected",
+            JOptionPane.WARNING_MESSAGE);
       }
     });
   }
