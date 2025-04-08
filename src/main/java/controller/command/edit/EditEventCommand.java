@@ -54,7 +54,6 @@ public class EditEventCommand implements ICommand {
     String editType = args[0];
 
     try {
-      // Handle edit commands based on type
       if ("single".equalsIgnoreCase(editType)) {
         // Format from headlessCmd.txt: 
         // edit event subject "Gym" from 2024-03-26T18:00 with "Weightlifting Session"
@@ -73,7 +72,6 @@ public class EditEventCommand implements ICommand {
         }
       }
 
-      // For UUID-based edits (if needed in the future)
       else {
         return "Error: Unknown edit type: " + editType;
       }

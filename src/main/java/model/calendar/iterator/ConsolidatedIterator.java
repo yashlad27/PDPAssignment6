@@ -169,9 +169,9 @@ public class ConsolidatedIterator {
      * @param startDate       the start date of the range
      * @param endDate         the end date of the range
      */
-    public RecurringEventIterator(List<RecurringEvent> recurringEvents, 
-                                 LocalDate startDate, 
-                                 LocalDate endDate) {
+    public RecurringEventIterator(List<RecurringEvent> recurringEvents,
+                                  LocalDate startDate,
+                                  LocalDate endDate) {
       this.recurringEvents = new ArrayList<>(recurringEvents);
       this.startDate = startDate;
       this.endDate = endDate;
@@ -330,8 +330,8 @@ public class ConsolidatedIterator {
    * @return a new recurring event iterator
    */
   public static IEventIterator forRecurringEvents(List<RecurringEvent> recurringEvents,
-                                                LocalDate startDate,
-                                                LocalDate endDate) {
+                                                  LocalDate startDate,
+                                                  LocalDate endDate) {
     return new RecurringEventIterator(recurringEvents, startDate, endDate);
   }
 

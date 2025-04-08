@@ -21,7 +21,6 @@ public class RecurringEvent extends Event {
   private final int occurrences;
   private final LocalDate endDate;
   private final UUID recurringId;
-  // The isAllDay field determines if the event spans the entire day
   private final boolean isAllDay;
 
   /**
@@ -47,7 +46,8 @@ public class RecurringEvent extends Event {
    * @param isAllDay      whether the event is an all-day event
    */
   private RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                         String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
+                         String description, String location,
+                         boolean isPublic, Set<DayOfWeek> repeatDays,
                          int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
     super(subject, startDateTime, endDateTime, description, location, isPublic);
     this.repeatDays = new HashSet<>(repeatDays);
@@ -196,7 +196,9 @@ public class RecurringEvent extends Event {
      */
     public RecurringEvent build() {
       validate();
-      return new RecurringEvent(subject, startDateTime, endDateTime, description, location, isPublic, repeatDays, occurrences, endDate, recurringId, isAllDay);
+      return new RecurringEvent(subject, startDateTime, endDateTime,
+              description, location, isPublic, repeatDays, occurrences,
+              endDate, recurringId, isAllDay);
     }
 
     /**
@@ -254,16 +256,29 @@ public class RecurringEvent extends Event {
     List<Event> occurrences = new ArrayList<>();
     LocalDateTime currentDate = getStartDateTime();
     int count = 0;
-
-    while (count < this.occurrences) {
+    
+    // Continue until we've generated the requested number of occurrences
+    // or reached the end date if specified
+    while ((this.occurrences <= 0 || count < this.occurrences) && 
+           (this.endDate == null || !currentDate.toLocalDate().isAfter(this.endDate))) {
+      
+      System.out.println("[DEBUG] Checking date: " + currentDate + ", day of week: " + currentDate.getDayOfWeek());
+      System.out.println("[DEBUG] Repeat days: " + repeatDays);
+      
+      // If the current day is one of the repeat days, create an occurrence
       if (repeatDays.contains(currentDate.getDayOfWeek())) {
+        System.out.println("[DEBUG] Creating occurrence for: " + currentDate);
         Event occurrence = createOccurrence(currentDate);
         occurrences.add(occurrence);
         count++;
+        System.out.println("[DEBUG] Added occurrence #" + count + " on " + currentDate.toLocalDate());
       }
+      
+      // Move to the next day
       currentDate = currentDate.plusDays(1);
     }
-
+    
+    System.out.println("[DEBUG] Total occurrences generated: " + occurrences.size());
     return occurrences;
   }
 
@@ -303,7 +318,8 @@ public class RecurringEvent extends Event {
     int count = 0;
 
     // Iterate through dates and collect occurrences
-    while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0 || count < this.occurrences)) {
+    while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0
+            || count < this.occurrences)) {
       if (repeatDays.contains(currentDateTime.getDayOfWeek())) {
         Event occurrence = createOccurrence(currentDateTime);
         occurrences.add(occurrence);

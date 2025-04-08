@@ -5,7 +5,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.*;
-import javax.swing.JOptionPane;
 
 /**
  * Utility class for styling buttons consistently across the application.
@@ -48,9 +47,9 @@ public class ButtonStyler {
    */
   public static void showEditEventPopup(JFrame parent) {
     JOptionPane.showMessageDialog(parent,
-        EDIT_EVENT_MESSAGE,
-        EDIT_EVENT_TITLE,
-        JOptionPane.INFORMATION_MESSAGE);
+            EDIT_EVENT_MESSAGE,
+            EDIT_EVENT_TITLE,
+            JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**
@@ -122,25 +121,5 @@ public class ButtonStyler {
     });
 
     return button;
-  }
-
-  /**
-   * Creates a styled primary button.
-   *
-   * @param text the button text
-   * @return a new styled primary button
-   */
-  public static JButton createPrimaryButton(String text) {
-    return applyPrimaryStyle(new JButton(text));
-  }
-
-  /**
-   * Creates a styled secondary button.
-   *
-   * @param text the button text
-   * @return a new styled secondary button
-   */
-  public static JButton createSecondaryButton(String text) {
-    return applySecondaryStyle(new JButton(text));
   }
 }

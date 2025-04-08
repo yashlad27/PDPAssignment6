@@ -91,40 +91,6 @@ public class CalendarRegistry {
   }
 
   /**
-   * Renames a calendar in the registry.
-   *
-   * @param oldName the current name of the calendar
-   * @param newName the new name for the calendar
-   * @throws CalendarNotFoundException  if no calendar with the specified name exists
-   * @throws DuplicateCalendarException if a calendar with the new name already exists
-   */
-  public void renameCalendar(String oldName, String newName)
-          throws CalendarNotFoundException, DuplicateCalendarException {
-    if (newName == null || newName.trim().isEmpty()) {
-      throw new IllegalArgumentException("New calendar name cannot be null or empty");
-    }
-
-    if (!calendars.containsKey(oldName)) {
-      throw new CalendarNotFoundException("Calendar not found: " + oldName);
-    }
-
-    if (!oldName.equals(newName) && calendars.containsKey(newName)) {
-      throw new DuplicateCalendarException("Calendar with name '" + newName + "' already exists");
-    }
-
-    Calendar calendar = calendars.get(oldName);
-
-    calendar.setName(newName);
-
-    calendars.remove(oldName);
-    calendars.put(newName, calendar);
-
-    if (oldName.equals(activeCalendarName)) {
-      activeCalendarName = newName;
-    }
-  }
-
-  /**
    * Checks if the specified calendar name exists.
    *
    * @param name the calendar name to check
@@ -206,18 +172,6 @@ public class CalendarRegistry {
   public void applyToCalendar(String calendarName, Consumer<Calendar> consumer)
           throws CalendarNotFoundException {
     Calendar calendar = getCalendarByName(calendarName);
-    consumer.accept(calendar);
-  }
-
-  /**
-   * Applies a consumer to the active calendar.
-   *
-   * @param consumer the consumer to apply
-   * @throws CalendarNotFoundException if there is no active calendar
-   */
-  public void applyToActiveCalendar(Consumer<Calendar> consumer)
-          throws CalendarNotFoundException {
-    Calendar calendar = getActiveCalendar();
     consumer.accept(calendar);
   }
 

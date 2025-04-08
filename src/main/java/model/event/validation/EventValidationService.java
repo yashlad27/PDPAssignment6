@@ -30,10 +30,10 @@ public class EventValidationService implements IEventValidator {
       throw new InvalidEventException("End date/time cannot be before start date/time");
     }
 
-    // Comment out past date validation for testing
-    // if (start.isBefore(LocalDateTime.now())) {
-    //     throw new InvalidEventException("Event cannot be created in the past");
-    // }
+//     Comment out past date validation for testing
+//     if (start.isBefore(LocalDateTime.now())) {
+//         throw new InvalidEventException("Event cannot be created in the past");
+//     }
   }
 
   @Override
@@ -55,9 +55,9 @@ public class EventValidationService implements IEventValidator {
     }
 
     // Comment out past date validation for testing
-    // if (date.isBefore(LocalDate.now())) {
-    //     throw new InvalidEventException("Event cannot be created in the past");
-    // }
+//     if (date.isBefore(LocalDate.now())) {
+//         throw new InvalidEventException("Event cannot be created in the past");
+//     }
   }
 
   /**
@@ -152,13 +152,13 @@ public class EventValidationService implements IEventValidator {
 
     validateEvent(event);
   }
-  
+
   @Override
   public boolean validateWeekdayString(String weekdays) {
     if (weekdays == null || weekdays.trim().isEmpty()) {
       return false;
     }
-    
+
     String validDayCodes = "MTWRFSU";
     for (char c : weekdays.toUpperCase().toCharArray()) {
       if (validDayCodes.indexOf(c) == -1) {
@@ -167,13 +167,13 @@ public class EventValidationService implements IEventValidator {
     }
     return true;
   }
-  
+
   @Override
   public Set<DayOfWeek> parseWeekdays(String weekdays) throws InvalidEventException {
     if (!validateWeekdayString(weekdays)) {
       throw new InvalidEventException("Invalid weekday string: " + weekdays);
     }
-    
+
     Set<DayOfWeek> days = new HashSet<>();
     for (char c : weekdays.toUpperCase().toCharArray()) {
       switch (c) {
@@ -200,7 +200,7 @@ public class EventValidationService implements IEventValidator {
           break;
       }
     }
-    
+
     return days;
   }
 } 

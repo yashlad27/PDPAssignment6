@@ -1,7 +1,9 @@
 package view.display;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -11,13 +13,13 @@ import java.util.Map;
 import javax.swing.*;
 
 import model.event.Event;
+import utilities.TimeZoneHandler;
 
 /**
  * Responsible for calendar UI rendering logic.
  * Follows Single Responsibility Principle by focusing only on display concerns.
  */
 public class CalendarDisplayManager {
-  // Constants for display styling
   private static final int CELL_WIDTH = 78;
   private static final int CELL_HEIGHT = 60;
   private static final int GRID_WIDTH = 550;
@@ -87,15 +89,13 @@ public class CalendarDisplayManager {
    * @param yearMonth          the year and month to display
    * @param dateButtonListener the listener for date button clicks
    */
-  public void updateCalendarGrid(YearMonth yearMonth, java.awt.event.ActionListener dateButtonListener) {
+  public void updateCalendarGrid(YearMonth yearMonth, ActionListener dateButtonListener) {
     this.currentMonth = yearMonth;
     dateButtons.clear();
     calendarGrid.removeAll();
 
-    // Update the month label
     monthYearLabel.setText(yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")));
 
-    // Add day of week headers
     String[] daysOfWeek = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     for (String dayOfWeek : daysOfWeek) {
       JLabel label = new JLabel(dayOfWeek, JLabel.CENTER);
@@ -104,16 +104,13 @@ public class CalendarDisplayManager {
       calendarGrid.add(label);
     }
 
-    // Get the first day of the month
     LocalDate firstOfMonth = yearMonth.atDay(1);
 
-    // Add empty cells for days before the first day of the month
     int dayOfWeekValue = firstOfMonth.getDayOfWeek().getValue() % 7;
     for (int i = 0; i < dayOfWeekValue; i++) {
       calendarGrid.add(createEmptyCell());
     }
 
-    // Add buttons for each day of the month
     for (int day = 1; day <= yearMonth.lengthOfMonth(); day++) {
       LocalDate date = yearMonth.atDay(day);
       JButton button = createDateButton(date);
@@ -122,7 +119,6 @@ public class CalendarDisplayManager {
       dateButtons.put(date, button);
     }
 
-    // Add empty cells for remaining days to complete the grid
     int remainingCells = 42 - (dayOfWeekValue + yearMonth.lengthOfMonth());
     for (int i = 0; i < remainingCells; i++) {
       calendarGrid.add(createEmptyCell());
@@ -156,32 +152,25 @@ public class CalendarDisplayManager {
     JButton button = new JButton();
     button.setLayout(new BorderLayout());
 
-    // Create date label that appears in the top-left corner
     JLabel dateLabel = new JLabel(String.valueOf(date.getDayOfMonth()));
     dateLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     dateLabel.setForeground(TEXT_COLOR);
     dateLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 0, 0));
-
-    // Create events panel for displaying event indicators
     JPanel eventsPanel = new JPanel();
     eventsPanel.setLayout(new BoxLayout(eventsPanel, BoxLayout.Y_AXIS));
     eventsPanel.setOpaque(false);
 
-    // Style the button
     button.setBackground(Color.WHITE);
     button.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
     button.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
 
-    // Add components to button
     button.add(dateLabel, BorderLayout.NORTH);
     button.add(eventsPanel, BorderLayout.CENTER);
 
-    // Highlight today's date
     if (date.equals(LocalDate.now())) {
       button.setBackground(HEADER_LIGHT_COLOR);
     }
 
-    // Highlight selected date
     if (date.equals(selectedDate)) {
       button.setBorder(BorderFactory.createLineBorder(HEADER_COLOR, 2));
     }
@@ -200,17 +189,14 @@ public class CalendarDisplayManager {
       LocalDate date = entry.getKey();
       JButton button = entry.getValue();
 
-      // Check if there are events for this date
       List<Event> events = eventsByDate.get(date);
       boolean hasEvents = events != null && !events.isEmpty();
 
-      // Update the button's appearance based on events
       if (hasEvents) {
         JPanel eventsPanel = new JPanel();
         eventsPanel.setLayout(new BoxLayout(eventsPanel, BoxLayout.Y_AXIS));
         eventsPanel.setOpaque(false);
 
-        // Add event indicators (limited to 3 maximum)
         int count = Math.min(events.size(), 3);
         for (int i = 0; i < count; i++) {
           JPanel indicator = new JPanel();
@@ -220,7 +206,6 @@ public class CalendarDisplayManager {
           eventsPanel.add(Box.createVerticalStrut(2));
         }
 
-        // Add a count label if there are more than 3 events
         if (events.size() > 3) {
           JLabel countLabel = new JLabel("+" + (events.size() - 3) + " more");
           countLabel.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -228,7 +213,6 @@ public class CalendarDisplayManager {
           eventsPanel.add(countLabel);
         }
 
-        // Update the button's events panel
         for (int i = 0; i < button.getComponentCount(); i++) {
           if (button.getComponent(i) instanceof JPanel &&
                   button.getComponent(i) != button.getComponent(0)) {
@@ -239,7 +223,6 @@ public class CalendarDisplayManager {
         button.add(eventsPanel, BorderLayout.CENTER);
       }
 
-      // Ensure the selected date is highlighted
       if (date.equals(selectedDate)) {
         button.setBorder(BorderFactory.createLineBorder(HEADER_COLOR, 2));
       } else {
@@ -295,13 +278,21 @@ public class CalendarDisplayManager {
     sb.append("<html><body style='font-family:Arial; font-size:12px;'>")
             .append("<h3 style='color:#4a86e8;'>Events for ").append(date).append("</h3>");
 
+    // Create a TimeZoneHandler to convert times
+    TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+    String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+
     for (Event event : events) {
+      // Convert event times from UTC to local timezone for display
+      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
+      
       String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
       sb.append("<div id='").append(currentEventId)
               .append("' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>")
               .append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>")
-              .append("<span style='color:#666;'>").append(event.getStartDateTime().toLocalTime())
-              .append(" - ").append(event.getEndDateTime().toLocalTime()).append("</span><br>")
+              .append("<span style='color:#666;'>").append(localStartTime.toLocalTime())
+              .append(" - ").append(localEndTime.toLocalTime()).append("</span><br>")
               .append("<span>").append(event.getDescription()).append("</span><br>")
               .append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>")
               .append("<div style='margin-top:5px;'>")

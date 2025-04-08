@@ -48,7 +48,7 @@ public interface IEventValidator {
    * @throws InvalidEventException if the name is invalid
    */
   void validateEventNameWithException(String name) throws InvalidEventException;
-  
+
   /**
    * Validates recurring event parameters.
    *
@@ -99,7 +99,7 @@ public interface IEventValidator {
    * @throws InvalidEventException if the weekday string is invalid
    */
   Set<DayOfWeek> parseWeekdays(String weekdays) throws InvalidEventException;
-  
+
   /**
    * Validates event description.
    *

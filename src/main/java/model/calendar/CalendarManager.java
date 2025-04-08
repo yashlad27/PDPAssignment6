@@ -90,21 +90,6 @@ public class CalendarManager {
   }
 
   /**
-   * Creates a new calendar with the specified name and default timezone.
-   *
-   * @param name the unique name for the calendar
-   * @return the newly created calendar
-   * @throws DuplicateCalendarException if a calendar with the specified name already exists
-   */
-  public Calendar createCalendarWithDefaultTimezone(String name) throws DuplicateCalendarException {
-    try {
-      return createCalendar(name, timezoneHandler.getDefaultTimezone());
-    } catch (InvalidTimezoneException e) {
-      throw new RuntimeException("Invalid default timezone", e);
-    }
-  }
-
-  /**
    * Gets a calendar by name.
    *
    * @param name the name of the calendar
@@ -194,20 +179,6 @@ public class CalendarManager {
    */
   public Set<String> getCalendarNames() {
     return calendarRegistry.getCalendarNames();
-  }
-
-  /**
-   * Gets the first available calendar, or null if none exists.
-   *
-   * @return the first available calendar, or null if none exists
-   */
-  public ICalendar getFirstAvailableCalendar() {
-    // Use the iterator pattern to get the first available calendar
-    ConsolidatedIterator.ICalendarIterator iterator = getCalendarIterator();
-    if (iterator.hasNext()) {
-      return iterator.next();
-    }
-    return null;
   }
 
   /**

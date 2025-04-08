@@ -60,25 +60,6 @@ public class CalendarNameValidator {
   }
 
   /**
-   * Removes a calendar name from the set of existing names.
-   *
-   * @param name the calendar name to remove
-   */
-  public static void removeCalendarName(String name) {
-    existingNames.remove(name);
-  }
-
-  /**
-   * Checks if a calendar name exists.
-   *
-   * @param name the calendar name to check
-   * @return true if the name exists, false otherwise
-   */
-  public static boolean hasCalendarName(String name) {
-    return name != null && existingNames.contains(name.trim());
-  }
-
-  /**
    * Clears all existing calendar names.
    * This method should be called before running tests to ensure a clean state.
    */

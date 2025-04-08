@@ -56,6 +56,6 @@ public class CreateCalendarCommand implements ICommand {
 
   @Override
   public String getName() {
-    return "create-calendar";
+    return "create calendar";
   }
 } 

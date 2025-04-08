@@ -92,7 +92,6 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Event cannot be null");
     }
 
-    // Convert event times to UTC for storage
     LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(), timezone.getID());
     LocalDateTime endUTC = timezoneHandler.convertToUTC(event.getEndDateTime(), timezone.getID());
 
@@ -105,7 +104,6 @@ public class Calendar implements ICalendar {
             event.isPublic()
     );
 
-    // Check for conflicts using UTC times
     if (!autoDecline) {
       for (Event existingEvent : events) {
         if (existingEvent.getStartDateTime().isBefore(utcEvent.getEndDateTime()) &&
@@ -141,7 +139,6 @@ public class Calendar implements ICalendar {
 
     List<Event> occurrences = recurringEvent.getAllOccurrences();
 
-    // Convert each occurrence's times to UTC before checking conflicts
     List<Event> utcOccurrences = new ArrayList<>();
     for (Event occurrence : occurrences) {
       LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone.getID());
@@ -157,7 +154,6 @@ public class Calendar implements ICalendar {
       utcOccurrences.add(utcOccurrence);
     }
 
-    // Check for conflicts using UTC times
     for (Event utcOccurrence : utcOccurrences) {
       if (hasConflict(utcOccurrence)) {
         if (autoDecline) {
@@ -172,7 +168,6 @@ public class Calendar implements ICalendar {
     recurringEvents.add(recurringEvent);
     recurringEventById.put(recurringEvent.getId(), recurringEvent);
 
-    // Add UTC occurrences to events list
     for (Event utcOccurrence : utcOccurrences) {
       events.add(utcOccurrence);
       eventById.put(utcOccurrence.getId(), utcOccurrence);
@@ -214,7 +209,9 @@ public class Calendar implements ICalendar {
 
   @Override
   public boolean createAllDayRecurringEvent(String name, LocalDate date, String weekdays,
-                                            int occurrences, boolean autoDecline, String description, String location, boolean isPublic)
+                                            int occurrences,
+                                            boolean autoDecline, String description,
+                                            String location, boolean isPublic)
           throws ConflictingEventException {
     try {
       Set<DayOfWeek> repeatDays = DateTimeUtil.parseWeekdays(weekdays);
@@ -234,8 +231,10 @@ public class Calendar implements ICalendar {
 
   @Override
   public boolean createAllDayRecurringEventUntil(String name, LocalDate date, String weekdays,
-                                                 LocalDate untilDate, boolean autoDecline, String description, String location,
-                                                 boolean isPublic) throws ConflictingEventException {
+                                                 LocalDate untilDate, boolean autoDecline,
+                                                 String description, String location,
+                                                 boolean isPublic)
+          throws ConflictingEventException {
     try {
       Set<DayOfWeek> repeatDays = DateTimeUtil.parseWeekdays(weekdays);
 
@@ -265,10 +264,8 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Subject and start date/time cannot be null");
     }
 
-    // Convert input time to UTC for comparison
     LocalDateTime utcStartTime = timezoneHandler.convertToUTC(startDateTime, timezone.getID());
 
-    // First try to find in regular events
     Event event = events.stream()
             .filter(e -> e.getSubject().equals(subject) &&
                     e.getStartDateTime().equals(utcStartTime))
@@ -279,10 +276,8 @@ public class Calendar implements ICalendar {
       return event;
     }
 
-    // If not found in regular events, check recurring events
     for (RecurringEvent recurringEvent : recurringEvents) {
       if (recurringEvent.getSubject().equals(subject)) {
-        // Get all occurrences and compare UTC times
         List<Event> occurrences = recurringEvent.getAllOccurrences();
         for (Event occurrence : occurrences) {
           if (occurrence.getStartDateTime().equals(utcStartTime)) {
@@ -302,7 +297,6 @@ public class Calendar implements ICalendar {
    */
   @Override
   public List<Event> getAllEvents() {
-    // Use the iterator pattern to get all events
     ConsolidatedIterator.IEventIterator iterator = getEventIterator();
     List<Event> allEvents = new ArrayList<>();
 
@@ -419,7 +413,6 @@ public class Calendar implements ICalendar {
    * @return true if there is a conflict, false otherwise
    */
   private boolean hasConflict(Event event) {
-    // Use the iterator pattern to check for conflicts
     EventFilter conflictFilter = existingEvent -> event.conflictsWith(existingEvent);
     ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(conflictFilter);
     return iterator.hasNext();
@@ -457,8 +450,9 @@ public class Calendar implements ICalendar {
     if (date == null) {
       throw new IllegalArgumentException("Date cannot be null");
     }
-
-    return getFilteredEvents(event -> {
+    
+    // Get regular events for the date
+    List<Event> result = getFilteredEvents(event -> {
       if (event.getStartDateTime() != null) {
         LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
 
@@ -473,6 +467,21 @@ public class Calendar implements ICalendar {
       }
       return false;
     });
+    
+    // Also check for recurring event occurrences on this date
+    for (RecurringEvent recurringEvent : this.recurringEvents) {
+      System.out.println("[DEBUG] Checking recurring event for date " + date + ": " + recurringEvent.getSubject());
+      
+      // Get all occurrences between the specified date and itself (effectively just for that date)
+      List<Event> occurrences = recurringEvent.getOccurrencesBetween(date, date);
+      System.out.println("[DEBUG] Found " + occurrences.size() + " occurrences of recurring event " + 
+                         recurringEvent.getSubject() + " on " + date);
+      
+      // Add any occurrences found to the result list
+      result.addAll(occurrences);
+    }
+    
+    return result;
   }
 
   /**
@@ -596,7 +605,8 @@ public class Calendar implements ICalendar {
     propertyUpdaters.put("enddatetime", endTimeUpdater);
 
     EventPropertyUpdater visibilityUpdater = (event, value) -> {
-      boolean isPublic = value.equalsIgnoreCase("public") || value.equalsIgnoreCase("true");
+      boolean isPublic = value.equalsIgnoreCase("public")
+              || value.equalsIgnoreCase("true");
       event.setPublic(isPublic);
       return true;
     };
@@ -605,7 +615,8 @@ public class Calendar implements ICalendar {
     propertyUpdaters.put("public", visibilityUpdater);
 
     propertyUpdaters.put("private", (event, value) -> {
-      boolean isPrivate = value.equalsIgnoreCase("true") || value.equalsIgnoreCase("private");
+      boolean isPrivate = value.equalsIgnoreCase("true")
+              || value.equalsIgnoreCase("private");
       event.setPublic(!isPrivate);
       return true;
     });
@@ -638,7 +649,8 @@ public class Calendar implements ICalendar {
   public ConsolidatedIterator.IEventIterator getEventIterator() {
     List<ConsolidatedIterator.IEventIterator> iterators = new ArrayList<>();
     iterators.add(ConsolidatedIterator.forEvents(events));
-    iterators.add(ConsolidatedIterator.forRecurringEvents(recurringEvents, LocalDate.now(), LocalDate.now().plusYears(1)));
+    iterators.add(ConsolidatedIterator.forRecurringEvents(recurringEvents,
+            LocalDate.now(), LocalDate.now().plusYears(1)));
     return ConsolidatedIterator.composite(iterators);
   }
 
@@ -650,28 +662,6 @@ public class Calendar implements ICalendar {
    */
   public ConsolidatedIterator.IEventIterator getFilteredEventIterator(EventFilter filter) {
     return ConsolidatedIterator.withFilter(getEventIterator(), filter);
-  }
-
-  /**
-   * Gets an iterator for events on a specific date.
-   *
-   * @param date the date to get events for
-   * @return an iterator for events on the specified date
-   */
-  public ConsolidatedIterator.IEventIterator getEventsOnDateIterator(LocalDate date) {
-    if (date == null) {
-      throw new IllegalArgumentException("Date cannot be null");
-    }
-
-    EventFilter dateFilter = event -> {
-      if (event.getStartDateTime() != null) {
-        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
-        return eventStartDate.equals(date);
-      }
-      return false;
-    };
-
-    return getFilteredEventIterator(dateFilter);
   }
 
   @Override
@@ -718,26 +708,21 @@ public class Calendar implements ICalendar {
       return false;
     }
 
-    // Check if the event exists
     Event existingEvent = eventById.get(eventId);
     if (existingEvent == null) {
       return false; // Event not found
     }
 
-    // Temporarily remove the existing event to avoid false conflicts
     events.remove(existingEvent);
     eventById.remove(eventId);
 
     try {
-      // Check for conflicts with other events
       if (hasConflict(updatedEvent)) {
-        // Put the original event back if there's a conflict
         events.add(existingEvent);
         eventById.put(eventId, existingEvent);
         throw new ConflictingEventException("The updated event conflicts with existing events");
       }
 
-      // Create a new event with the same ID and updated data
       Event newEvent = new Event(
               updatedEvent.getSubject(),
               updatedEvent.getStartDateTime(),

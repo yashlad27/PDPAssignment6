@@ -1,9 +1,10 @@
 package view;
 
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.swing.*;
 
@@ -48,15 +49,6 @@ public class GUICalendarSelectorPanel extends JPanel {
      * @param timezone The timezone of the new calendar
      */
     default void onCalendarCreated(String name, String timezone) {
-      // Default implementation does nothing
-    }
-
-    /**
-     * Called when a file is selected for import.
-     *
-     * @param file The file to import
-     */
-    default void onImport(File file) {
       // Default implementation does nothing
     }
   }
@@ -296,9 +288,7 @@ public class GUICalendarSelectorPanel extends JPanel {
         int index = calendarList.getSelectedIndex();
         if (index >= 0) {
           String calendarName = calendarListModel.getElementAt(index);
-          // Notify listener
           if (listener != null) {
-            // Assuming listener has a method to handle selection by name
             listener.onCalendarSelected(calendarName);
           }
         }
@@ -306,39 +296,35 @@ public class GUICalendarSelectorPanel extends JPanel {
     });
 
     addCalendarButton.addActionListener(e -> {
-      // Show dialog to create a new calendar
       showAddCalendarDialog();
     });
 
     useCalendarButton.addActionListener(e -> {
       System.out.println("[DEBUG] Use Calendar button clicked");
-      
-      // Get the selected calendar from the list
+
       int selectedIndex = calendarList.getSelectedIndex();
       if (selectedIndex >= 0) {
         String calendarName = calendarListModel.getElementAt(selectedIndex);
         System.out.println("[DEBUG] Selected calendar from list: " + calendarName);
-        
-        // Notify listener to switch to the selected calendar
+
         if (listener != null) {
           try {
             System.out.println("[DEBUG] Notifying listener to switch to calendar: " + calendarName);
             listener.onCalendarSelected(calendarName);
-            
-            // Show confirmation message
+
             JOptionPane.showMessageDialog(
-                this,
-                "Switched to calendar: " + calendarName,
-                "Calendar Selected",
-                JOptionPane.INFORMATION_MESSAGE);
+                    this,
+                    "Switched to calendar: " + calendarName,
+                    "Calendar Selected",
+                    JOptionPane.INFORMATION_MESSAGE);
           } catch (Exception ex) {
             System.err.println("[ERROR] Failed to switch calendar: " + ex.getMessage());
             ex.printStackTrace();
             JOptionPane.showMessageDialog(
-                this,
-                "Failed to switch calendar: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    this,
+                    "Failed to switch calendar: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
           }
         } else {
           System.out.println("[WARNING] No calendar selection listener registered");
@@ -346,10 +332,10 @@ public class GUICalendarSelectorPanel extends JPanel {
       } else {
         System.out.println("[DEBUG] No calendar selected in the list");
         JOptionPane.showMessageDialog(
-            this,
-            "Please select a calendar from the list first",
-            "No Calendar Selected",
-            JOptionPane.WARNING_MESSAGE);
+                this,
+                "Please select a calendar from the list first",
+                "No Calendar Selected",
+                JOptionPane.WARNING_MESSAGE);
       }
     });
   }
@@ -358,12 +344,11 @@ public class GUICalendarSelectorPanel extends JPanel {
    * Shows a dialog for adding a new calendar with name and timezone.
    */
   private void showAddCalendarDialog() {
-    // Create the dialog
-    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add Calendar", true);
+    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+            "Add Calendar", true);
     dialog.setLayout(new BorderLayout());
     dialog.setResizable(false);
 
-    // Create form panel
     JPanel formPanel = new JPanel(new GridBagLayout());
     formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
     GridBagConstraints gbc = new GridBagConstraints();
@@ -372,7 +357,6 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.anchor = GridBagConstraints.WEST;
     gbc.insets = new Insets(5, 5, 5, 5);
 
-    // Calendar name field
     JLabel nameLabel = new JLabel("Calendar Name:");
     formPanel.add(nameLabel, gbc);
 
@@ -382,7 +366,6 @@ public class GUICalendarSelectorPanel extends JPanel {
     JTextField nameField = new JTextField(20);
     formPanel.add(nameField, gbc);
 
-    // Timezone selector
     gbc.gridx = 0;
     gbc.gridy = 1;
     gbc.fill = GridBagConstraints.NONE;
@@ -394,40 +377,32 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weightx = 1.0;
 
-    // Get all available timezone IDs
-    String[] availableTimezones = java.util.TimeZone.getAvailableIDs();
-    // Sort timezones alphabetically
-    java.util.Arrays.sort(availableTimezones);
+    String[] availableTimezones = TimeZone.getAvailableIDs();
+    Arrays.sort(availableTimezones);
 
     JComboBox<String> timezoneComboBox = new JComboBox<>(availableTimezones);
-    // Set default to system timezone
-    timezoneComboBox.setSelectedItem(java.util.TimeZone.getDefault().getID());
+    timezoneComboBox.setSelectedItem(TimeZone.getDefault().getID());
     formPanel.add(timezoneComboBox, gbc);
 
-    // Button panel with improved layout
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
 
     JButton addButton = new JButton("Add");
     JButton cancelButton = new JButton("Cancel");
 
-    // Use ButtonStyler for consistent styling
     ButtonStyler.applyPrimaryStyle(addButton);
     ButtonStyler.applySecondaryStyle(cancelButton);
 
-    // Set preferred size for buttons to ensure visibility
     Dimension buttonSize = new Dimension(100, 30);
     addButton.setPreferredSize(buttonSize);
     cancelButton.setPreferredSize(buttonSize);
     addButton.setMinimumSize(buttonSize);
     cancelButton.setMinimumSize(buttonSize);
 
-    // Center the buttons with some space between them
     buttonPanel.add(addButton);
     buttonPanel.add(Box.createHorizontalStrut(10));
     buttonPanel.add(cancelButton);
 
-    // Event handlers
     addButton.addActionListener(ae -> {
       String calendarName = nameField.getText().trim();
       String selectedTimezone = (String) timezoneComboBox.getSelectedItem();
@@ -440,9 +415,7 @@ public class GUICalendarSelectorPanel extends JPanel {
         return;
       }
 
-      // Notify listener about the new calendar
       if (listener != null) {
-        // Assuming listener has a method to handle calendar creation
         listener.onCalendarCreated(calendarName, selectedTimezone);
       }
 
@@ -451,11 +424,9 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     cancelButton.addActionListener(ae -> dialog.dispose());
 
-    // Add components to dialog
     dialog.add(formPanel, BorderLayout.CENTER);
     dialog.add(buttonPanel, BorderLayout.SOUTH);
 
-    // Set dialog properties
     dialog.pack();
     dialog.setLocationRelativeTo(this);
     dialog.setVisible(true);

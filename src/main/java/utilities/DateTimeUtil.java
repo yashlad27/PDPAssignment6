@@ -67,11 +67,9 @@ public class DateTimeUtil {
    */
   public static LocalDateTime parseDateTime(String dateTimeStr) {
     try {
-      // Try to parse with the standard formatter (no seconds)
       return LocalDateTime.parse(dateTimeStr, DATE_TIME_FORMATTER);
     } catch (DateTimeParseException e) {
       try {
-        // If that fails, try to parse with seconds included
         DateTimeFormatter withSecondsFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"
                 + "'T'HH:mm:ss");
         return LocalDateTime.parse(dateTimeStr, withSecondsFormatter);
@@ -80,59 +78,6 @@ public class DateTimeUtil {
                 ". Expected format: YYYY-MM-DDThh:mm or YYYY-MM-DDThh:mm:ss", e2);
       }
     }
-  }
-
-  /**
-   * Combines a date string and a time string into a LocalDateTime.
-   *
-   * @param dateStr the date string in the format "YYYY-MM-DD"
-   * @param timeStr the time string in the format "HH:MM"
-   * @return the combined LocalDateTime
-   * @throws IllegalArgumentException if either string is invalid
-   */
-  public static LocalDateTime combineDateAndTime(String dateStr, String timeStr) {
-    LocalDate date = parseDate(dateStr);
-    LocalTime time = parseTime(timeStr);
-    return LocalDateTime.of(date, time);
-  }
-
-  /**
-   * Formats a LocalDate as a string in the format "YYYY-MM-DD".
-   *
-   * @param date the date to format
-   * @return the formatted date string
-   */
-  public static String formatDate(LocalDate date) {
-    if (date == null) {
-      throw new IllegalArgumentException("Date cannot be null");
-    }
-    return date.format(DATE_FORMATTER);
-  }
-
-  /**
-   * Formats a LocalTime as a string in the format "HH:MM".
-   *
-   * @param time the time to format
-   * @return the formatted time string
-   */
-  public static String formatTime(LocalTime time) {
-    if (time == null) {
-      throw new IllegalArgumentException("Time cannot be null");
-    }
-    return time.format(TIME_FORMATTER);
-  }
-
-  /**
-   * Formats a LocalDateTime as a string in the format "YYYY-MM-DD HH:MM".
-   *
-   * @param dateTime the date and time to format
-   * @return the formatted date and time string
-   */
-  public static String formatDateTime(LocalDateTime dateTime) {
-    if (dateTime == null) {
-      throw new IllegalArgumentException("DateTime cannot be null");
-    }
-    return dateTime.format(DATE_TIME_FORMATTER);
   }
 
   /**
@@ -184,43 +129,5 @@ public class DateTimeUtil {
     }
 
     return weekdays;
-  }
-
-  /**
-   * Converts a set of DayOfWeek to a string of weekday characters.
-   *
-   * @param weekdays the set of DayOfWeek
-   * @return a string of weekday characters
-   */
-  public static String formatWeekdays(Set<DayOfWeek> weekdays) {
-    if (weekdays == null || weekdays.isEmpty()) {
-      throw new IllegalArgumentException("Weekdays set cannot be null or empty");
-    }
-
-    StringBuilder sb = new StringBuilder();
-
-    if (weekdays.contains(DayOfWeek.MONDAY)) {
-      sb.append('M');
-    }
-    if (weekdays.contains(DayOfWeek.TUESDAY)) {
-      sb.append('T');
-    }
-    if (weekdays.contains(DayOfWeek.WEDNESDAY)) {
-      sb.append('W');
-    }
-    if (weekdays.contains(DayOfWeek.THURSDAY)) {
-      sb.append('R');
-    }
-    if (weekdays.contains(DayOfWeek.FRIDAY)) {
-      sb.append('F');
-    }
-    if (weekdays.contains(DayOfWeek.SATURDAY)) {
-      sb.append('S');
-    }
-    if (weekdays.contains(DayOfWeek.SUNDAY)) {
-      sb.append('U');
-    }
-
-    return sb.toString();
   }
 }

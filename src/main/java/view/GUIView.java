@@ -17,12 +17,14 @@ import controller.GUIController;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
+import utilities.TimeZoneHandler;
 import viewmodel.CalendarViewModel;
 import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
 
 /**
- * Main GUI view class that integrates all GUI components and implements both ICalendarView and IGUIView interfaces.
+ * Main GUI view class that integrates all GUI components and implements both ICalendarView
+ * and IGUIView interfaces.
  * This class provides the main window and layout for the calendar application.
  */
 public class GUIView extends JFrame implements ICalendarView, IGUIView {
@@ -425,10 +427,8 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     eventListResultsPanel.setBorder(BorderFactory.createTitledBorder("Event List Results"));
     eventListResultsPanel.setPreferredSize(new Dimension(550, 150));
     
-    // Create initial empty content for event list results
-    JLabel emptyLabel = new JLabel("Event list results will appear here", SwingConstants.CENTER);
-    emptyLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-    eventListResultsPanel.add(emptyLabel, BorderLayout.CENTER);
+    // Event list results will be populated dynamically
+    // No static text needed here
     
     // Create scroll pane for event list results
     eventListScrollPane = new JScrollPane(eventListResultsPanel);
@@ -741,10 +741,17 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     subjectLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     detailsPanel.add(subjectLabel);
     
-    // Date and time
-    String dateTimeStr = "" + event.getStartDateTime().toLocalDate() + 
-                        " " + event.getStartDateTime().toLocalTime() + 
-                        " - " + event.getEndDateTime().toLocalTime();
+    // Date and time - Convert from UTC to local timezone for display
+    TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+    String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+    
+    // Convert start and end times from UTC to local time
+    LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+    LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
+    
+    String dateTimeStr = "" + localStartDateTime.toLocalDate() + 
+                        " " + localStartDateTime.toLocalTime() + 
+                        " - " + localEndDateTime.toLocalTime();
     JLabel timeLabel = new JLabel(dateTimeStr);
     timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -760,13 +767,14 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     
     panel.add(detailsPanel, BorderLayout.CENTER);
     
-    // Right side - View button
-    JButton viewButton = new JButton("View");
-    viewButton.addActionListener(e -> {
-      // When clicked, display this event in the event panel
+    // Right side - Edit button
+    JButton editButton = new JButton("Edit");
+    editButton.addActionListener(e -> {
+      // When clicked, display this event in the event panel for editing
       eventPanel.displayEvent(event);
+      eventPanel.setPanelMode(GUIEventPanel.PanelMode.EDIT);
     });
-    panel.add(viewButton, BorderLayout.EAST);
+    panel.add(editButton, BorderLayout.EAST);
     
     return panel;
   }

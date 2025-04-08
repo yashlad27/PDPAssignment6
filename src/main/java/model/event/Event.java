@@ -42,6 +42,50 @@ public class Event {
 
     this.id = UUID.randomUUID();
     this.subject = subject;
+    
+    // Store times in UTC
+    this.startDateTime = startDateTime;
+    this.description = description != null ? description : "";
+    this.location = location != null ? location : "";
+    this.isPublic = isPublic;
+
+    if (endDateTime == null) {
+      this.isAllDay = true;
+      this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(), LocalTime.of(23, 59, 59));
+    } else {
+      if (endDateTime.isBefore(startDateTime)) {
+        throw new IllegalArgumentException("End date/time cannot be before start date/time");
+      }
+      this.isAllDay = false;
+      this.endDateTime = endDateTime;
+    }
+  }
+  
+  /**
+   * Creates an event with a specific ID (used for updating existing events).
+   *
+   * @param id            the UUID to use for this event
+   * @param subject       the subject/title of the event
+   * @param startDateTime the start date and time in the calendar's timezone
+   * @param endDateTime   the end date and time in the calendar's timezone, null if all-day event
+   * @param description   a description of the event, can be null
+   * @param location      the location of the event, can be null
+   * @param isPublic      whether the event is public
+   */
+  public Event(UUID id, String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
+               String description, String location, boolean isPublic) {
+    if (subject == null || subject.trim().isEmpty()) {
+      throw new IllegalArgumentException("Event subject cannot be null or empty");
+    }
+    if (startDateTime == null) {
+      throw new IllegalArgumentException("Start date/time cannot be null");
+    }
+    if (id == null) {
+      throw new IllegalArgumentException("Event ID cannot be null");
+    }
+
+    this.id = id;
+    this.subject = subject;
 
     // Store times in UTC
     this.startDateTime = startDateTime;

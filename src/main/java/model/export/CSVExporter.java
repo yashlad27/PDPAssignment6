@@ -132,11 +132,11 @@ public class CSVExporter implements IDataExporter {
   public String export(String filePath, List<Event> events) throws IOException {
     System.out.println("[DEBUG] CSVExporter.export called for file: " + filePath);
     System.out.println("[DEBUG] Number of events to export: " + (events != null ? events.size() : 0));
-    
+
     if (events == null || events.isEmpty()) {
       System.out.println("[WARNING] No events to export or events list is null");
     }
-    
+
     // Create parent directories if they don't exist
     File exportFile = new File(filePath);
     File parentDir = exportFile.getParentFile();
@@ -145,7 +145,7 @@ public class CSVExporter implements IDataExporter {
       boolean dirCreated = parentDir.mkdirs();
       System.out.println("[DEBUG] Parent directories created: " + dirCreated);
     }
-    
+
     System.out.println("[DEBUG] Opening FileWriter for: " + filePath);
     try (FileWriter writer = new FileWriter(filePath)) {
       // Write header row
@@ -156,14 +156,15 @@ public class CSVExporter implements IDataExporter {
 
       // Track how many events we've written
       final int[] count = {0};
-      
+
       System.out.println("[DEBUG] Starting to write event data");
       events.stream()
               .map(event -> {
                 String formatted = formatEventForCSV(event);
-                System.out.println("[DEBUG] Formatted event " + (count[0] + 1) + ": " + 
-                    event.getSubject() + " -> " + formatted.substring(0, Math.min(50, formatted.length())) + 
-                    (formatted.length() > 50 ? "..." : ""));
+                System.out.println("[DEBUG] Formatted event " + (count[0] + 1) + ": " +
+                        event.getSubject() + " -> " + formatted.substring(0,
+                        Math.min(50, formatted.length())) +
+                        (formatted.length() > 50 ? "..." : ""));
                 count[0]++;
                 return formatted;
               })
@@ -175,13 +176,13 @@ public class CSVExporter implements IDataExporter {
                   throw new RuntimeException("Failed to write event to CSV", e);
                 }
               });
-              
+
       System.out.println("[DEBUG] Successfully wrote " + count[0] + " events to CSV file");
     } catch (IOException e) {
       System.err.println("[ERROR] Exception while exporting CSV: " + e.getMessage());
       throw e;
     }
-    
+
     // Verify the file was created and has content
     File outputFile = new File(filePath);
     if (outputFile.exists()) {
@@ -190,7 +191,7 @@ public class CSVExporter implements IDataExporter {
     } else {
       System.out.println("[WARNING] CSV file was not created");
     }
-    
+
     return filePath;
   }
 

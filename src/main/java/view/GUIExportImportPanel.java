@@ -1,7 +1,6 @@
 package view;
 
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +40,8 @@ public class GUIExportImportPanel extends JPanel {
     setBorder(BorderFactory.createTitledBorder("Import/Export"));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-    // Set alignment for centering components
     setAlignmentX(Component.CENTER_ALIGNMENT);
 
-    // Create a panel for import section
     JPanel importPanel = new JPanel();
     importPanel.setLayout(new BoxLayout(importPanel, BoxLayout.Y_AXIS));
     importPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -122,12 +119,10 @@ public class GUIExportImportPanel extends JPanel {
    * Sets up event listeners for the buttons.
    */
   private void setupListeners() {
-    // Set up the Choose File button for import
     importButton.addActionListener(e -> {
       System.out.println("[DEBUG] Import Choose File button clicked");
       fileChooser.setDialogTitle("Select CSV File to Import");
 
-      // Set up file filter for CSV files
       FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
       fileChooser.setFileFilter(filter);
 
@@ -193,7 +188,6 @@ public class GUIExportImportPanel extends JPanel {
         System.out.println("[DEBUG] Selected export file: " + exportFile.getAbsolutePath());
         exportFileLabel.setText(exportFile.getName());
         
-        // Automatically start the export process after file selection
         if (exportFile != null) {
           try {
             System.out.println("[DEBUG] Preparing to export calendar data to: " + exportFile.getAbsolutePath());
@@ -202,7 +196,6 @@ public class GUIExportImportPanel extends JPanel {
             System.out.println("[DEBUG] File can write: " + exportFile.getParentFile().canWrite());
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             
-            // Notify all listeners
             int listenerCount = listeners.size();
             System.out.println("[DEBUG] Notifying " + listenerCount + " export listeners");
             
@@ -242,7 +235,6 @@ public class GUIExportImportPanel extends JPanel {
       }
     });
     
-    // Import functionality is now handled directly in the Choose File button handler
   }
 
   /**
@@ -298,24 +290,5 @@ public class GUIExportImportPanel extends JPanel {
     });
     timer.setRepeats(false);
     timer.start();
-  }
-
-  public void addImportListener(ActionListener listener) {
-    importButton.addActionListener(listener);
-  }
-
-  public void addExportListener(ActionListener listener) {
-    exportButton.addActionListener(listener);
-  }
-
-  public File showFileChooser(boolean forImport) {
-    int result = forImport ?
-            fileChooser.showOpenDialog(this) :
-            fileChooser.showSaveDialog(this);
-
-    if (result == JFileChooser.APPROVE_OPTION) {
-      return fileChooser.getSelectedFile();
-    }
-    return null;
   }
 } 

@@ -21,8 +21,8 @@ public class CalendarApp {
   private static CalendarManager calendarManager;
   private static ICalendarView view;
   private static CalendarController controller;
-  private static String currentMode = "gui"; // Default mode
-  private static String[] commandLineArgs; // Store command line arguments
+  private static String currentMode = "gui";
+  private static String[] commandLineArgs;
 
   /**
    * Main method that serves as the entry point for the application.
@@ -30,7 +30,7 @@ public class CalendarApp {
    * @param args Command line arguments:
    *             --mode interactive : Starts the application in interactive mode
    *             --mode headless file : Starts the application in headless mode
-   *                    with the specified command file
+   *             with the specified command file
    *             --no args : Starts the application in GUI mode
    */
   public static void main(String[] args) {
@@ -49,19 +49,15 @@ public class CalendarApp {
     calendarManager = factory.createCalendarManager(timezoneHandler);
     ICalendar calendar = new Calendar();
 
-    // Create controller with null command factories first
     controller = factory.createController(null,
             null, calendarManager, null);
 
-    // Create view based on current mode
     view = CalendarFactory.createView(currentMode, controller);
 
-    // Now create command factories with the view
     ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
     ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
             view);
 
-    // Update controller with the command factories
     controller.setEventCommandFactory(eventCommandFactory);
     controller.setCalendarCommandFactory(calendarCommandFactory);
     controller.setView(view);
@@ -167,9 +163,7 @@ public class CalendarApp {
    * Starts the application in text mode (interactive or headless).
    */
   private static void startTextMode() {
-    // Get the TextView instance to set up the mode correctly
     if (view instanceof TextView) {
-      // Just check if it's the correct type - no need to create a variable
       if (commandLineArgs.length > 1 && commandLineArgs[1].equals("headless")) {
         startHeadlessMode(commandLineArgs);
       } else {
@@ -196,7 +190,6 @@ public class CalendarApp {
   private static void startHeadlessMode(String[] args) {
     String filename = args[2];
 
-    // Set up the TextView for headless mode
     if (view instanceof TextView) {
       boolean setupSuccess = ((TextView) view).setupHeadlessMode(filename);
 

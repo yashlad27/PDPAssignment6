@@ -8,11 +8,15 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -57,7 +61,6 @@ public class GUIController {
   public GUIController(CalendarManager calendarManager, GUIView view) {
     this.calendarManager = calendarManager;
     this.view = view;
-    // ViewModels are managed by the view itself, so we don't need references here
     this.timezoneHandler = new TimeZoneHandler();
     this.currentCalendar = null;
   }
@@ -67,12 +70,9 @@ public class GUIController {
    */
   public void initialize() throws CalendarNotFoundException {
     System.out.println("Initializing GUI controller...");
-    // Set up initial state
     try {
-      // Clear any existing calendar names
       CalendarNameValidator.removeAllCalendarNames();
 
-      // Create a default calendar if none exists
       String defaultCalendar = "Default_Calendar";
       if (calendarManager.getCalendarCount() == 0) {
         System.out.println("Creating default calendar...");
@@ -82,24 +82,19 @@ public class GUIController {
         System.out.println("[DEBUG] Default calendar created");
       }
 
-      // Get the first available calendar
       System.out.println("Getting first available calendar...");
       currentCalendar = calendarManager.getCalendar(defaultCalendar);
       if (currentCalendar == null) {
         throw new CalendarNotFoundException("No calendars available");
       }
-
-      // Set up the view with the first calendar
       System.out.println("Setting up view with calendar: " + defaultCalendar);
       view.setSelectedCalendar(defaultCalendar);
       view.updateCalendarView(currentCalendar);
       view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
 
-      // Set up event listeners
       System.out.println("Setting up event listeners...");
       setupEventListeners();
 
-      // Update the calendar display with events
       System.out.println("Updating calendar display...");
       List<Event> events = getAllEvents();
       List<RecurringEvent> recurringEvents = getAllRecurringEvents();
@@ -886,15 +881,30 @@ public class GUIController {
                 .atZone(ZoneId.systemDefault()).toLocalDateTime();
       }
 
-      // Create updated event
+      // Convert times from local timezone to UTC for storage
+      TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+      String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+      
+      // Convert to UTC for storage
+      LocalDateTime utcStartDateTime = timezoneHandler.convertToUTC(startDateTime, systemTimezone);
+      LocalDateTime utcEndDateTime = timezoneHandler.convertToUTC(endDateTime, systemTimezone);
+      
+      System.out.println("[DEBUG] Event times - Local Start: " + startDateTime);
+      System.out.println("[DEBUG] Event times - UTC Start: " + utcStartDateTime);
+      
+      // Create updated event with UTC times - preserve the original event ID
       Event updatedEvent = new Event(
+              currentEvent.getId(), // Preserve the original event ID
               subject,
-              startDateTime,
-              endDateTime,
+              utcStartDateTime,
+              utcEndDateTime,
               description,
               location,
               currentEvent.isPublic()
       );
+      
+      System.out.println("[DEBUG] Updating event with ID: " + currentEvent.getId());
+      System.out.println("[DEBUG] Updated event ID: " + updatedEvent.getId());
 
       // Update the event in the calendar
       boolean success = currentCalendar.updateEvent(currentEvent.getId(), updatedEvent);
@@ -1267,23 +1277,109 @@ public class GUIController {
                 }
               }
 
-              // Create the event
-              Event event = new Event(
-                      subject,
-                      startDateTime,
-                      endDateTime,
-                      description,
-                      location,
-                      !isPrivate // isPublic is the opposite of isPrivate
-              );
+              // Check if this is a recurring event
+              boolean isRecurring = false;
+              Set<DayOfWeek> repeatDays = new HashSet<>();
+              LocalDate untilDate = null;
+              int occurrences = -1;
+              
+              // Process recurring event options
+              for (int i = 6; i < args.length; i++) {
+                if ("-r".equals(args[i]) && i + 1 < args.length) {
+                  isRecurring = true;
+                  String[] weekdays = args[i + 1].split(",");
+                  for (String day : weekdays) {
+                    switch (day.toLowerCase()) {
+                      case "mon":
+                        repeatDays.add(DayOfWeek.MONDAY);
+                        break;
+                      case "tue":
+                        repeatDays.add(DayOfWeek.TUESDAY);
+                        break;
+                      case "wed":
+                        repeatDays.add(DayOfWeek.WEDNESDAY);
+                        break;
+                      case "thu":
+                        repeatDays.add(DayOfWeek.THURSDAY);
+                        break;
+                      case "fri":
+                        repeatDays.add(DayOfWeek.FRIDAY);
+                        break;
+                      case "sat":
+                        repeatDays.add(DayOfWeek.SATURDAY);
+                        break;
+                      case "sun":
+                        repeatDays.add(DayOfWeek.SUNDAY);
+                        break;
+                      default:
+                        System.out.println("[DEBUG] Unknown day: " + day);
+                    }
+                  }
+                  i++; // Skip the weekdays argument
+                } else if ("-e".equals(args[i]) && i + 1 < args.length) {
+                  // End date for recurring events
+                  untilDate = LocalDate.parse(args[i + 1]);
+                  i++; // Skip the end date argument
+                } else if ("-o".equals(args[i]) && i + 1 < args.length) {
+                  // Number of occurrences
+                  occurrences = Integer.parseInt(args[i + 1]);
+                  i++; // Skip the occurrences argument
+                }
+              }
+              
+              boolean added;
+              
+              if (isRecurring && !repeatDays.isEmpty()) {
+                // Create a recurring event
+                System.out.println("[DEBUG] Creating recurring event with repeat days: " + repeatDays);
+                
+                RecurringEvent.Builder builder = new RecurringEvent.Builder(
+                        subject,
+                        startDateTime,
+                        endDateTime,
+                        repeatDays
+                )
+                        .description(description)
+                        .location(location)
+                        .isPublic(!isPrivate);
+                
+                // Set either occurrences or end date
+                if (untilDate != null) {
+                  builder = builder.endDate(untilDate);
+                  System.out.println("[DEBUG] Recurring event will repeat until: " + untilDate);
+                } else if (occurrences > 0) {
+                  builder = builder.occurrences(occurrences);
+                  System.out.println("[DEBUG] Recurring event will have " + occurrences + " occurrences");
+                } else {
+                  // Default to 10 occurrences if neither is specified
+                  builder = builder.occurrences(10);
+                  System.out.println("[DEBUG] Defaulting to 10 occurrences for recurring event");
+                }
+                
+                // Build and add the recurring event
+                RecurringEvent builtEvent = builder.build();
+                System.out.println("[DEBUG] Adding recurring event to calendar: " + builtEvent.getSubject());
+                added = currentCalendar.addRecurringEvent(builtEvent, false);
+                System.out.println("[DEBUG] Recurring event added: " + added);
+              } else {
+                // Create a normal event
+                Event event = new Event(
+                        subject,
+                        startDateTime,
+                        endDateTime,
+                        description,
+                        location,
+                        !isPrivate // isPublic is the opposite of isPrivate
+                );
 
-              System.out.println("[DEBUG] Adding event to calendar: Event{subject='" + subject
-                      + "', startDateTime=" + startDateTime
-                      + ", endDateTime=" + endDateTime
-                      + ", isAllDay=false"
-                      + ", location='" + location + "'}");
-              boolean added = currentCalendar.addEvent(event, false);
-              System.out.println("[DEBUG] Event added: " + added);
+                System.out.println("[DEBUG] Adding event to calendar: Event{subject='" + subject
+                        + "', startDateTime=" + startDateTime
+                        + ", endDateTime=" + endDateTime
+                        + ", isAllDay=false"
+                        + ", location='" + location + "'}");
+                added = currentCalendar.addEvent(event, false);
+                System.out.println("[DEBUG] Event added: " + added);
+              }
 
               if (added) {
                 updateEventList(eventStartDateTime.toLocalDate());

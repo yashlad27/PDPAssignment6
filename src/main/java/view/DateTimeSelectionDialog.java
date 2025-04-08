@@ -69,8 +69,4 @@ public class DateTimeSelectionDialog extends JDialog {
     pack();
     setLocationRelativeTo(parent);
   }
-
-  public LocalDateTime getSelectedDateTime() {
-    return selectedDateTime;
-  }
 } 

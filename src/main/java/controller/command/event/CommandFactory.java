@@ -91,7 +91,6 @@ public class CommandFactory implements ICommandFactory {
    */
   private void registerUseCommand() {
     commands.put("use", (args) -> {
-      // The 'use' command is always handled by CalendarCommandFactory
       return "Command forwarded to CalendarCommandFactory";
     });
   }
@@ -133,15 +132,6 @@ public class CommandFactory implements ICommandFactory {
   }
 
   /**
-   * Gets all available command names.
-   *
-   * @return a set of command names
-   */
-  public Iterable<String> getCommandNames() {
-    return commands.keySet();
-  }
-
-  /**
    * Gets the calendar instance.
    *
    * @return the calendar instance
@@ -157,22 +147,5 @@ public class CommandFactory implements ICommandFactory {
    */
   public ICalendarView getView() {
     return view;
-  }
-
-  /**
-   * Registers a custom command executor.
-   *
-   * @param name     the name of the command
-   * @param executor the command executor
-   */
-  public void registerCommand(String name, Function<String[], String> executor) {
-    if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException("Command name cannot be null or empty");
-    }
-    if (executor == null) {
-      throw new IllegalArgumentException("Command executor cannot be null");
-    }
-
-    commands.put(name, executor);
   }
 }

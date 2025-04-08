@@ -18,24 +18,19 @@ import utilities.DateTimeUtil;
  */
 public class ConsolidatedEventCreator implements EventCreator {
 
-  // Common fields
   private final String eventName;
   private final String description;
   private final String location;
   private final boolean isPublic;
   private final boolean autoDecline;
 
-  // Event type
   private final EventType eventType;
 
-  // Fields for single events
   private LocalDateTime startDateTime;
   private LocalDateTime endDateTime;
 
-  // Fields for all-day events
   private LocalDate date;
 
-  // Fields for recurring events
   private Set<DayOfWeek> repeatDays;
   private int occurrences;
   private LocalDate untilDate;
@@ -161,7 +156,8 @@ public class ConsolidatedEventCreator implements EventCreator {
    */
   public static ConsolidatedEventCreator createRecurringUntilEvent(String[] args) {
     if (args == null || args.length < 6) {
-      throw new IllegalArgumentException("Insufficient arguments for creating a recurring event with end date");
+      throw new IllegalArgumentException("Insufficient arguments for"
+              + " creating a recurring event with end date");
     }
 
     try {
@@ -196,7 +192,8 @@ public class ConsolidatedEventCreator implements EventCreator {
    */
   public static ConsolidatedEventCreator createAllDayRecurringEvent(String[] args) {
     if (args == null || args.length < 5) {
-      throw new IllegalArgumentException("Insufficient arguments for creating an all-day recurring event");
+      throw new IllegalArgumentException("Insufficient arguments "
+              + "for creating an all-day recurring event");
     }
 
     try {
@@ -229,7 +226,8 @@ public class ConsolidatedEventCreator implements EventCreator {
    */
   public static ConsolidatedEventCreator createAllDayRecurringUntilEvent(String[] args) {
     if (args == null || args.length < 5) {
-      throw new IllegalArgumentException("Insufficient arguments for creating an all-day recurring event with end date");
+      throw new IllegalArgumentException("Insufficient arguments for "
+              + "creating an all-day recurring event with end date");
     }
 
     try {
@@ -286,7 +284,8 @@ public class ConsolidatedEventCreator implements EventCreator {
       case RECURRING:
       case RECURRING_UNTIL:
         if (startDateTime == null || endDateTime == null || repeatDays == null) {
-          throw new InvalidEventException("Start date/time, end date/time, and repeat days are required for recurring events");
+          throw new InvalidEventException("Start date/time, end date/time, "
+                  + "and repeat days are required for recurring events");
         }
         if (startDateTime.isAfter(endDateTime)) {
           throw new InvalidEventException("Start date/time must be before end date/time");
@@ -295,20 +294,23 @@ public class ConsolidatedEventCreator implements EventCreator {
           throw new InvalidEventException("Number of occurrences must be positive");
         }
         if (eventType == EventType.RECURRING_UNTIL && untilDate == null) {
-          throw new InvalidEventException("Until date is required for recurring events with end date");
+          throw new InvalidEventException("Until date is required "
+                  + "for recurring events with end date");
         }
         break;
 
       case ALL_DAY_RECURRING:
       case ALL_DAY_RECURRING_UNTIL:
         if (date == null || repeatDays == null) {
-          throw new InvalidEventException("Date and repeat days are required for all-day recurring events");
+          throw new InvalidEventException("Date and repeat days are "
+                  + "required for all-day recurring events");
         }
         if (eventType == EventType.ALL_DAY_RECURRING && occurrences <= 0) {
           throw new InvalidEventException("Number of occurrences must be positive");
         }
         if (eventType == EventType.ALL_DAY_RECURRING_UNTIL && untilDate == null) {
-          throw new InvalidEventException("Until date is required for all-day recurring events with end date");
+          throw new InvalidEventException("Until date is required for"
+                  + " all-day recurring events with end date");
         }
         break;
     }
@@ -323,13 +325,13 @@ public class ConsolidatedEventCreator implements EventCreator {
         return new Event(eventName, startDateTime, endDateTime, description, location, isPublic);
 
       default:
-        // For other event types, we'll create the event during executeCreation
         return null;
     }
   }
 
   @Override
-  public String executeCreation(ICalendar calendar) throws ConflictingEventException, InvalidEventException {
+  public String executeCreation(ICalendar calendar)
+          throws ConflictingEventException, InvalidEventException {
     validateEventParameters();
 
     boolean success = false;
@@ -342,40 +344,42 @@ public class ConsolidatedEventCreator implements EventCreator {
           return success ? "Event created successfully" : "Failed to create event";
 
         case ALL_DAY:
-          // Create an all-day event (spans the entire day)
           LocalDateTime startOfDay = date.atStartOfDay();
           LocalDateTime endOfDay = date.atTime(23, 59, 59);
-          Event allDayEvent = new Event(eventName, startOfDay, endOfDay, description, location, isPublic);
+          Event allDayEvent = new Event(eventName, startOfDay, endOfDay,
+                  description, location, isPublic);
           success = calendar.addEvent(allDayEvent, autoDecline);
           return success ? "All-day event created successfully" : "Failed to create all-day event";
 
         case RECURRING:
-          // Create a recurring event with occurrences
-          RecurringEvent recurringEvent = new RecurringEvent.Builder(eventName, startDateTime, endDateTime, repeatDays)
+          RecurringEvent recurringEvent = new RecurringEvent.Builder(eventName,
+                  startDateTime, endDateTime, repeatDays)
                   .description(description)
                   .location(location)
                   .isPublic(isPublic)
                   .occurrences(occurrences)
                   .build();
           success = calendar.addRecurringEvent(recurringEvent, autoDecline);
-          return success ? "Recurring event created successfully" : "Failed to create recurring event";
+          return success ? "Recurring event created successfully" :
+                  "Failed to create recurring event";
 
         case RECURRING_UNTIL:
-          // Create a recurring event with end date
-          RecurringEvent recurringUntilEvent = new RecurringEvent.Builder(eventName, startDateTime, endDateTime, repeatDays)
+          RecurringEvent recurringUntilEvent = new RecurringEvent.Builder(eventName,
+                  startDateTime, endDateTime, repeatDays)
                   .description(description)
                   .location(location)
                   .isPublic(isPublic)
                   .endDate(untilDate)
                   .build();
           success = calendar.addRecurringEvent(recurringUntilEvent, autoDecline);
-          return success ? "Recurring event created successfully" : "Failed to create recurring event";
+          return success ? "Recurring event created successfully"
+                  : "Failed to create recurring event";
 
         case ALL_DAY_RECURRING:
-          // Create an all-day recurring event with occurrences
           LocalDateTime allDayStart = date.atStartOfDay();
           LocalDateTime allDayEnd = date.atTime(23, 59, 59);
-          RecurringEvent allDayRecurringEvent = new RecurringEvent.Builder(eventName, allDayStart, allDayEnd, repeatDays)
+          RecurringEvent allDayRecurringEvent = new RecurringEvent.Builder(eventName,
+                  allDayStart, allDayEnd, repeatDays)
                   .description(description)
                   .location(location)
                   .isPublic(isPublic)
@@ -383,13 +387,14 @@ public class ConsolidatedEventCreator implements EventCreator {
                   .isAllDay(true)
                   .build();
           success = calendar.addRecurringEvent(allDayRecurringEvent, autoDecline);
-          return success ? "All-day recurring event created successfully" : "Failed to create all-day recurring event";
+          return success ? "All-day recurring event created successfully"
+                  : "Failed to create all-day recurring event";
 
         case ALL_DAY_RECURRING_UNTIL:
-          // Create an all-day recurring event with end date
           LocalDateTime allDayUntilStart = date.atStartOfDay();
           LocalDateTime allDayUntilEnd = date.atTime(23, 59, 59);
-          RecurringEvent allDayRecurringUntilEvent = new RecurringEvent.Builder(eventName, allDayUntilStart, allDayUntilEnd, repeatDays)
+          RecurringEvent allDayRecurringUntilEvent = new RecurringEvent.Builder(eventName,
+                  allDayUntilStart, allDayUntilEnd, repeatDays)
                   .description(description)
                   .location(location)
                   .isPublic(isPublic)
@@ -397,7 +402,8 @@ public class ConsolidatedEventCreator implements EventCreator {
                   .isAllDay(true)
                   .build();
           success = calendar.addRecurringEvent(allDayRecurringUntilEvent, autoDecline);
-          return success ? "All-day recurring event created successfully" : "Failed to create all-day recurring event";
+          return success ? "All-day recurring event created successfully"
+                  : "Failed to create all-day recurring event";
 
         default:
           throw new InvalidEventException("Unknown event type: " + eventType);

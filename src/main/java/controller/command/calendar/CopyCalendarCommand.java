@@ -17,7 +17,6 @@ public class CopyCalendarCommand implements ICommand {
    */
   public CopyCalendarCommand(CalendarManager calendarManager, ICalendarView view) {
     this.calendarManager = calendarManager;
-    // View parameter is kept for interface consistency but not used in this implementation
   }
 
   @Override
@@ -30,7 +29,6 @@ public class CopyCalendarCommand implements ICommand {
     String targetName = args[2];
 
     try {
-      // Use the calendar registry to copy the calendar
       calendarManager.getCalendarRegistry().updateCalendarName(sourceName, targetName);
       return "Calendar copied: " + sourceName + " -> " + targetName;
     } catch (IllegalArgumentException e) {
@@ -40,6 +38,6 @@ public class CopyCalendarCommand implements ICommand {
 
   @Override
   public String getName() {
-    return "copy-calendar";
+    return "copy calendar";
   }
 } 
