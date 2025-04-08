@@ -5,11 +5,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.*;
+import javax.swing.JOptionPane;
 
 /**
  * Utility class for styling buttons consistently across the application.
  */
 public class ButtonStyler {
+  private static final String EDIT_EVENT_TITLE = "Edit Event";
+  private static final String EDIT_EVENT_MESSAGE = "Event is being edited";
   // Theme colors
   private static final Color PRIMARY_COLOR = new Color(0x4a86e8);
   private static final Color PRIMARY_HOVER_COLOR = new Color(0x2962ff);
@@ -36,6 +39,18 @@ public class ButtonStyler {
    */
   public static JButton applySecondaryStyle(JButton button) {
     return applyStyle(button, SECONDARY_COLOR, SECONDARY_HOVER_COLOR, TEXT_DARK, false);
+  }
+
+  /**
+   * Shows an edit event popup message.
+   *
+   * @param parent the parent frame
+   */
+  public static void showEditEventPopup(JFrame parent) {
+    JOptionPane.showMessageDialog(parent,
+        EDIT_EVENT_MESSAGE,
+        EDIT_EVENT_TITLE,
+        JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**

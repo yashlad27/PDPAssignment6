@@ -34,6 +34,8 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   private final GUIEventPanel eventPanel;
   private final GUICalendarSelectorPanel calendarSelectorPanel;
   private final GUIExportImportPanel exportImportPanel;
+  private JPanel eventListResultsPanel;
+  private JScrollPane eventListScrollPane;
   private final JTextArea messageArea;
   private final CalendarController controller;
   private CalendarViewModel calendarViewModel;
@@ -315,14 +317,6 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       }
 
       @Override
-      public void onCopyEvent(Event event) {
-        System.out.println("[DEBUG] Copy event requested in view: " + event.getSubject());
-        if (guiController != null) {
-          guiController.showCopyEventDialog(event);
-        }
-      }
-
-      @Override
       public void onPrintEvent(Event event) {
         System.out.println("[DEBUG] Print event requested in view: " + event.getSubject());
         if (guiController != null) {
@@ -422,9 +416,33 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     rightSplitPane.setDividerSize(5);
     rightSplitPane.setResizeWeight(0.7); // Give more weight to calendar
 
-    // Calendar panel with proper size
-    JPanel calendarContainer = new JPanel(new BorderLayout());
-    calendarContainer.add(calendarPanel, BorderLayout.CENTER);
+    // Create a panel for the calendar and event list results
+    JPanel calendarContainer = new JPanel(new BorderLayout(0, 5));
+    
+    // Initialize event list results panel to appear under the calendar
+    eventListResultsPanel = new JPanel(new BorderLayout());
+    eventListResultsPanel.setBackground(Color.WHITE);
+    eventListResultsPanel.setBorder(BorderFactory.createTitledBorder("Event List Results"));
+    eventListResultsPanel.setPreferredSize(new Dimension(550, 150));
+    
+    // Create initial empty content for event list results
+    JLabel emptyLabel = new JLabel("Event list results will appear here", SwingConstants.CENTER);
+    emptyLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+    eventListResultsPanel.add(emptyLabel, BorderLayout.CENTER);
+    
+    // Create scroll pane for event list results
+    eventListScrollPane = new JScrollPane(eventListResultsPanel);
+    eventListScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    eventListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    eventListScrollPane.setBorder(null);
+    
+    // Create a panel for the main calendar
+    JPanel calendarGridPanel = new JPanel(new BorderLayout());
+    calendarGridPanel.add(calendarPanel, BorderLayout.CENTER);
+    
+    // Add the calendar and event list results to the container
+    calendarContainer.add(calendarGridPanel, BorderLayout.CENTER);
+    calendarContainer.add(eventListScrollPane, BorderLayout.SOUTH);
     calendarContainer.setPreferredSize(new Dimension(550, 0));
 
     // Event panel with fixed width
@@ -535,43 +553,6 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   }
 
   /**
-   * Shows an enhanced event copy dialog with more comprehensive options.
-   *
-   * @param event     the event to copy
-   * @param calendars the list of available calendars
-   */
-  public void showEventCopyDialog(Event event, List<ICalendar> calendars) {
-    // Use the interface type rather than the concrete implementation
-    view.dialog.IEventCopyDialog dialog = new view.dialog.EnhancedEventCopyDialog(this, event, calendars);
-    boolean confirmed = dialog.showDialog();
-
-    if (confirmed) {
-      // Get the target calendar name and datetime information
-      String targetCalendarName = dialog.getTargetCalendarName();
-      LocalDateTime targetStartDateTime = dialog.getTargetStartDateTime();
-      LocalDateTime targetEndDateTime = dialog.getTargetEndDateTime();
-
-      // Create a copy of the event with the new target date/time
-      Event targetEvent = event;
-      targetEvent.setStartDateTime(targetStartDateTime);
-      targetEvent.setEndDateTime(targetEndDateTime);
-
-      // Notify the controller that the event should be copied
-      if (guiController != null) {
-        try {
-          String result = guiController.executeCopyEvent(targetEvent, targetCalendarName);
-          showInfoMessage(result);
-        } catch (Exception e) {
-          // If an exception occurs (likely ConflictingEventException), show error to user
-          showErrorMessage("Cannot copy event: " + e.getMessage() +
-                  "\n\nEvents cannot conflict with each other. A conflict with any instance " +
-                  "of a recurring event is treated as a conflict with the recurring event itself, and is prohibited.");
-        }
-      }
-    }
-  }
-
-  /**
    * Gets the event panel.
    *
    * @return the event panel
@@ -659,10 +640,135 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
     System.out.println("[DEBUG] Updating event list for date range " + startDate + " to " + endDate +
             " with " + (events != null ? events.size() : 0) + " events");
+            
     // Highlight the date range in the calendar panel
     calendarPanel.setSelectedDateRange(startDate, endDate);
-    // Update the event list
-    eventPanel.updateEventList(events);
+    
+    // Clear the event list results panel and update it with new content
+    updateEventListResultsPanel(startDate, endDate, events);
+    
+    if (events != null && !events.isEmpty()) {
+      // Display the first event in the detail view on the right panel
+      Event firstEvent = events.get(0);
+      System.out.println("[DEBUG] Auto-selected first event in range: " + firstEvent.getSubject());
+      eventPanel.displayEvent(firstEvent);
+      
+      // Make sure to update the calendar display with the events
+      calendarPanel.updateEvents(events);
+    } else {
+      // Keep the event detail panel on the right for creating/editing
+      // Don't clear the form if user is in the middle of creating/editing an event
+      eventPanel.clearForm();
+    }
+  }
+  
+  /**
+   * Updates the event list results panel to display events under the calendar grid.
+   * This keeps the create/edit panel on the right side intact.
+   * 
+   * @param startDate The start date of the range (or a single date)
+   * @param endDate The end date of the range (same as startDate for single day)
+   * @param events The list of events to display
+   */
+  private void updateEventListResultsPanel(LocalDate startDate, LocalDate endDate, List<Event> events) {
+    // Clear previous content
+    eventListResultsPanel.removeAll();
+    
+    if (events == null || events.isEmpty()) {
+      // If no events, display a message
+      JLabel noEventsLabel = new JLabel("No events for " + 
+        (startDate.equals(endDate) ? "date " + startDate : "range " + startDate + " to " + endDate));
+      noEventsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+      noEventsLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+      eventListResultsPanel.add(noEventsLabel, BorderLayout.CENTER);
+    } else {
+      // Create a panel to display the events in a list format
+      JPanel listPanel = new JPanel();
+      listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+      listPanel.setBackground(Color.WHITE);
+      
+      // Add a header
+      JLabel headerLabel = new JLabel("Events for " + 
+        (startDate.equals(endDate) ? "date " + startDate : "range " + startDate + " to " + endDate) + 
+        " (" + events.size() + " events)");
+      headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
+      headerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+      headerLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
+      listPanel.add(headerLabel);
+      
+      // Add each event to the list
+      for (Event event : events) {
+        JPanel eventItemPanel = createEventItemPanel(event);
+        eventItemPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        listPanel.add(eventItemPanel);
+        listPanel.add(Box.createVerticalStrut(5)); // Add spacing between events
+      }
+      
+      // Add the list panel to a scroll pane in the results panel
+      JScrollPane scrollPane = new JScrollPane(listPanel);
+      scrollPane.setBorder(null);
+      scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smoother scrolling
+      eventListResultsPanel.add(scrollPane, BorderLayout.CENTER);
+    }
+    
+    // Update the UI
+    eventListResultsPanel.revalidate();
+    eventListResultsPanel.repaint();
+  }
+  
+  /**
+   * Creates a panel for displaying a single event in the event list results.
+   * 
+   * @param event The event to display
+   * @return A panel containing the event details
+   */
+  private JPanel createEventItemPanel(Event event) {
+    JPanel panel = new JPanel(new BorderLayout(10, 5));
+    panel.setBackground(Color.WHITE);
+    panel.setBorder(BorderFactory.createCompoundBorder(
+      BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
+      BorderFactory.createEmptyBorder(5, 5, 5, 5)
+    ));
+    
+    // Left side - subject and time
+    JPanel detailsPanel = new JPanel();
+    detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+    detailsPanel.setBackground(Color.WHITE);
+    
+    // Subject with bold font
+    JLabel subjectLabel = new JLabel(event.getSubject());
+    subjectLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    subjectLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    detailsPanel.add(subjectLabel);
+    
+    // Date and time
+    String dateTimeStr = "" + event.getStartDateTime().toLocalDate() + 
+                        " " + event.getStartDateTime().toLocalTime() + 
+                        " - " + event.getEndDateTime().toLocalTime();
+    JLabel timeLabel = new JLabel(dateTimeStr);
+    timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+    timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    detailsPanel.add(timeLabel);
+    
+    // Description (if present)
+    if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+      JLabel descLabel = new JLabel(event.getDescription());
+      descLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+      descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+      detailsPanel.add(descLabel);
+    }
+    
+    panel.add(detailsPanel, BorderLayout.CENTER);
+    
+    // Right side - View button
+    JButton viewButton = new JButton("View");
+    viewButton.addActionListener(e -> {
+      // When clicked, display this event in the event panel
+      eventPanel.displayEvent(event);
+    });
+    panel.add(viewButton, BorderLayout.EAST);
+    
+    return panel;
   }
 
   /**
@@ -680,9 +786,29 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
 
   @Override
   public void updateEventList(List<Event> events) {
-    if (events != null) {
+    if (events != null && !events.isEmpty()) {
+      // Update calendar panel events
       calendarPanel.updateEvents(events);
-      calendarPanel.updateEventList(LocalDate.now());
+      
+      // Get the date of the first event
+      LocalDate eventDate = events.get(0).getStartDateTime().toLocalDate();
+      
+      // Display the events in the results panel under the calendar
+      updateEventListResultsPanel(eventDate, eventDate, events);
+      
+      // If we have events, select the first one to display its details in the right panel
+      Event firstEvent = events.get(0);
+      System.out.println("[DEBUG] Auto-selected first event: " + firstEvent.getSubject());
+      eventPanel.displayEvent(firstEvent);
+      
+      // Update the calendar panel with the date of the first event
+      calendarPanel.updateEventList(eventDate);
+    } else {
+      // Clear the event panel if no events
+      eventPanel.clearForm();
+      
+      // Show "no events" in the results panel
+      updateEventListResultsPanel(LocalDate.now(), LocalDate.now(), null);
     }
   }
 

@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import controller.command.copy.DirectCopyEventCommand;
 import controller.command.edit.strategy.ConsolidatedEventEditor;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
@@ -30,7 +29,7 @@ import model.exceptions.ConflictingEventException;
 import model.exceptions.EventNotFoundException;
 import model.exceptions.InvalidEventException;
 import utilities.CalendarNameValidator;
-import utilities.PopupImageHandler;
+import view.ButtonStyler;
 import utilities.TimeZoneHandler;
 import view.EventFormData;
 import view.GUICalendarPanel;
@@ -310,12 +309,6 @@ public class GUIController {
       public void onEditEvent(Event event) {
         System.out.println("[DEBUG] Edit event requested: " + event.getSubject());
         editEvent(event);
-      }
-
-      @Override
-      public void onCopyEvent(Event event) {
-        System.out.println("[DEBUG] Copy event requested: " + event.getSubject());
-        showCopyEventDialog(event);
       }
 
       @Override
@@ -750,7 +743,7 @@ public class GUIController {
     try {
       System.out.println("[DEBUG] About to show edit popup image");
       // Show the image popup first
-      PopupImageHandler.showEditEventPopup((JFrame) view);
+      ButtonStyler.showEditEventPopup((JFrame) view);
       System.out.println("[DEBUG] Edit popup image display method called");
     } catch (Exception e) {
       System.err.println("[ERROR] Error showing edit popup: " + e.getMessage());
@@ -791,72 +784,6 @@ public class GUIController {
    *
    * @param event the event to copy
    */
-  public void showCopyEventDialog(Event event) {
-    System.out.println("[DEBUG] GUIController.showCopyEventDialog called for: " + event.getSubject());
-    System.out.println("[DEBUG] Showing copy dialog for event: " + event.getSubject());
-    System.out.println("[DEBUG] Event details: ID=" + event.getId() + ", start=" + event.getStartDateTime() + ", end=" + event.getEndDateTime());
-
-    if (currentCalendar == null) {
-      System.out.println("[DEBUG] No current calendar selected");
-      view.displayError("Please select a calendar first");
-      return;
-    }
-    System.out.println("[DEBUG] Current calendar: " + currentCalendar.getName());
-
-    try {
-      System.out.println("[DEBUG] About to show copy popup image");
-      // Show the image popup first
-      PopupImageHandler.showCopyEventPopup((JFrame) view);
-      System.out.println("[DEBUG] Copy popup image display method called");
-    } catch (Exception e) {
-      System.err.println("[ERROR] Error showing copy popup: " + e.getMessage());
-      e.printStackTrace();
-    }
-
-    try {
-      // Create a simple dialog to get target calendar
-      String[] calendarNames = calendarManager.getCalendarRegistry().getCalendarNames().toArray(new String[0]);
-      String targetCalendarName = (String) JOptionPane.showInputDialog(
-              null,
-              "Select target calendar:",
-              "Copy Event",
-              JOptionPane.QUESTION_MESSAGE,
-              null,
-              calendarNames,
-              calendarNames.length > 0 ? calendarNames[0] : null);
-
-      if (targetCalendarName != null) {
-        // Get the target calendar
-        ICalendar targetCalendar = null;
-        try {
-          targetCalendar = calendarManager.getCalendar(targetCalendarName);
-        } catch (Exception e) {
-          view.showErrorMessage("Target calendar not found: " + e.getMessage());
-          return;
-        }
-
-        if (targetCalendar == null) {
-          view.showErrorMessage("Target calendar not found");
-          return;
-        }
-
-        // Execute the copy command
-        DirectCopyEventCommand copyCommand = new DirectCopyEventCommand(targetCalendar, event);
-
-        boolean success = copyCommand.execute();
-        if (success) {
-          JOptionPane.showMessageDialog(null, "Event copied successfully");
-          view.refreshView();
-        } else {
-          JOptionPane.showMessageDialog(null, "Failed to copy event. There may be a conflict.");
-        }
-      }
-    } catch (Exception e) {
-      System.out.println("[ERROR] Error showing copy dialog: " + e.getMessage());
-      e.printStackTrace();
-      JOptionPane.showMessageDialog(null, "Error copying event: " + e.getMessage());
-    }
-  }
 
   /**
    * Handles a new event being saved from the event panel.
@@ -1102,53 +1029,6 @@ public class GUIController {
    * @param targetCalendarName the name of the target calendar
    * @return a message indicating the result of the operation
    */
-  public String executeCopyEvent(Event event, String targetCalendarName) {
-    System.out.println("[DEBUG] Executing copy event: " + (event != null ? event.getSubject() : "null") + " to calendar: " + targetCalendarName);
-
-    if (event == null) {
-      return "Error: No event selected";
-    }
-
-    try {
-      // Get the target calendar
-      ICalendar targetCalendar = null;
-      try {
-        targetCalendar = calendarManager.getCalendar(targetCalendarName);
-      } catch (Exception e) {
-        return "Error: Target calendar not found";
-      }
-
-      if (targetCalendar == null) {
-        return "Error: Target calendar not found";
-      }
-
-      // Create a new event with the same details
-      Event copiedEvent = new Event(
-              event.getSubject(),
-              event.getStartDateTime(),
-              event.getEndDateTime(),
-              event.getDescription(),
-              event.getLocation(),
-              event.isPublic()
-      );
-
-      // Add the event to the target calendar with conflict checking enabled
-      boolean added = targetCalendar.addEvent(copiedEvent, true);
-
-      if (added) {
-        // Refresh the view if the target calendar is the current calendar
-        if (currentCalendar != null && targetCalendar == currentCalendar) {
-          view.refreshView();
-        }
-        return "Event copied successfully to " + targetCalendarName;
-      } else {
-        return "Failed to copy event to " + targetCalendarName;
-      }
-    } catch (Exception e) {
-      return "Error copying event: " + e.getMessage();
-    }
-  }
-
   /**
    * Handles the closing of the application.
    */

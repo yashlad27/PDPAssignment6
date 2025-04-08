@@ -61,7 +61,6 @@ public class GUIEventPanel extends JPanel {
   private final JButton saveButton;
   private final JButton cancelButton;
   private final JButton editButton;
-  private final JButton copyButton;
 
   // Mode indicator label
   private final JLabel modeLabel;
@@ -171,16 +170,12 @@ public class GUIEventPanel extends JPanel {
     saveButton = new JButton("Save");
     cancelButton = new JButton("Cancel");
     editButton = new JButton("Edit");
-    copyButton = new JButton("Copy");
-
-    // Hide edit and copy buttons as per requirements
+    // Hide edit button initially
     editButton.setVisible(false);
-    copyButton.setVisible(false);
 
-    // Explicitly set all buttons to be visible
+    // Explicitly set buttons to be visible
     saveButton.setVisible(true);
     cancelButton.setVisible(true);
-    copyButton.setVisible(true);
 
     System.out.println("[DEBUG] All buttons created and set to visible");
     recurringOptionsPanel = new JPanel(new GridLayout(0, 1));
@@ -360,49 +355,6 @@ public class GUIEventPanel extends JPanel {
       }
     });
 
-    // Copy button
-    copyButton.addActionListener(e -> {
-      System.out.println("[DEBUG] Copy button clicked for event: " + (currentEvent != null ? currentEvent.getSubject() : "null"));
-      if (currentEvent != null) {
-        setPanelMode(PanelMode.COPY);
-
-        // Populate the copy options panel with available calendars
-        if (listener != null) {
-          // Request available calendars from the controller
-          List<String> calendarNames = new ArrayList<>();
-          try {
-            // Get calendar names from the listener
-            calendarNames = listener.getAvailableCalendarNames();
-            setAvailableCalendars(calendarNames);
-            System.out.println("[DEBUG] Available calendars for copy: " + calendarNames);
-          } catch (Exception ex) {
-            System.out.println("[DEBUG] Error getting calendar names: " + ex.getMessage());
-          }
-        }
-
-        // Set target date/time to match the current event
-        Calendar cal = Calendar.getInstance();
-        LocalDateTime startDateTime = currentEvent.getStartDateTime();
-        LocalDateTime endDateTime = currentEvent.getEndDateTime();
-
-        cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1, startDateTime.getDayOfMonth());
-        targetDateSpinner.setValue(cal.getTime());
-
-        cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
-        cal.set(Calendar.MINUTE, startDateTime.getMinute());
-        targetStartTimeSpinner.setValue(cal.getTime());
-
-        cal.set(Calendar.HOUR_OF_DAY, endDateTime.getHour());
-        cal.set(Calendar.MINUTE, endDateTime.getMinute());
-        targetEndTimeSpinner.setValue(cal.getTime());
-
-        // Show copy options panel
-        copyOptionsPanel.setVisible(true);
-        System.out.println("[DEBUG] Copy options panel displayed");
-      } else {
-        System.out.println("[DEBUG] Cannot copy: No event selected");
-      }
-    });
 
     // Add document listeners to text fields for real-time validation
     subjectField.getDocument().addDocumentListener(new DocumentListener() {
@@ -640,9 +592,8 @@ public class GUIEventPanel extends JPanel {
       System.out.println("[DEBUG] Showing copy options panel");
     }
 
-    // Make all buttons visible all the time
+    // Make buttons visible all the time
     editButton.setVisible(true);
-    copyButton.setVisible(true);
     saveButton.setVisible(true);
     cancelButton.setVisible(true);
 
@@ -664,7 +615,6 @@ public class GUIEventPanel extends JPanel {
     System.out.println("[DEBUG] After setPanelMode - Save button visibility: " + saveButton.isVisible());
     System.out.println("[DEBUG] After setPanelMode - Cancel button visibility: " + cancelButton.isVisible());
     System.out.println("[DEBUG] After setPanelMode - Edit button visibility: " + editButton.isVisible());
-    System.out.println("[DEBUG] After setPanelMode - Copy button visibility: " + copyButton.isVisible());
 
     revalidate();
     repaint();
@@ -764,7 +714,6 @@ public class GUIEventPanel extends JPanel {
     // No need to explicitly set button visibility here as setPanelMode now makes all buttons visible
 
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Edit button visibility: " + editButton.isVisible());
-    System.out.println("[DEBUG] displayEvent - After setPanelMode - Copy button visibility: " + copyButton.isVisible());
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Save button visibility: " + saveButton.isVisible());
 
     // Force repaint to ensure buttons are visible
@@ -860,7 +809,6 @@ public class GUIEventPanel extends JPanel {
 
     System.out.println("[DEBUG] clearForm - After setPanelMode - Save button visibility: " + saveButton.isVisible());
     System.out.println("[DEBUG] clearForm - After setPanelMode - Edit button visibility: " + editButton.isVisible());
-    System.out.println("[DEBUG] clearForm - After setPanelMode - Copy button visibility: " + copyButton.isVisible());
 
     // Reset current event
     currentEvent = null;
@@ -1327,30 +1275,26 @@ public class GUIEventPanel extends JPanel {
 
     // Create a dedicated button panel with fixed layout to ensure all buttons are visible
     JPanel buttonPanel = new JPanel();
-    buttonPanel.setLayout(new GridLayout(1, 4, 10, 5));
+    buttonPanel.setLayout(new GridLayout(1, 3, 10, 5));
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
     // Add all buttons to the panel
     buttonPanel.add(saveButton);
     buttonPanel.add(editButton);
-    buttonPanel.add(copyButton);
     buttonPanel.add(cancelButton);
 
     // Set preferred size for buttons to prevent squishing
     Dimension buttonSize = new Dimension(100, 30);
     editButton.setPreferredSize(buttonSize);
-    copyButton.setPreferredSize(buttonSize);
     saveButton.setPreferredSize(buttonSize);
     cancelButton.setPreferredSize(buttonSize);
 
     // Ensure all buttons are visible
     editButton.setVisible(true);
-    copyButton.setVisible(true);
     saveButton.setVisible(true);
     cancelButton.setVisible(true);
 
     System.out.println("[DEBUG] setupLayout - Edit button visibility: " + editButton.isVisible());
-    System.out.println("[DEBUG] setupLayout - Copy button visibility: " + copyButton.isVisible());
     System.out.println("[DEBUG] setupLayout - Save button visibility: " + saveButton.isVisible());
     System.out.println("[DEBUG] setupLayout - Cancel button visibility: " + cancelButton.isVisible());
 

@@ -90,13 +90,6 @@ public class GUICalendarPanel extends JPanel {
     void onEditEvent(Event event);
 
     /**
-     * Called when an event copy is requested.
-     *
-     * @param event the event to copy
-     */
-    void onCopyEvent(Event event);
-
-    /**
      * Called when an event print is requested.
      *
      * @param event the event to print
@@ -966,10 +959,6 @@ public class GUICalendarPanel extends JPanel {
           System.out.println("[DEBUG] Sending edit event to listener: " + targetEvent.getSubject());
           listener.onEditEvent(targetEvent);
           break;
-        case "copy":
-          System.out.println("[DEBUG] Sending copy event to listener: " + targetEvent.getSubject());
-          listener.onCopyEvent(targetEvent);
-          break;
         case "print":
           System.out.println("[DEBUG] Sending print event to listener: " + targetEvent.getSubject());
           listener.onPrintEvent(targetEvent);
@@ -1117,19 +1106,6 @@ public class GUICalendarPanel extends JPanel {
       });
       buttonPanel.add(editButton);
       
-      // Copy button
-      JButton copyButton = new JButton("Copy");
-      copyButton.setBackground(HEADER_COLOR);
-      copyButton.setForeground(Color.WHITE);
-      copyButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-      copyButton.setFocusPainted(false);
-      final String eventIdForCopy = currentEventId; // Create final copy for lambda
-      copyButton.addActionListener(e -> {
-        System.out.println("[DEBUG] Copy button clicked for event in range view: " + eventIdForCopy);
-        highlightEvent(eventPanel);
-        handleEventAction(eventIdForCopy, "copy");
-      });
-      buttonPanel.add(copyButton);
       
       // Print button
       JButton printButton = new JButton("Print");
@@ -1177,10 +1153,21 @@ public class GUICalendarPanel extends JPanel {
             parent.add(scrollPane, index);
             parent.revalidate();
             parent.repaint();
+            
+            // Force UI refresh to ensure visibility
+            SwingUtilities.invokeLater(() -> {
+              parent.revalidate();
+              parent.repaint();
+              scrollPane.revalidate();
+              scrollPane.repaint();
+            });
           }
         }
       }
     }
+    
+    // Don't update the eventListArea reference directly since it's a different type
+    // The eventListArea will be replaced in the UI hierarchy
   }
   
   /**

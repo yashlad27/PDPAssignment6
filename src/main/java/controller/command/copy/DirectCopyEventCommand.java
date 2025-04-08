@@ -18,7 +18,7 @@ public class DirectCopyEventCommand implements ICommand {
    * Constructs a new DirectCopyEventCommand.
    *
    * @param targetCalendar the target calendar to copy the event to
-   * @param eventToCopy    the event to copy
+   * @param eventToCopy the event to copy
    */
   public DirectCopyEventCommand(ICalendar targetCalendar, Event eventToCopy) {
     if (targetCalendar == null) {

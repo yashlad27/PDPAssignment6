@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 import model.calendar.iterator.ConsolidatedEventIterator;
 import model.calendar.iterator.EventIterator;
 import model.event.Event;
+import model.event.EventPropertyUpdater;
 import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
 import model.export.IDataExporter;
 import utilities.DateTimeUtil;
-import utilities.EventPropertyUpdater;
 import utilities.TimeZoneHandler;
 
 /**
