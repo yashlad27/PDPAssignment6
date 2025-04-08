@@ -11,6 +11,7 @@ import model.exceptions.CalendarNotFoundException;
 import model.exceptions.DuplicateCalendarException;
 import model.exceptions.InvalidTimezoneException;
 import utilities.TimeZoneHandler;
+import utilities.CalendarNameValidator;
 import view.GUIView;
 
 /**
@@ -252,7 +253,7 @@ public class CalendarViewController {
    */
   public void initializeCalendarView() {
     // Clear any existing calendar names
-    utilities.CalendarNameValidator.removeAllCalendarNames();
+    CalendarNameValidator.removeAllCalendarNames();
 
     // Create a default calendar if none exists
     String defaultCalendar = "Default_Calendar";

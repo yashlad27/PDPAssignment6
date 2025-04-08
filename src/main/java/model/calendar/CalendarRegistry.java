@@ -5,8 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import model.calendar.iterator.CalendarIterator;
-import model.calendar.iterator.CalendarRegistryIterator;
+import model.calendar.iterator.ConsolidatedIterator;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.exceptions.CalendarNotFoundException;
@@ -149,8 +148,8 @@ public class CalendarRegistry {
    *
    * @return an iterator for all calendars
    */
-  public CalendarIterator getCalendarIterator() {
-    return new CalendarRegistryIterator(calendars);
+  public ConsolidatedIterator.ICalendarIterator getCalendarIterator() {
+    return ConsolidatedIterator.forCalendarRegistry(calendars);
   }
 
   /**

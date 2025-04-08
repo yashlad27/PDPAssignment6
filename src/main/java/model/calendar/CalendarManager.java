@@ -2,7 +2,7 @@ package model.calendar;
 
 import java.util.Set;
 
-import model.calendar.iterator.CalendarIterator;
+import model.calendar.iterator.ConsolidatedIterator;
 import model.exceptions.CalendarNotFoundException;
 import model.exceptions.DuplicateCalendarException;
 import model.exceptions.InvalidTimezoneException;
@@ -203,7 +203,7 @@ public class CalendarManager {
    */
   public ICalendar getFirstAvailableCalendar() {
     // Use the iterator pattern to get the first available calendar
-    CalendarIterator iterator = getCalendarIterator();
+    ConsolidatedIterator.ICalendarIterator iterator = getCalendarIterator();
     if (iterator.hasNext()) {
       return iterator.next();
     }
@@ -215,7 +215,7 @@ public class CalendarManager {
    *
    * @return an iterator for all calendars
    */
-  public CalendarIterator getCalendarIterator() {
+  public ConsolidatedIterator.ICalendarIterator getCalendarIterator() {
     return calendarRegistry.getCalendarIterator();
   }
 

@@ -14,8 +14,7 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import model.calendar.iterator.ConsolidatedEventIterator;
-import model.calendar.iterator.EventIterator;
+import model.calendar.iterator.ConsolidatedIterator;
 import model.event.Event;
 import model.event.EventPropertyUpdater;
 import model.event.RecurringEvent;
@@ -304,7 +303,7 @@ public class Calendar implements ICalendar {
   @Override
   public List<Event> getAllEvents() {
     // Use the iterator pattern to get all events
-    EventIterator iterator = getEventIterator();
+    ConsolidatedIterator.IEventIterator iterator = getEventIterator();
     List<Event> allEvents = new ArrayList<>();
 
     while (iterator.hasNext()) {
@@ -422,7 +421,7 @@ public class Calendar implements ICalendar {
   private boolean hasConflict(Event event) {
     // Use the iterator pattern to check for conflicts
     EventFilter conflictFilter = existingEvent -> event.conflictsWith(existingEvent);
-    EventIterator iterator = getFilteredEventIterator(conflictFilter);
+    ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(conflictFilter);
     return iterator.hasNext();
   }
 
@@ -502,7 +501,7 @@ public class Calendar implements ICalendar {
       return false;
     };
 
-    EventIterator iterator = getFilteredEventIterator(dateRangeFilter);
+    ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(dateRangeFilter);
     List<Event> result = new ArrayList<>();
 
     while (iterator.hasNext()) {
@@ -620,7 +619,7 @@ public class Calendar implements ICalendar {
    */
   public List<Event> getFilteredEvents(EventFilter filter) {
     // Use the iterator pattern to filter events
-    EventIterator iterator = getFilteredEventIterator(filter);
+    ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(filter);
     List<Event> result = new ArrayList<>();
 
     while (iterator.hasNext()) {
@@ -636,11 +635,11 @@ public class Calendar implements ICalendar {
    *
    * @return an iterator for all events
    */
-  public EventIterator getEventIterator() {
-    List<EventIterator> iterators = new ArrayList<>();
-    iterators.add(ConsolidatedEventIterator.createRegularIterator(events));
-    iterators.add(ConsolidatedEventIterator.createRecurringIterator(recurringEvents));
-    return ConsolidatedEventIterator.createCompositeIterator(iterators);
+  public ConsolidatedIterator.IEventIterator getEventIterator() {
+    List<ConsolidatedIterator.IEventIterator> iterators = new ArrayList<>();
+    iterators.add(ConsolidatedIterator.forEvents(events));
+    iterators.add(ConsolidatedIterator.forRecurringEvents(recurringEvents, LocalDate.now(), LocalDate.now().plusYears(1)));
+    return ConsolidatedIterator.composite(iterators);
   }
 
   /**
@@ -649,8 +648,8 @@ public class Calendar implements ICalendar {
    * @param filter the filter to apply
    * @return a filtered iterator
    */
-  public EventIterator getFilteredEventIterator(EventFilter filter) {
-    return ConsolidatedEventIterator.createFilteredIterator(getEventIterator(), filter);
+  public ConsolidatedIterator.IEventIterator getFilteredEventIterator(EventFilter filter) {
+    return ConsolidatedIterator.withFilter(getEventIterator(), filter);
   }
 
   /**
@@ -659,7 +658,7 @@ public class Calendar implements ICalendar {
    * @param date the date to get events for
    * @return an iterator for events on the specified date
    */
-  public EventIterator getEventsOnDateIterator(LocalDate date) {
+  public ConsolidatedIterator.IEventIterator getEventsOnDateIterator(LocalDate date) {
     if (date == null) {
       throw new IllegalArgumentException("Date cannot be null");
     }
@@ -696,7 +695,7 @@ public class Calendar implements ICalendar {
     };
 
     // Use the iterator pattern to check if busy
-    EventIterator iterator = getFilteredEventIterator(busyFilter);
+    ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(busyFilter);
     return iterator.hasNext();
   }
 

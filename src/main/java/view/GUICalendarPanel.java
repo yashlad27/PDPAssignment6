@@ -19,6 +19,7 @@ import javax.swing.*;
 
 import model.calendar.ICalendar;
 import model.event.Event;
+import view.ButtonStyler;
 import model.event.RecurringEvent;
 
 /**

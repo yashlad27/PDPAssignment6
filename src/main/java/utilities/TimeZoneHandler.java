@@ -107,6 +107,20 @@ public class TimeZoneHandler {
   }
 
   /**
+   * Functional interface for converting times between timezones.
+   */
+  @FunctionalInterface
+  public interface TimezoneConverter {
+    /**
+     * Converts a LocalDateTime from one timezone to another.
+     *
+     * @param dateTime the LocalDateTime to convert
+     * @return the converted LocalDateTime
+     */
+    LocalDateTime convert(LocalDateTime dateTime);
+  }
+
+  /**
    * Gets a timezone converter for converting between two timezones.
    * The converter will first convert to UTC, then to the target timezone.
    *
