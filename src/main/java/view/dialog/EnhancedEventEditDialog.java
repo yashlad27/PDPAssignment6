@@ -1,25 +1,38 @@
 package view.dialog;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
 import javax.swing.text.JTextComponent;
 
 import model.event.Event;
 
 /**
- * Enhanced dialog for editing events with improved UI and validation.
- * This implementation follows the SOLID principles:
- * - Single Responsibility: Only handles event editing UI
- * - Open/Closed: Extends AbstractEventDialog and implements IEventEditDialog
- * - Liskov Substitution: Can be used anywhere an IEventEditDialog is needed
- * - Interface Segregation: Implements only methods relevant to event editing
- * - Dependency Inversion: GUI components depend on dialog interfaces, not implementations
+ * Enhanced dialog for editing events with improved UI and validation. This implementation follows
+ * the SOLID principles: - Single Responsibility: Only handles event editing UI - Open/Closed:
+ * Extends AbstractEventDialog and implements IEventEditDialog - Liskov Substitution: Can be used
+ * anywhere an IEventEditDialog is needed - Interface Segregation: Implements only methods relevant
+ * to event editing - Dependency Inversion: GUI components depend on dialog interfaces, not
+ * implementations
  */
 public class EnhancedEventEditDialog extends AbstractEventDialog implements IEventEditDialog {
 
@@ -65,18 +78,15 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
     descriptionArea.setWrapStyleWord(true);
 
     dateSpinner = new JSpinner(new SpinnerDateModel());
-    JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner,
-            "yyyy-MM-dd");
+    JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
     dateSpinner.setEditor(dateEditor);
 
     startTimeSpinner = new JSpinner(new SpinnerDateModel());
-    JSpinner.DateEditor startTimeEditor = new JSpinner.DateEditor(startTimeSpinner,
-            "HH:mm");
+    JSpinner.DateEditor startTimeEditor = new JSpinner.DateEditor(startTimeSpinner, "HH:mm");
     startTimeSpinner.setEditor(startTimeEditor);
 
     endTimeSpinner = new JSpinner(new SpinnerDateModel());
-    JSpinner.DateEditor endTimeEditor = new JSpinner.DateEditor(endTimeSpinner,
-            "HH:mm");
+    JSpinner.DateEditor endTimeEditor = new JSpinner.DateEditor(endTimeSpinner, "HH:mm");
     endTimeSpinner.setEditor(endTimeEditor);
 
     allDayCheckBox = new JCheckBox("All Day Event");
@@ -217,8 +227,8 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
 
     // Create info panel with conflict warning
     JPanel infoPanel = createInfoPanel(
-            "Note: Events cannot conflict with each other. Editing that would create " +
-                    "a conflict with another existing event is not allowed.");
+        "Note: Events cannot conflict with each other. Editing that would create "
+            + "a conflict with another existing event is not allowed.");
 
     // Main layout
     setLayout(new BorderLayout());
@@ -257,15 +267,15 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
     LocalDateTime startDateTime = event.getStartDateTime();
     LocalDateTime endDateTime = event.getEndDateTime();
 
-    boolean isAllDay = startDateTime.toLocalTime().equals(LocalTime.of(0, 0)) &&
-            (endDateTime.toLocalTime().equals(LocalTime.of(23, 59)) ||
-                    endDateTime.toLocalTime().equals(LocalTime.of(23, 59, 59)));
+    boolean isAllDay = startDateTime.toLocalTime().equals(LocalTime.of(0, 0)) && (
+        endDateTime.toLocalTime().equals(LocalTime.of(23, 59)) || endDateTime.toLocalTime()
+            .equals(LocalTime.of(23, 59, 59)));
 
     allDayCheckBox.setSelected(isAllDay);
 
     Calendar cal = Calendar.getInstance();
     cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1,
-            startDateTime.getDayOfMonth());
+        startDateTime.getDayOfMonth());
     dateSpinner.setValue(cal.getTime());
 
     cal = Calendar.getInstance();
@@ -313,8 +323,7 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
    * @param message   the error message
    */
   private void showValidationError(Component component, String message) {
-    JOptionPane.showMessageDialog(this, message,
-            "Validation Error", JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(this, message, "Validation Error", JOptionPane.ERROR_MESSAGE);
     if (component instanceof JTextComponent) {
       ((JTextComponent) component).selectAll();
     }
@@ -345,21 +354,14 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
     Calendar endTimeCal = Calendar.getInstance();
     endTimeCal.setTime(endTimeValue);
 
-    LocalDate date = LocalDate.of(
-            dateCal.get(Calendar.YEAR),
-            dateCal.get(Calendar.MONTH) + 1,
-            dateCal.get(Calendar.DAY_OF_MONTH)
-    );
+    LocalDate date = LocalDate.of(dateCal.get(Calendar.YEAR), dateCal.get(Calendar.MONTH) + 1,
+        dateCal.get(Calendar.DAY_OF_MONTH));
 
-    LocalTime startTime = LocalTime.of(
-            startTimeCal.get(Calendar.HOUR_OF_DAY),
-            startTimeCal.get(Calendar.MINUTE)
-    );
+    LocalTime startTime = LocalTime.of(startTimeCal.get(Calendar.HOUR_OF_DAY),
+        startTimeCal.get(Calendar.MINUTE));
 
-    LocalTime endTime = LocalTime.of(
-            endTimeCal.get(Calendar.HOUR_OF_DAY),
-            endTimeCal.get(Calendar.MINUTE)
-    );
+    LocalTime endTime = LocalTime.of(endTimeCal.get(Calendar.HOUR_OF_DAY),
+        endTimeCal.get(Calendar.MINUTE));
 
     updatedStartDateTime = LocalDateTime.of(date, startTime);
     updatedEndDateTime = LocalDateTime.of(date, endTime);

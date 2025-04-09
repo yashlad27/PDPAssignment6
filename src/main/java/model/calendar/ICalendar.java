@@ -69,11 +69,10 @@ public interface ICalendar {
    *
    * @param recurringEvent The recurring event to add, must not be null
    * @param autoDecline    If true, throws exception on conflict; if false, returns false
-   * @return true if the event was added successfully, false if there was a conflict and autoDecline
-   * is false
+   * @return true if the event was added successfully, false if there was a conflict
    */
   boolean addRecurringEvent(RecurringEvent recurringEvent, boolean autoDecline)
-          throws ConflictingEventException;
+      throws ConflictingEventException;
 
   /**
    * Creates a recurring event that repeats on specified weekdays until a given end date.
@@ -95,8 +94,8 @@ public interface ICalendar {
    * @throws ConflictingEventException if autoDecline is true and any occurrence conflicts
    */
   boolean createRecurringEventUntil(String name, LocalDateTime start, LocalDateTime end,
-                                    String weekdays, LocalDate untilDate, boolean autoDecline)
-          throws InvalidEventException, ConflictingEventException;
+      String weekdays, LocalDate untilDate, boolean autoDecline)
+      throws InvalidEventException, ConflictingEventException;
 
   /**
    * Creates an all-day recurring event with a fixed number of occurrences.
@@ -118,9 +117,8 @@ public interface ICalendar {
    * @throws ConflictingEventException if autoDecline is true and any occurrence conflicts
    */
   boolean createAllDayRecurringEvent(String name, LocalDate date, String weekdays, int occurrences,
-                                     boolean autoDecline, String description,
-                                     String location, boolean isPublic)
-          throws InvalidEventException, ConflictingEventException;
+      boolean autoDecline, String description, String location, boolean isPublic)
+      throws InvalidEventException, ConflictingEventException;
 
   /**
    * Creates an all-day recurring event that repeats until a specific date.
@@ -135,10 +133,8 @@ public interface ICalendar {
    * @throws ConflictingEventException if autoDecline is true and any occurrence conflicts
    */
   boolean createAllDayRecurringEventUntil(String name, LocalDate date, String weekdays,
-                                          LocalDate untilDate, boolean autoDecline,
-                                          String description, String location,
-                                          boolean isPublic)
-          throws InvalidEventException, ConflictingEventException;
+      LocalDate untilDate, boolean autoDecline, String description, String location,
+      boolean isPublic) throws InvalidEventException, ConflictingEventException;
 
   /**
    * Gets all events occurring on a specific date.
@@ -212,8 +208,8 @@ public interface ICalendar {
    * @throws ConflictingEventException if the edit would create a conflict
    */
   boolean editSingleEvent(String subject, LocalDateTime startDateTime, String property,
-                          String newValue)
-          throws EventNotFoundException, InvalidEventException, ConflictingEventException;
+      String newValue)
+      throws EventNotFoundException, InvalidEventException, ConflictingEventException;
 
   /**
    * Updates an existing event with a new version.
@@ -237,7 +233,7 @@ public interface ICalendar {
    * @throws ConflictingEventException if the edit would create a conflict
    */
   int editEventsFromDate(String subject, LocalDateTime startDateTime, String property,
-                         String newValue) throws InvalidEventException, ConflictingEventException;
+      String newValue) throws InvalidEventException, ConflictingEventException;
 
   /**
    * Edits all events with a specific subject.
@@ -250,7 +246,7 @@ public interface ICalendar {
    * @throws ConflictingEventException if the edit would create a conflict
    */
   int editAllEvents(String subject, String property, String newValue)
-          throws InvalidEventException, ConflictingEventException;
+      throws InvalidEventException, ConflictingEventException;
 
   /**
    * Gets all recurring events in the calendar.

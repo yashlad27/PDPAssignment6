@@ -26,6 +26,8 @@ public class RecurringEvent extends Event {
   private final boolean isAllDay;
 
   /**
+   * Checks if the event spans the entire day.
+   *
    * @return true if this event spans the entire day
    */
   public boolean isAllDay() {

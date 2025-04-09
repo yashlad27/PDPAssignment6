@@ -10,15 +10,15 @@ import model.exceptions.InvalidEventException;
  * Interface for command pattern implementation in the calendar application.
  *
  * <p> The command pattern encapsulates a request as an object, thereby allowing for
- * parameterization of clients with different requests, queuing of requests, and logging
- * of the requests. Each command represents a specific operation that can be performed
- * within the calendar application.</p>
+ * parameterization of clients with different requests, queuing of requests, and logging of the
+ * requests. Each command represents a specific operation that can be performed within the calendar
+ * application.</p>
  *
  * <p> Commands in this application follow these principles:</p>
  * <ul>
  *   <li>Single Responsibility: Each command performs exactly one operation</li>
  *   <li>Encapsulation: Commands encapsulate all necessary information to execute an operation</li>
- *   <li>Separation of Concerns: Commands separate the request initiator from the request handler</li>
+ *   <li>Separation of Concerns: Commands separate the request initiator from request handler</li>
  * </ul>
  *
  * <p> This interface facilitates both concrete command implementations and dynamic command
@@ -43,13 +43,15 @@ public interface ICommand {
    *
    * @param args the command arguments as an array of strings, typically parsed from user input
    * @return a string representing the result of command execution, suitable for display to the user
-   * @throws ConflictingEventException when the command would create an event
-   *                                   that conflicts with existing events
-   * @throws InvalidEventException     when the provided event details (date, time, duration, etc.) are invalid
-   * @throws EventNotFoundException    when the command references an event that doesn't exist in the calendar
+   * @throws ConflictingEventException when the command would create an event that conflicts with
+   *                                   existing events
+   * @throws InvalidEventException     when the provided event details (date, time, duration, etc.)
+   *                                   are invalid
+   * @throws EventNotFoundException    when the command references an event that doesn't exist in
+   *                                   the calendar
    */
   String execute(String[] args) throws ConflictingEventException, InvalidEventException,
-          EventNotFoundException;
+      EventNotFoundException;
 
   /**
    * Gets the name of the command.
@@ -75,19 +77,19 @@ public interface ICommand {
    *
    *
    * <p>Note that commands created with this factory method must handle exceptions internally
-   * since the Function interface doesn't support checked exceptions. For commands that need
-   * to throw checked exceptions, implement the interface directly.</p>
+   * since the Function interface doesn't support checked exceptions. For commands that need to
+   * throw checked exceptions, implement the interface directly.</p>
    *
    * @param name     the name of the command, must be non-null and unique in the command registry
-   * @param executor the function that executes the command logic, accepting arguments
-   *                 and returning a result
+   * @param executor the function that executes the command logic, accepting arguments and returning
+   *                 a result
    * @return an ICommand implementation that delegates to the provided function
    */
   static ICommand fromExecutor(String name, Function<String[], String> executor) {
     return new ICommand() {
       @Override
       public String execute(String[] args) throws ConflictingEventException,
-              InvalidEventException, EventNotFoundException {
+          InvalidEventException, EventNotFoundException {
         return executor.apply(args);
       }
 

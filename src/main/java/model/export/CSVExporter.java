@@ -17,21 +17,21 @@ import java.util.stream.Collectors;
 import model.event.Event;
 
 /**
- * Implementation of IDataExporter that handles CSV format exports.
- * This class provides functionality to convert Event objects into CSV format
- * for data persistence and interoperability with other applications.
+ * Implementation of IDataExporter that handles CSV format exports. This class provides
+ * functionality to convert Event objects into CSV format for data persistence and interoperability
+ * with other applications.
  */
 public class CSVExporter implements IDataExporter {
 
   /**
-   * Date formatter used to format just the date portion (YYYY-MM-DD) of date-time values.
-   * This is used for CSV column values that require only date information.
+   * Date formatter used to format just the date portion (YYYY-MM-DD) of date-time values. This is
+   * used for CSV column values that require only date information.
    */
   private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   /**
-   * Time formatter used to format just the time portion (HH:MM) of date-time values.
-   * This is used for CSV column values that require only time information.
+   * Time formatter used to format just the time portion (HH:MM) of date-time values. This is used
+   * for CSV column values that require only time information.
    */
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -131,7 +131,8 @@ public class CSVExporter implements IDataExporter {
   @Override
   public String export(String filePath, List<Event> events) throws IOException {
     System.out.println("[DEBUG] CSVExporter.export called for file: " + filePath);
-    System.out.println("[DEBUG] Number of events to export: " + (events != null ? events.size() : 0));
+    System.out.println(
+        "[DEBUG] Number of events to export: " + (events != null ? events.size() : 0));
 
     if (events == null || events.isEmpty()) {
       System.out.println("[WARNING] No events to export or events list is null");
@@ -149,8 +150,8 @@ public class CSVExporter implements IDataExporter {
     System.out.println("[DEBUG] Opening FileWriter for: " + filePath);
     try (FileWriter writer = new FileWriter(filePath)) {
       // Write header row
-      String header = "Subject,Start Date,Start Time,End Date,End Time,All Day," +
-              "Description,Location,Public\n";
+      String header = "Subject,Start Date,Start Time,End Date,End Time,All Day,"
+          + "Description,Location,Public\n";
       System.out.println("[DEBUG] Writing CSV header: " + header.trim());
       writer.write(header);
 
@@ -158,24 +159,22 @@ public class CSVExporter implements IDataExporter {
       final int[] count = {0};
 
       System.out.println("[DEBUG] Starting to write event data");
-      events.stream()
-              .map(event -> {
-                String formatted = formatEventForCSV(event);
-                System.out.println("[DEBUG] Formatted event " + (count[0] + 1) + ": " +
-                        event.getSubject() + " -> " + formatted.substring(0,
-                        Math.min(50, formatted.length())) +
-                        (formatted.length() > 50 ? "..." : ""));
-                count[0]++;
-                return formatted;
-              })
-              .forEach(line -> {
-                try {
-                  writer.write(line);
-                } catch (IOException e) {
-                  System.err.println("[ERROR] Failed to write event to CSV: " + e.getMessage());
-                  throw new RuntimeException("Failed to write event to CSV", e);
-                }
-              });
+      events.stream().map(event -> {
+        String formatted = formatEventForCSV(event);
+        System.out.println(
+            "[DEBUG] Formatted event " + (count[0] + 1) + ": " + event.getSubject() + " -> "
+                + formatted.substring(0, Math.min(50, formatted.length())) + (
+                formatted.length() > 50 ? "..." : ""));
+        count[0]++;
+        return formatted;
+      }).forEach(line -> {
+        try {
+          writer.write(line);
+        } catch (IOException e) {
+          System.err.println("[ERROR] Failed to write event to CSV: " + e.getMessage());
+          throw new RuntimeException("Failed to write event to CSV", e);
+        }
+      });
 
       System.out.println("[DEBUG] Successfully wrote " + count[0] + " events to CSV file");
     } catch (IOException e) {
@@ -201,36 +200,30 @@ public class CSVExporter implements IDataExporter {
       return "No events found.";
     }
 
-    return events.stream()
-            .map(event -> formatEventForDisplay(event, showDetails))
-            .collect(Collectors.joining("\n"));
+    return events.stream().map(event -> formatEventForDisplay(event, showDetails))
+        .collect(Collectors.joining("\n"));
   }
 
   /**
-   * Formats a single event as a CSV row.
-   * This method generates a properly formatted CSV string for an event, with
-   * values properly escaped according to CSV standards.
+   * Formats a single event as a CSV row. This method generates a properly formatted CSV string for
+   * an event, with values properly escaped according to CSV standards.
    *
    * @param event the event to format as a CSV row
    * @return a CSV-formatted string representing the event, ending with a newline
    */
   private String formatEventForCSV(Event event) {
-    return String.format("%s,%s,%s,%s,%s,%b,%s,%s,%b\n",
-            escapeCSV(event.getSubject()),
-            event.getStartDateTime().format(DATE_FORMATTER),
-            event.getStartDateTime().format(TIME_FORMATTER),
-            event.getEndDateTime().format(DATE_FORMATTER),
-            event.getEndDateTime().format(TIME_FORMATTER),
-            event.isAllDay(),
-            escapeCSV(event.getDescription()),
-            escapeCSV(event.getLocation()),
-            event.isPublic());
+    return String.format("%s,%s,%s,%s,%s,%b,%s,%s,%b\n", escapeCSV(event.getSubject()),
+        event.getStartDateTime().format(DATE_FORMATTER),
+        event.getStartDateTime().format(TIME_FORMATTER),
+        event.getEndDateTime().format(DATE_FORMATTER),
+        event.getEndDateTime().format(TIME_FORMATTER), event.isAllDay(),
+        escapeCSV(event.getDescription()), escapeCSV(event.getLocation()), event.isPublic());
   }
 
   /**
-   * Formats a single event for display in a human-readable format.
-   * This method generates a string representation of an event with basic information
-   * and optional details depending on the showDetails parameter.
+   * Formats a single event for display in a human-readable format. This method generates a string
+   * representation of an event with basic information and optional details depending on the
+   * showDetails parameter.
    *
    * @param event       the event to format for display
    * @param showDetails whether to include detailed information like description,location & privacy
@@ -244,10 +237,8 @@ public class CSVExporter implements IDataExporter {
     if (event.isAllDay()) {
       display.append(" (All Day)");
     } else {
-      display.append(" from ")
-              .append(event.getStartDateTime().format(TIME_FORMATTER))
-              .append(" to ")
-              .append(event.getEndDateTime().format(TIME_FORMATTER));
+      display.append(" from ").append(event.getStartDateTime().format(TIME_FORMATTER))
+          .append(" to ").append(event.getEndDateTime().format(TIME_FORMATTER));
     }
 
     if (showDetails) {
@@ -270,11 +261,9 @@ public class CSVExporter implements IDataExporter {
   }
 
   /**
-   * Escapes a string value for CSV format.
-   * This method handles special characters in CSV:
-   * - If the value contains commas, double quotes, or newlines, it wraps the value in quotes
-   * - Any existing double quotes are escaped by doubling them
-   * - Null values are converted to empty strings
+   * Escapes a string value for CSV format. This method handles special characters in CSV: - If the
+   * value contains commas, double quotes, or newlines, it wraps the value in quotes - Any existing
+   * double quotes are escaped by doubling them - Null values are converted to empty strings
    *
    * @param value the string value to escape for CSV format
    * @return the properly escaped CSV value
