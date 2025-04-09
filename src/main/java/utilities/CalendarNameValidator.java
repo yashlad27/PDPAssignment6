@@ -70,4 +70,34 @@ public class CalendarNameValidator {
   public static void removeAllCalendarNames() {
     existingNames.clear();
   }
+  
+  /**
+   * Checks if a calendar name already exists.
+   *
+   * @param name the calendar name to check
+   * @return true if the name exists, false otherwise
+   */
+  public static boolean hasCalendarName(String name) {
+    if (name == null) {
+      return false;
+    }
+    String trimmedName = name.trim();
+    String unquotedName = removeQuotes(trimmedName);
+    return existingNames.contains(unquotedName);
+  }
+  
+  /**
+   * Removes a calendar name from the existing names.
+   *
+   * @param name the calendar name to remove
+   * @return true if the name was removed, false if it didn't exist
+   */
+  public static boolean removeCalendarName(String name) {
+    if (name == null) {
+      return false;
+    }
+    String trimmedName = name.trim();
+    String unquotedName = removeQuotes(trimmedName);
+    return existingNames.remove(unquotedName);
+  }
 }
