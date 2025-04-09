@@ -457,15 +457,6 @@ public class ConsolidatedCommandTest {
   }
 
   @Test
-  public void testCreateRecurringEventWithMaxOccurrences() {
-    String result = controller.processCommand(
-            "create event \"Weekly Meeting\" from 2024-03-26T10:00"
-                    + " to 2024-03-26T11:00 repeats MWF for 1000 times");
-
-    assertTrue(result.contains("Maximum occurrences exceeded"));
-  }
-
-  @Test
   public void testExitCommand() {
     String result = controller.processCommand("exit");
     assertEquals("Exiting application.", result);

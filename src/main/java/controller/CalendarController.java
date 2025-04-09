@@ -17,6 +17,7 @@ import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.exceptions.CalendarNotFoundException;
+import view.GUIView;
 import view.ICalendarView;
 
 /**
@@ -431,45 +432,28 @@ public class CalendarController {
   }
 
   /**
-   * Sets the selected calendar by name.
-   * This method is specifically designed for the GUI interaction.
+   * Sets the selected calendar.
    *
-   * @param calendarName The name of the calendar to select
-   * @return true if the calendar was selected successfully, false otherwise
+   * @param calendar the calendar to select
    */
-  public boolean setSelectedCalendarByName(String calendarName) {
-    if (calendarName == null || calendarName.trim().isEmpty()) {
-      return false;
-    }
-
-    try {
-      String command = "use calendar \"" + calendarName + "\"";
-      String result = processCommand(command);
-      updateCommandFactory();
-      return !result.startsWith("Error");
-    } catch (Exception e) {
-      view.displayError("Error selecting calendar: " + e.getMessage());
-      return false;
+  public void setSelectedCalendar(ICalendar calendar) {
+    if (view instanceof GUIView) {
+      GUIView guiView = (GUIView) view;
+      guiView.getCalendarPanel().updateCalendarName(calendar.getName());
     }
   }
 
   /**
-   * Sets the selected calendar.
-   * This method is specifically designed for the GUI interaction.
+   * Sets the selected calendar by name.
    *
-   * @param calendar The calendar to select
-   * @return true if the calendar was selected successfully, false otherwise
+   * @param calendarName the name of the calendar to select
    */
-  public boolean setSelectedCalendar(ICalendar calendar) {
-    if (calendar == null) {
-      return false;
-    }
-
+  public void setSelectedCalendarByName(String calendarName) {
     try {
-      return setSelectedCalendarByName(calendar.toString());
-    } catch (Exception e) {
-      view.displayError("Error selecting calendar: " + e.getMessage());
-      return false;
+      ICalendar calendar = calendarManager.getCalendar(calendarName);
+      setSelectedCalendar(calendar);
+    } catch (CalendarNotFoundException e) {
+      view.displayError("Calendar not found: " + e.getMessage());
     }
   }
 

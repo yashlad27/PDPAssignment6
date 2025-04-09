@@ -322,7 +322,7 @@ public class ConsolidatedEventCreator implements EventCreator {
 
     switch (eventType) {
       case SINGLE:
-        return new Event(eventName, startDateTime, endDateTime, description, location, isPublic);
+        return new Event(eventName, startDateTime, endDateTime, description, location, isPublic, false);
 
       default:
         return null;
@@ -347,7 +347,7 @@ public class ConsolidatedEventCreator implements EventCreator {
           LocalDateTime startOfDay = date.atStartOfDay();
           LocalDateTime endOfDay = date.atTime(23, 59, 59);
           Event allDayEvent = new Event(eventName, startOfDay, endOfDay,
-                  description, location, isPublic);
+                  description, location, isPublic, true);
           success = calendar.addEvent(allDayEvent, autoDecline);
           return success ? "All-day event created successfully" : "Failed to create all-day event";
 

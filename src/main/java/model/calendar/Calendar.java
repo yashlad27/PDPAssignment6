@@ -106,8 +106,7 @@ public class Calendar implements ICalendar {
 
     if (!autoDecline) {
       for (Event existingEvent : events) {
-        if (existingEvent.getStartDateTime().isBefore(utcEvent.getEndDateTime()) &&
-                utcEvent.getStartDateTime().isBefore(existingEvent.getEndDateTime())) {
+        if (utcEvent.conflictsWith(existingEvent)) {
           throw new ConflictingEventException("Event conflicts with existing event");
         }
       }
@@ -117,7 +116,7 @@ public class Calendar implements ICalendar {
     // Store the event in the eventById map for future lookup
     eventById.put(utcEvent.getId(), utcEvent);
     System.out.println("[DEBUG] Calendar.addEvent - Added event to map with ID: " + utcEvent.getId());
-    
+
     return true;
   }
 
@@ -454,10 +453,10 @@ public class Calendar implements ICalendar {
     if (date == null) {
       throw new IllegalArgumentException("Date cannot be null");
     }
-    
+
     // Create a map to track events by ID to avoid duplicates
     Map<UUID, Event> eventsOnDateById = new HashMap<>();
-    
+
     // Get regular events for the date
     List<Event> regularEvents = getFilteredEvents(event -> {
       if (event.getStartDateTime() != null) {
@@ -474,27 +473,27 @@ public class Calendar implements ICalendar {
       }
       return false;
     });
-    
+
     // Add regular events to the map by ID to avoid duplicates
     for (Event event : regularEvents) {
       eventsOnDateById.put(event.getId(), event);
     }
-    
+
     // Also check for recurring event occurrences on this date
     for (RecurringEvent recurringEvent : this.recurringEvents) {
       System.out.println("[DEBUG] Checking recurring event for date " + date + ": " + recurringEvent.getSubject());
-      
+
       // Get occurrences just for the specified date
       List<Event> occurrences = recurringEvent.getOccurrencesBetween(date, date);
-      System.out.println("[DEBUG] Found " + occurrences.size() + " occurrences of recurring event " + 
-                         recurringEvent.getSubject() + " on " + date);
-      
+      System.out.println("[DEBUG] Found " + occurrences.size() + " occurrences of recurring event " +
+              recurringEvent.getSubject() + " on " + date);
+
       // Add occurrences to the map by ID to avoid duplicates
       for (Event occurrence : occurrences) {
         eventsOnDateById.put(occurrence.getId(), occurrence);
       }
     }
-    
+
     // Return the deduplicated events as a list
     return new ArrayList<>(eventsOnDateById.values());
   }
@@ -534,14 +533,14 @@ public class Calendar implements ICalendar {
       Event event = iterator.next();
       eventsInRangeById.put(event.getId(), event);
     }
-    
+
     // Check each recurring event for occurrences in the range
     LocalDate currentDate = startDate;
     while (!currentDate.isAfter(endDate)) {
       for (RecurringEvent recurringEvent : this.recurringEvents) {
         // Get occurrences for the current day
         List<Event> occurrences = recurringEvent.getOccurrencesBetween(currentDate, currentDate);
-        
+
         // Add each occurrence to the map by ID to avoid duplicates
         for (Event occurrence : occurrences) {
           eventsInRangeById.put(occurrence.getId(), occurrence);
@@ -710,68 +709,68 @@ public class Calendar implements ICalendar {
         return true;
       }
     }
-    
+
     // Then check all recurring events
     for (RecurringEvent recurringEvent : recurringEvents) {
       if (isRecurringEventActiveAt(dateTime, recurringEvent)) {
         return true;
       }
     }
-    
+
     return false;
   }
-  
+
   /**
    * Helper method to check if a given time falls within an event's time range.
    *
    * @param dateTime The time to check
-   * @param event The event to check against
+   * @param event    The event to check against
    * @return true if the time is within the event's range
    */
   private boolean isTimeWithinEventRange(LocalDateTime dateTime, Event event) {
     if (event.getStartDateTime() == null || event.getEndDateTime() == null) {
       return false;
     }
-    
-    // Check if the dateTime is within the event time range (inclusive of start, exclusive of end)
+
+    // Check if the dateTime is within the event time range (inclusive of both start and end)
     return (dateTime.isEqual(event.getStartDateTime()) || dateTime.isAfter(event.getStartDateTime()))
-           && dateTime.isBefore(event.getEndDateTime());
+            && (dateTime.isEqual(event.getEndDateTime()) || dateTime.isBefore(event.getEndDateTime()));
   }
-  
+
   /**
    * Helper method to check if a recurring event is active at the given time.
    *
-   * @param dateTime The time to check
+   * @param dateTime       The time to check
    * @param recurringEvent The recurring event to check against
    * @return true if the recurring event is active at the specified time
    */
   private boolean isRecurringEventActiveAt(LocalDateTime dateTime, RecurringEvent recurringEvent) {
     LocalDate targetDate = dateTime.toLocalDate();
     DayOfWeek targetDay = targetDate.getDayOfWeek();
-    
+
     // First check if this event repeats on this day of the week
     if (!recurringEvent.getRepeatDays().contains(targetDay)) {
       return false;
     }
-    
+
     // Check date is on or after the start date of the recurring event
     LocalDate recurringStartDate = recurringEvent.getStartDateTime().toLocalDate();
     if (targetDate.isBefore(recurringStartDate)) {
       return false;
     }
-    
+
     // Check if we've passed the end date (if one is specified)
     if (recurringEvent.getEndDate() != null && targetDate.isAfter(recurringEvent.getEndDate())) {
       return false;
     }
-    
+
     // Check if the time falls within the event's time range
     LocalTime targetTime = dateTime.toLocalTime();
     LocalTime eventStartTime = recurringEvent.getStartDateTime().toLocalTime();
     LocalTime eventEndTime = recurringEvent.getEndDateTime().toLocalTime();
-    
+
     return (targetTime.equals(eventStartTime) || targetTime.isAfter(eventStartTime))
-           && targetTime.isBefore(eventEndTime);
+            && targetTime.isBefore(eventEndTime);
   }
 
   @Override
@@ -795,10 +794,10 @@ public class Calendar implements ICalendar {
     }
 
     System.out.println("[DEBUG] Calendar.updateEvent - Updating event with ID: " + eventId);
-    System.out.println("[DEBUG] Calendar.updateEvent - Updated event details: Subject=" + updatedEvent.getSubject() + 
-                       ", Start=" + updatedEvent.getStartDateTime() + 
-                       ", End=" + updatedEvent.getEndDateTime() + 
-                       ", Location=" + updatedEvent.getLocation());
+    System.out.println("[DEBUG] Calendar.updateEvent - Updated event details: Subject=" + updatedEvent.getSubject() +
+            ", Start=" + updatedEvent.getStartDateTime() +
+            ", End=" + updatedEvent.getEndDateTime() +
+            ", Location=" + updatedEvent.getLocation());
 
     Event existingEvent = eventById.get(eventId);
     if (existingEvent == null) {
@@ -830,13 +829,14 @@ public class Calendar implements ICalendar {
               updatedEvent.getEndDateTime(),
               updatedEvent.getDescription(),
               updatedEvent.getLocation(),
-              updatedEvent.isPublic()
+              updatedEvent.isPublic(),
+              updatedEvent.isAllDay()
       );
 
-      System.out.println("[DEBUG] Calendar.updateEvent - Created new event object: " + newEvent.getSubject() + 
-                         ", ID=" + newEvent.getId() + 
-                         ", Start=" + newEvent.getStartDateTime() + 
-                         ", End=" + newEvent.getEndDateTime());
+      System.out.println("[DEBUG] Calendar.updateEvent - Created new event object: " + newEvent.getSubject() +
+              ", ID=" + newEvent.getId() +
+              ", Start=" + newEvent.getStartDateTime() +
+              ", End=" + newEvent.getEndDateTime());
 
       // Add the updated event
       events.add(newEvent);

@@ -42,7 +42,6 @@ public class GUIControllerTest {
 
   private GUIController controller;
   private StubGUIView stubView;
-  private StubCalendarManager stubCalendarManager;
   private StubCalendar stubCalendar;
   private Event testEvent;
 
@@ -51,7 +50,7 @@ public class GUIControllerTest {
     // Create stub implementations
     stubView = new StubGUIView();
     stubCalendar = new StubCalendar("Default_Calendar");
-    stubCalendarManager = new StubCalendarManager();
+    StubCalendarManager stubCalendarManager = new StubCalendarManager();
     stubCalendarManager.addCalendar(stubCalendar);
 
     // Initialize controller with stubs
