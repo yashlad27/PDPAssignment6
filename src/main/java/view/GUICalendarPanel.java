@@ -24,8 +24,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.*;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JViewport;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
@@ -628,7 +641,6 @@ public class GUICalendarPanel extends JPanel {
         return true;
       }
 
-      // For recurring events, we consider events with the same subject on the same day as duplicates
       // Ignore time differences completely
       if (e.getSubject().equals(event.getSubject()) && isSameDay(e.getStartDateTime(),
           event.getStartDateTime())) {

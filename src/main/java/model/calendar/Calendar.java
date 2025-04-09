@@ -339,7 +339,7 @@ public class Calendar implements ICalendar {
     int count = 0;
 
     List<Event> matchingEvents = events.stream().filter(
-            e -> e.getSubject().equals(subject) && !e.getStartDateTime().isBefore(startDateTime))
+        e -> e.getSubject().equals(subject) && !e.getStartDateTime().isBefore(startDateTime))
         .collect(Collectors.toList());
 
     for (Event event : matchingEvents) {

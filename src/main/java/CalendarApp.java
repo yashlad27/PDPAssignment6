@@ -1,8 +1,7 @@
-import javax.swing.*;
-
 import controller.CalendarController;
 import controller.GUIController;
 import controller.ICommandFactory;
+import javax.swing.SwingUtilities;
 import model.calendar.Calendar;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
@@ -18,6 +17,7 @@ import view.TextView;
  * modes of operation.
  */
 public class CalendarApp {
+
   private static CalendarManager calendarManager;
   private static ICalendarView view;
   private static CalendarController controller;
@@ -27,11 +27,9 @@ public class CalendarApp {
   /**
    * Main method that serves as the entry point for the application.
    *
-   * @param args Command line arguments:
-   *             --mode interactive : Starts the application in interactive mode
-   *             --mode headless file : Starts the application in headless mode
-   *             with the specified command file
-   *             --no args : Starts the application in GUI mode
+   * @param args Command line arguments: --mode interactive : Starts the application in interactive
+   *             mode --mode headless file : Starts the application in headless mode with the
+   *             specified command file --no args : Starts the application in GUI mode
    */
   public static void main(String[] args) {
     commandLineArgs = args;
@@ -49,14 +47,13 @@ public class CalendarApp {
     calendarManager = factory.createCalendarManager(timezoneHandler);
     ICalendar calendar = new Calendar();
 
-    controller = factory.createController(null,
-            null, calendarManager, null);
+    controller = factory.createController(null, null, calendarManager, null);
 
     view = CalendarFactory.createView(currentMode, controller);
 
     ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
     ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
-            view);
+        view);
 
     controller.setEventCommandFactory(eventCommandFactory);
     controller.setCalendarCommandFactory(calendarCommandFactory);
@@ -135,8 +132,7 @@ public class CalendarApp {
    */
   private static void setHeadlessMode(String[] args) {
     if (args.length < 3) {
-      System.err.println("Headless mode requires a filename."
-              + " Usage: --mode headless filename");
+      System.err.println("Headless mode requires a filename." + " Usage: --mode headless filename");
       System.exit(1);
     }
     currentMode = "text";

@@ -49,56 +49,70 @@ public class CommandParser {
             "create event (--autoDecline )?([\"']?[^\"']+[\"']?|[^\\s]+) "
                 + "from (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
                 + "to (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})"
-                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s+\"([^\"]+)\")" + "?(?:\\s+(private))?"),
+                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s+\"([^\"]+)\")"
+                + "?(?:\\s+(private))?"),
         this::parseCreateEventCommand);
 
     // Create recurring event pattern
     registerPattern("create_recurring_event", Pattern.compile(
-            "create event ([\"']?[^\"']+[\"']?|[^\\s]+) " + "from (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
-                + "to (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) " + "repeats ([MTWRFSU]+) for (\\d+) times"
+            "create event ([\"']?[^\"']+[\"']?|[^\\s]+) "
+                + "from (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
+                + "to (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
+                + "repeats ([MTWRFSU]+) for (\\d+) times"
                 + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s+\"([^\"]+)\")?"),
         this::parseCreateRecurringEventCommand);
 
     // Create all-day event pattern
     registerPattern("create_all_day_event", Pattern.compile(
-            "create event (--autoDecline )?([\"']?[^\"']+[\"']?|[^\\s]+) on" + " (\\d{4}-\\d{2}-\\d{2})"
-                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s+\"([^\"]+)\")" + "?(?:\\s+(private))?"),
+            "create event (--autoDecline )?([\"']?[^\"']+[\"']?|[^\\s]+) on"
+                + " (\\d{4}-\\d{2}-\\d{2})"
+                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s+\"([^\"]+)\")"
+                + "?(?:\\s+(private))?"),
         this::parseCreateAllDayEventCommand);
 
     // Create event patterns
     registerPattern("create_recurring_until_event", Pattern.compile(
             "create event (--autoDecline )?([\"']?[^\"']+[\"']?|[^\\s]+) from "
-                + "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) to " + "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
+                + "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) to "
+                + "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
                 + "repeats ([MTWRFSU]+) until (\\d{4}-\\d{2}-\\d{2})"
-                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s" + "+\"([^\"]+)\")?(?:\\s+(private))?"),
+                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s"
+                + "+\"([^\"]+)\")?(?:\\s+(private))?"),
         this::parseCreateRecurringUntilEventCommand);
 
     registerPattern("create_all_day_recurring_event", Pattern.compile(
             "create event (--autoDecline )?([\"']?[^\"']+[\"']?|[^\\s]+) "
                 + "on (\\d{4}-\\d{2}-\\d{2}) repeats ([MTWRFSU]+) for (\\d+) times"
-                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s" + "+\"([^\"]+)\")?(?:\\s+(private))?"),
+                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s"
+                + "+\"([^\"]+)\")?(?:\\s+(private))?"),
         this::parseCreateAllDayRecurringEventCommand);
 
     registerPattern("create_all_day_recurring_until_event", Pattern.compile(
             "create event (--autoDecline )?([\"']?[^\"']+[\"']?|[^\\s]+) "
-                + "on (\\d{4}-\\d{2}-\\d{2}) repeats ([MTWRFSU]+)" + " until (\\d{4}-\\d{2}-\\d{2})"
-                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s" + "+\"([^\"]+)\")?(?:\\s+(private))?"),
+                + "on (\\d{4}-\\d{2}-\\d{2}) repeats ([MTWRFSU]+)"
+                + " until (\\d{4}-\\d{2}-\\d{2})"
+                + "(?:\\s+desc\\s+\"([^\"]+)\")?(?:\\s+at\\s"
+                + "+\"([^\"]+)\")?(?:\\s+(private))?"),
         this::parseCreateAllDayRecurringUntilEventCommand);
 
     registerPattern("edit_single_event",
-        Pattern.compile("edit event (\\w+) \"([^\"]+)\" from (\\S+T\\S+) " + "with \"?([^\"]+)\"?"),
+        Pattern.compile("edit event (\\w+) \"([^\"]+)\" from (\\S+T\\S+) "
+            + "with \"?([^\"]+)\"?"),
         this::parseEditSingleEventCommand);
 
     registerPattern("edit_event_time", Pattern.compile(
-            "edit event (\\w+) \"([^\"]+)\" from (\\S+T\\S+) " + "to (\\S+T\\S+) with \"?([^\"]+)\"?"),
+            "edit event (\\w+) \"([^\"]+)\" from (\\S+T\\S+) "
+                + "to (\\S+T\\S+) with \"?([^\"]+)\"?"),
         this::parseEditEventTimeCommand);
 
     registerPattern("print_events_date",
-        Pattern.compile("print events " + "on (\\d{4}-\\d{2}-\\d{2})"),
+        Pattern.compile("print events "
+            + "on (\\d{4}-\\d{2}-\\d{2})"),
         this::parsePrintEventsDateCommand);
 
     registerPattern("print_events_range",
-        Pattern.compile("print events from (\\d{4}-\\d{2}-\\d{2}) " + "to (\\d{4}-\\d{2}-\\d{2})"),
+        Pattern.compile("print events from (\\d{4}-\\d{2}-\\d{2}) "
+            + "to (\\d{4}-\\d{2}-\\d{2})"),
         this::parsePrintEventsRangeCommand);
 
     // Edit calendar pattern
@@ -113,18 +127,21 @@ public class CommandParser {
 
     // Copy single event pattern
     registerPattern("copy_event", Pattern.compile(
-            "copy event ([\"']?[^\"']+[\"']?|[^\\s]+) " + "on (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
+            "copy event ([\"']?[^\"']+[\"']?|[^\\s]+) "
+                + "on (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
                 + "--target ([\\w-]+) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})"),
         this::parseCopyEventCommand);
 
     // Copy events on date pattern
     registerPattern("copy_events_on_date", Pattern.compile(
-            "copy events on (\\d{4}-\\d{2}-\\d{2}) --target ([\\w-]+) " + "to (\\d{4}-\\d{2}-\\d{2})"),
+            "copy events on (\\d{4}-\\d{2}-\\d{2}) --target ([\\w-]+) "
+                + "to (\\d{4}-\\d{2}-\\d{2})"),
         this::parseCopyEventsOnDateCommand);
 
     // Copy events between dates pattern
     registerPattern("copy_events_between_dates", Pattern.compile(
-            "copy events between (\\d{4}-\\d{2}-\\d{2}) " + "and (\\d{4}-\\d{2}-\\d{2}) "
+            "copy events between (\\d{4}-\\d{2}-\\d{2}) "
+                + "and (\\d{4}-\\d{2}-\\d{2}) "
                 + "--target ([\\w-]+) to (\\d{4}-\\d{2}-\\d{2})"),
         this::parseCopyEventsBetweenDatesCommand);
 

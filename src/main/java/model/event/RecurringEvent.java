@@ -414,11 +414,6 @@ public class RecurringEvent extends Event {
   }
 
   /**
-   * Gets the end date of this recurring event.
-   *
-   * @return the end date, or null if based on occurrences
-   */
-  /**
    * Gets the end date of the recurring event.
    *
    * @return the end date, or null if based on occurrences
