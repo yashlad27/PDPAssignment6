@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -928,51 +929,131 @@ public class GUIController {
         Date startDate = formData.getStartTime();
         Date endDate = formData.getEndTime();
 
-        startDateTime = startDate.toInstant()
-                .atZone(ZoneId.systemDefault()).toLocalDateTime();
-        endDateTime = endDate.toInstant()
-                .atZone(ZoneId.systemDefault()).toLocalDateTime();
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Raw start time: " + startDate);
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Raw end time: " + endDate);
+
+        // Create local date time from the form data date components with corrected time components
+        LocalDate selectedDate = formData.getSelectedDate().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+        
+        // Extract hours and minutes from start and end time
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(startDate);
+        int startHour = startCal.get(Calendar.HOUR_OF_DAY);
+        int startMinute = startCal.get(Calendar.MINUTE);
+        
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(endDate);
+        int endHour = endCal.get(Calendar.HOUR_OF_DAY);
+        int endMinute = endCal.get(Calendar.MINUTE);
+        
+        // Create date times with the correct date and times
+        startDateTime = selectedDate.atTime(startHour, startMinute);
+        endDateTime = selectedDate.atTime(endHour, endMinute);
+        
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Parsed start time: " + startDateTime);
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Parsed end time: " + endDateTime);
+        
+        // Validate that end time is after start time
+        if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
+          System.out.println("[ERROR] GUIController.onEventUpdated - End time validation failed: " + 
+                            "Start=" + startDateTime + ", End=" + endDateTime);
+          view.displayError("End date/time cannot be before or equal to start date/time");
+          return;
+        }
       }
 
       // Convert times from local timezone to UTC for storage
       TimeZoneHandler timezoneHandler = new TimeZoneHandler();
       String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+      String calendarTimezone = currentCalendar.getTimeZone().getID();
 
       // Convert to UTC for storage
       LocalDateTime utcStartDateTime = timezoneHandler.convertToUTC(startDateTime, systemTimezone);
       LocalDateTime utcEndDateTime = timezoneHandler.convertToUTC(endDateTime, systemTimezone);
 
       System.out.println("[DEBUG] Event times - Local Start: " + startDateTime);
+      System.out.println("[DEBUG] Event times - Local End: " + endDateTime);
       System.out.println("[DEBUG] Event times - UTC Start: " + utcStartDateTime);
+      System.out.println("[DEBUG] Event times - UTC End: " + utcEndDateTime);
+      System.out.println("[DEBUG] Calendar timezone: " + calendarTimezone);
 
-      // Create updated event with UTC times - preserve the original event ID
-      Event updatedEvent = new Event(
-              currentEvent.getId(), // Preserve the original event ID
-              subject,
-              utcStartDateTime,
-              utcEndDateTime,
-              description,
-              location,
-              currentEvent.isPublic()
-      );
+      try {
+        // Create updated event with UTC times - preserve the original event ID
+        Event updatedEvent = new Event(
+                currentEvent.getId(), // Preserve the original event ID
+                subject,
+                utcStartDateTime,
+                utcEndDateTime,
+                description,
+                location,
+                currentEvent.isPublic()
+        );
 
-      System.out.println("[DEBUG] Updating event with ID: " + currentEvent.getId());
-      System.out.println("[DEBUG] Updated event ID: " + updatedEvent.getId());
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Updating event with ID: " + currentEvent.getId());
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Event details before update: " + 
+                          "Subject=" + currentEvent.getSubject() + 
+                          ", Location=" + currentEvent.getLocation() + 
+                          ", Start=" + currentEvent.getStartDateTime() + 
+                          ", End=" + currentEvent.getEndDateTime());
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Event details after update: " + 
+                          "Subject=" + updatedEvent.getSubject() + 
+                          ", Location=" + updatedEvent.getLocation() + 
+                          ", Start=" + updatedEvent.getStartDateTime() + 
+                          ", End=" + updatedEvent.getEndDateTime());
 
-      // Update the event in the calendar
-      boolean success = currentCalendar.updateEvent(currentEvent.getId(), updatedEvent);
+        // Update the event in the calendar
+        boolean success = currentCalendar.updateEvent(currentEvent.getId(), updatedEvent);
 
-      if (success) {
-        view.displayMessage("Event updated successfully");
-        // Refresh the view to show the updated event
-        LocalDate selectedDate = startDateTime.toLocalDate();
-        setSelectedDate(selectedDate);
-        view.refreshCalendarView();
-        view.refreshEventView();
-      } else {
-        view.displayError("Failed to update event");
+        if (success) {
+          System.out.println("[DEBUG] GUIController.onEventUpdated - Update successful");
+          view.displayMessage("Event updated successfully");
+          
+          // Refresh the view to show the updated event
+          LocalDate selectedDate = startDateTime.toLocalDate();
+          setSelectedDate(selectedDate);
+          
+          // Get the updated events for the selected date to refresh the view
+          List<Event> updatedEvents = currentCalendar.getEventsOnDate(selectedDate);
+          view.updateEvents(selectedDate, updatedEvents);
+          
+          // Find the updated event in the list and display it
+          Event refreshedEvent = null;
+          for (Event event : updatedEvents) {
+            System.out.println("[DEBUG] GUIController.onEventUpdated - Found event in list: " + 
+                              "ID=" + event.getId() + 
+                              ", Subject=" + event.getSubject() + 
+                              ", Location=" + event.getLocation());
+            if (event.getId().equals(updatedEvent.getId())) {
+              refreshedEvent = event;
+              break;
+            }
+          }
+          
+          if (refreshedEvent != null) {
+            System.out.println("[DEBUG] GUIController.onEventUpdated - Displaying updated event: " + 
+                              refreshedEvent.getSubject());
+            view.showEventDetails(refreshedEvent);
+          } else {
+            System.out.println("[DEBUG] GUIController.onEventUpdated - Updated event not found in list, using original");
+            view.showEventDetails(updatedEvent);
+          }
+          
+          // Refresh all views
+          view.refreshCalendarView();
+          view.refreshEventView();
+          view.refreshView();
+        } else {
+          System.out.println("[ERROR] GUIController.onEventUpdated - Failed to update event");
+          view.displayError("Failed to update event");
+        }
+      } catch (IllegalArgumentException e) {
+        System.out.println("[ERROR] Validation error: " + e.getMessage());
+        view.displayError("Failed to update event: " + e.getMessage());
       }
     } catch (Exception e) {
+      System.out.println("[ERROR] Exception while updating event: " + e.getMessage());
+      e.printStackTrace();
       view.displayError("Failed to update event: " + e.getMessage());
     }
   }

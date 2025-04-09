@@ -114,6 +114,10 @@ public class Calendar implements ICalendar {
     }
 
     events.add(utcEvent);
+    // Store the event in the eventById map for future lookup
+    eventById.put(utcEvent.getId(), utcEvent);
+    System.out.println("[DEBUG] Calendar.addEvent - Added event to map with ID: " + utcEvent.getId());
+    
     return true;
   }
 
@@ -735,38 +739,53 @@ public class Calendar implements ICalendar {
   @Override
   public boolean updateEvent(UUID eventId, Event updatedEvent) throws ConflictingEventException {
     if (eventId == null || updatedEvent == null) {
+      System.out.println("[ERROR] Calendar.updateEvent - Null eventId or updatedEvent");
       return false;
     }
 
+    System.out.println("[DEBUG] Calendar.updateEvent - Updating event with ID: " + eventId);
+    System.out.println("[DEBUG] Calendar.updateEvent - Updated event details: Subject=" + updatedEvent.getSubject() + 
+                       ", Start=" + updatedEvent.getStartDateTime() + 
+                       ", End=" + updatedEvent.getEndDateTime() + 
+                       ", Location=" + updatedEvent.getLocation());
+
     Event existingEvent = eventById.get(eventId);
     if (existingEvent == null) {
+      System.out.println("[ERROR] Calendar.updateEvent - Event not found with ID: " + eventId);
       return false; // Event not found
     }
 
+    System.out.println("[DEBUG] Calendar.updateEvent - Found existing event: " + existingEvent.getSubject());
+
+    // Store the existing event temporarily and remove it from collections
     events.remove(existingEvent);
     eventById.remove(eventId);
 
     try {
+      // Check for conflicts with the updated event
       if (hasConflict(updatedEvent)) {
+        // Restore the original event if there's a conflict
         events.add(existingEvent);
         eventById.put(eventId, existingEvent);
+        System.out.println("[ERROR] Calendar.updateEvent - Conflict with existing events");
         throw new ConflictingEventException("The updated event conflicts with existing events");
       }
 
+      // Use the updated event directly, but ensure we preserve the original ID
       Event newEvent = new Event(
+              eventId, // Use the original event ID directly
               updatedEvent.getSubject(),
               updatedEvent.getStartDateTime(),
               updatedEvent.getEndDateTime(),
               updatedEvent.getDescription(),
               updatedEvent.getLocation(),
               updatedEvent.isPublic()
-      ) {
-        // Anonymous subclass to override the ID
-        @Override
-        public UUID getId() {
-          return eventId;
-        }
-      };
+      );
+
+      System.out.println("[DEBUG] Calendar.updateEvent - Created new event object: " + newEvent.getSubject() + 
+                         ", ID=" + newEvent.getId() + 
+                         ", Start=" + newEvent.getStartDateTime() + 
+                         ", End=" + newEvent.getEndDateTime());
 
       // Add the updated event
       events.add(newEvent);
@@ -776,6 +795,8 @@ public class Calendar implements ICalendar {
     } catch (ConflictingEventException e) {
       throw e;
     } catch (Exception e) {
+      System.out.println("[ERROR] Exception in Calendar.updateEvent: " + e.getMessage());
+      e.printStackTrace();
       // Put the original event back if there's any other error
       events.add(existingEvent);
       eventById.put(eventId, existingEvent);
