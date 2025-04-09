@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -100,7 +101,8 @@ public class CalendarViewModel implements IViewModel {
    *
    * @param calendar the calendar to set
    */
-  public void setCurrentCalendar(ICalendar calendar) throws ConflictingEventException, InvalidEventException, EventNotFoundException {
+  public void setCurrentCalendar(ICalendar calendar) throws ConflictingEventException,
+          InvalidEventException, EventNotFoundException {
     this.currentCalendar = calendar;
     // Get calendar name from toString
     this.selectedCalendarName = calendar != null ? calendar.toString() : "None";
@@ -130,7 +132,7 @@ public class CalendarViewModel implements IViewModel {
         events = currentCalendar.getEventsOnDate(date);
         recurringEvents = currentCalendar.getAllRecurringEvents().stream()
                 .filter(event -> event.getStartDateTime().toLocalDate().equals(date))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
         notifyEventsUpdated();
         notifyRecurringEventsUpdated();
@@ -204,26 +206,26 @@ public class CalendarViewModel implements IViewModel {
   public List<RecurringEvent> getRecurringEvents() {
     return recurringEvents;
   }
-  
+
   /**
    * Gets the current month being displayed.
-   * 
+   *
    * @return the current month
    */
   public YearMonth getCurrentMonth() {
     return currentMonth;
   }
-  
+
   /**
    * Sets the current month to display and notifies listeners.
-   * 
+   *
    * @param month the month to display
    */
   public void setCurrentMonth(YearMonth month) {
     this.currentMonth = month;
     notifyMonthChanged(month);
   }
-  
+
   /**
    * Updates the calendar with a new calendar and its events.
    * Method moved from GUICalendarPanel to follow MVVM pattern.
@@ -233,7 +235,7 @@ public class CalendarViewModel implements IViewModel {
   public void updateCalendar(ICalendar calendar) {
     try {
       this.currentCalendar = calendar;
-      
+
       if (calendar != null) {
         List<Event> events = calendar.getAllEvents();
         updateEvents(events);
@@ -244,40 +246,40 @@ public class CalendarViewModel implements IViewModel {
         if (selectedDate != null) {
           updateEventsForDate(selectedDate);
         }
-        
+
         notifyCalendarChanged();
       }
     } catch (Exception e) {
       notifyError("Error updating calendar: " + e.getMessage());
     }
   }
-  
+
   /**
    * Updates the recurring events for the calendar.
    * Method moved from GUICalendarPanel to follow MVVM pattern.
-   * 
+   *
    * @param recurringEvents the recurring events to update
    */
   public void updateRecurringEvents(List<RecurringEvent> recurringEvents) {
     this.recurringEvents = new ArrayList<>(recurringEvents);
     notifyRecurringEventsUpdated();
   }
-  
+
   /**
    * Updates all events in the calendar.
    * Method moved from GUICalendarPanel to follow MVVM pattern.
-   * 
+   *
    * @param events the events to update
    */
   public void updateEvents(List<Event> events) {
     this.events = new ArrayList<>(events);
     notifyEventsUpdated();
   }
-  
+
   /**
    * Navigates to a specific date in the calendar.
    * Method moved from GUICalendarPanel to follow MVVM pattern.
-   * 
+   *
    * @param date the date to navigate to
    */
   public void navigateToDate(LocalDate date) {
@@ -286,45 +288,45 @@ public class CalendarViewModel implements IViewModel {
     notifyDateSelected();
     notifyMonthChanged(currentMonth);
   }
-  
+
   /**
    * Navigates to a specific month in the calendar.
    * Method moved from GUICalendarPanel to follow MVVM pattern.
-   * 
+   *
    * @param month the month to navigate to
    */
   public void navigateToMonth(YearMonth month) {
     this.currentMonth = month;
     notifyMonthChanged(month);
   }
-  
+
   /**
    * Navigates to the next month.
    */
   public void nextMonth() {
     setCurrentMonth(currentMonth.plusMonths(1));
   }
-  
+
   /**
    * Navigates to the previous month.
    */
   public void previousMonth() {
     setCurrentMonth(currentMonth.minusMonths(1));
   }
-  
+
   /**
    * Gets the first day of month index (0 = Sunday, 1 = Monday, etc.)
-   * 
+   *
    * @param month the month to check
    * @return the day of week index (0-6)
    */
   public int getFirstDayOfMonthIndex(YearMonth month) {
     return month.atDay(1).getDayOfWeek().getValue() % 7;
   }
-  
+
   /**
    * Notifies listeners that the month has changed.
-   * 
+   *
    * @param month the new month
    */
   private void notifyMonthChanged(YearMonth month) {
@@ -334,14 +336,14 @@ public class CalendarViewModel implements IViewModel {
       }
     }
   }
-  
+
   /**
    * Extended interface for CalendarViewModelListener that includes month change notifications.
    */
   public interface ExtendedCalendarViewModelListener extends CalendarViewModelListener {
     /**
      * Called when the current month changes.
-     * 
+     *
      * @param month the new month
      */
     void onMonthChanged(YearMonth month);

@@ -21,17 +21,6 @@ import model.event.RecurringEvent;
 public class ConsolidatedIterator {
 
   /**
-   * Defines the iterator type enum for internal type differentiation.
-   */
-  public enum IteratorType {
-    CALENDAR,
-    EVENT_REGULAR,
-    EVENT_RECURRING,
-    EVENT_FILTERED,
-    EVENT_COMPOSITE
-  }
-
-  /**
    * Interface for calendar iterators. Maintains the original interface contract.
    */
   public interface ICalendarIterator {

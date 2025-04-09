@@ -38,12 +38,12 @@ public class ExportImportViewModel implements IViewModel {
   public ExportImportViewModel() {
     this.listeners = new ArrayList<>();
   }
-  
+
   /**
    * Constructs a new ExportImportViewModel with a calendar manager and view.
-   * 
+   *
    * @param calendarManager the calendar manager
-   * @param view the GUI view
+   * @param view            the GUI view
    */
   public ExportImportViewModel(CalendarManager calendarManager, IGUIView view) {
     this.listeners = new ArrayList<>();
@@ -74,7 +74,7 @@ public class ExportImportViewModel implements IViewModel {
   public void setCurrentCalendar(ICalendar calendar) {
     this.currentCalendar = calendar;
   }
-  
+
   /**
    * Sets the calendar manager.
    *
@@ -83,7 +83,7 @@ public class ExportImportViewModel implements IViewModel {
   public void setCalendarManager(CalendarManager calendarManager) {
     this.calendarManager = calendarManager;
   }
-  
+
   /**
    * Sets the GUI view.
    *
@@ -92,7 +92,7 @@ public class ExportImportViewModel implements IViewModel {
   public void setView(IGUIView view) {
     this.view = view;
   }
-  
+
   /**
    * Finds a suitable calendar for import/export operations.
    * Tries to get the calendar in the following order:
@@ -107,18 +107,18 @@ public class ExportImportViewModel implements IViewModel {
     if (calendarManager == null) {
       return currentCalendar;
     }
-    
+
     // Try to get the calendar from the selector panel if view is available
     ICalendar selectedCalendar = null;
     if (view != null && view.getCalendarSelectorPanel() != null) {
       selectedCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
     }
-    
+
     // If nothing selected, use the current calendar
     if (selectedCalendar == null) {
       selectedCalendar = currentCalendar;
     }
-    
+
     // If still null, try getting from calendar manager
     if (selectedCalendar == null) {
       try {
@@ -137,7 +137,7 @@ public class ExportImportViewModel implements IViewModel {
         }
       }
     }
-    
+
     return selectedCalendar;
   }
 
@@ -151,7 +151,7 @@ public class ExportImportViewModel implements IViewModel {
     // Find the suitable calendar if none provided
     if (currentCalendar == null) {
       currentCalendar = findSuitableCalendar();
-      
+
       if (currentCalendar == null) {
         notifyError("No calendar selected for import");
         return 0;
@@ -177,7 +177,7 @@ public class ExportImportViewModel implements IViewModel {
 
       String message = "Successfully imported " + successCount + " events";
       notifyImportSuccess(message);
-      
+
       // Update view if available
       updateViewAfterImport();
       refresh();
@@ -198,7 +198,7 @@ public class ExportImportViewModel implements IViewModel {
     // Find the suitable calendar if none provided
     if (currentCalendar == null) {
       currentCalendar = findSuitableCalendar();
-      
+
       if (currentCalendar == null) {
         notifyError("No calendar selected for export");
         return;
@@ -208,7 +208,7 @@ public class ExportImportViewModel implements IViewModel {
     try {
       // Get events from calendar
       List<model.event.Event> events = currentCalendar.getAllEvents();
-      
+
       // Use CSV exporter to write events
       model.export.CSVExporter csvExporter = new model.export.CSVExporter();
       csvExporter.exportEvents(events, file);
@@ -245,7 +245,7 @@ public class ExportImportViewModel implements IViewModel {
   public ICalendar getCurrentCalendar() {
     return currentCalendar;
   }
-  
+
   /**
    * Updates the view after importing events.
    * If a view is connected, updates the calendar panel.

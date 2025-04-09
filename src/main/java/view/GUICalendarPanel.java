@@ -3,8 +3,6 @@ package view;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.HashSet;
-import java.util.Set;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -14,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -28,7 +28,6 @@ import utilities.TimeZoneHandler;
  * Panel class that displays the calendar view and handles calendar-related interactions.
  */
 public class GUICalendarPanel extends JPanel {
-  private final JLabel monthLabel;
   private final JPanel calendarGrid;
   private final Map<LocalDate, JButton> dateButtons;
   private final Map<LocalDate, List<Event>> eventsByDate;
@@ -126,7 +125,7 @@ public class GUICalendarPanel extends JPanel {
     dateButtons = new HashMap<>();
     eventsByDate = new HashMap<>();
 
-    monthLabel = new JLabel("", SwingConstants.CENTER);
+    JLabel monthLabel = new JLabel("", SwingConstants.CENTER);
     monthLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
     calendarGrid = new JPanel(new GridLayout(0, 7, 2, 2));
@@ -270,7 +269,9 @@ public class GUICalendarPanel extends JPanel {
     JPanel controlPanel = new JPanel(new BorderLayout(10, 10));
     controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-    eventListArea.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(0xDDDDDD)), BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+    eventListArea.setBorder(BorderFactory.createCompoundBorder(BorderFactory
+            .createLineBorder(new Color(0xDDDDDD)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)));
     JScrollPane eventScroll = new JScrollPane(eventListArea);
     eventScroll.setPreferredSize(new Dimension(0, 150));
 
@@ -296,8 +297,10 @@ public class GUICalendarPanel extends JPanel {
 
     startDateSpinner = new JSpinner(new SpinnerDateModel());
     endDateSpinner = new JSpinner(new SpinnerDateModel());
-    JSpinner.DateEditor startEditor = new JSpinner.DateEditor(startDateSpinner, "yyyy-MM-dd");
-    JSpinner.DateEditor endEditor = new JSpinner.DateEditor(endDateSpinner, "yyyy-MM-dd");
+    JSpinner.DateEditor startEditor = new JSpinner.DateEditor(startDateSpinner,
+            "yyyy-MM-dd");
+    JSpinner.DateEditor endEditor = new JSpinner.DateEditor(endDateSpinner,
+            "yyyy-MM-dd");
     startDateSpinner.setEditor(startEditor);
     endDateSpinner.setEditor(endEditor);
 
@@ -466,20 +469,20 @@ public class GUICalendarPanel extends JPanel {
     // Add event indicators to the date button
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
-      
+
       // Create a map to track events by subject to prevent duplicates
       Map<String, Event> uniqueEventsBySubject = new HashMap<>();
-      
+
       // Only keep one event per subject (the first one we encounter)
       for (Event event : events) {
         if (!uniqueEventsBySubject.containsKey(event.getSubject())) {
           uniqueEventsBySubject.put(event.getSubject(), event);
         }
       }
-      
+
       // Get the list of unique events by subject
       List<Event> uniqueEvents = new ArrayList<>(uniqueEventsBySubject.values());
-      
+
       // Display up to two events
       for (int i = 0; i < Math.min(uniqueEvents.size(), 2); i++) {
         Event event = uniqueEvents.get(i);
@@ -559,7 +562,7 @@ public class GUICalendarPanel extends JPanel {
       LocalDate eventDate = event.getStartDateTime().toLocalDate();
       datesToUpdate.add(eventDate);
     }
-    
+
     // Clear events only for dates that we're updating
     if (currentCalendar != null && !eventsByDate.isEmpty()) {
       for (LocalDate date : datesToUpdate) {
@@ -573,37 +576,37 @@ public class GUICalendarPanel extends JPanel {
     for (Event event : events) {
       // Ensure we're using the correct date from the event
       LocalDate eventDate = event.getStartDateTime().toLocalDate();
-      
+
       // Get or create the list for this date
       List<Event> dateEvents = eventsByDate.computeIfAbsent(eventDate, k -> new ArrayList<>());
-      
+
       // Avoid duplicate events
       if (!containsEventWithSameId(dateEvents, event)) {
         dateEvents.add(event);
       }
     }
-    
+
     // Force immediate refresh of calendar display to show new events
     SwingUtilities.invokeLater(() -> {
       updateCalendarDisplay();
-      
+
       // Update the event list for the currently selected date if it has events
       if (selectedDate != null) {
         updateEventList(selectedDate);
       }
-      
+
       repaint();
       revalidate();
     });
   }
-  
+
   /**
    * Check if a list of events already contains a duplicate of the given event.
    * A duplicate is defined as an event with the same ID OR the same subject on the same day,
    * regardless of time. This is especially important for recurring events to prevent duplicates.
    *
    * @param events The list of events to check
-   * @param event The event to look for
+   * @param event  The event to look for
    * @return true if a duplicate event exists in the list
    */
   private boolean containsEventWithSameId(List<Event> events, Event event) {
@@ -612,22 +615,22 @@ public class GUICalendarPanel extends JPanel {
       if (e.getId().equals(event.getId())) {
         return true;
       }
-      
+
       // For recurring events, we consider events with the same subject on the same day as duplicates
       // Ignore time differences completely
-      if (e.getSubject().equals(event.getSubject()) && 
-          isSameDay(e.getStartDateTime(), event.getStartDateTime())) {
-        
+      if (e.getSubject().equals(event.getSubject()) &&
+              isSameDay(e.getStartDateTime(), event.getStartDateTime())) {
+
         // Detected duplicate event with same subject on same day
         return true;
       }
     }
     return false;
   }
-  
+
   /**
    * Check if two LocalDateTime objects represent the same day
-   * 
+   *
    * @param dt1 First datetime
    * @param dt2 Second datetime
    * @return true if both represent the same date (ignoring time)
@@ -635,7 +638,7 @@ public class GUICalendarPanel extends JPanel {
   private boolean isSameDay(LocalDateTime dt1, LocalDateTime dt2) {
     return dt1.toLocalDate().equals(dt2.toLocalDate());
   }
-  
+
   // Note: We removed the isSameTime method as it's no longer needed for duplicate detection
 
   /**
@@ -652,7 +655,7 @@ public class GUICalendarPanel extends JPanel {
         if (event.getRepeatDays().contains(date.getDayOfWeek())) {
           // Get or create the list for this date
           List<Event> dateEvents = eventsByDate.computeIfAbsent(date, k -> new ArrayList<>());
-          
+
           // Only add the event if it's not a duplicate
           if (!containsEventWithSameId(dateEvents, event)) {
             dateEvents.add(event);
