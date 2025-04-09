@@ -633,7 +633,6 @@ public class GUIController {
     try {
       return currentCalendar.getAllRecurringEvents();
     } catch (Exception e) {
-      // Don't show error for empty calendars
       if (!e.getMessage().contains("Insufficient arguments")) {
         view.displayError("Failed to get all recurring events: " + e.getMessage());
       }
