@@ -99,7 +99,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
 
   @Override
   public String execute(String[] args)
-      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException, InvalidEventException {
+      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException,
+      InvalidEventException {
     switch (copyType) {
       case SINGLE_EVENT:
         return executeSingleEventCopy(args);
@@ -145,7 +146,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeSingleEventCopy(String[] args)
-      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException, InvalidEventException {
+      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException,
+      InvalidEventException {
     if (args.length < 7) {
       throw new InvalidEventException("Insufficient arguments for copy event command");
     }

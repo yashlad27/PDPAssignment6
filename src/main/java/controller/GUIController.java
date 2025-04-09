@@ -1020,7 +1020,8 @@ public class GUIController {
             view.showEventDetails(refreshedEvent);
           } else {
             System.out.println(
-                "[DEBUG] GUIController.onEventUpdated - Updated event not found in list, using original");
+                "[DEBUG] GUIController.onEventUpdated - "
+                    + "Updated event not found in list, using original");
             view.showEventDetails(updatedEvent);
           }
 

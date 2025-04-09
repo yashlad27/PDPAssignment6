@@ -366,7 +366,8 @@ public class CalendarController {
 
   private boolean validateCommands(List<String> commands) {
     if (commands.isEmpty()) {
-      view.displayError("Error: Command file is empty. At least one command (exit) is required.");
+      view.displayError("Error: Command file is empty. "
+          + "At least one command (exit) is required.");
       return false;
     }
 
@@ -567,8 +568,7 @@ public class CalendarController {
    * designed for the GUI interaction.
    *
    * @param date The date to get events for
-   * @return A list of events on the specified date, or an empty list if there are none or an error
-   * occurs
+   * @return A list of events on the specified date, or an empty list if there are no events
    */
   public List<Event> getEventsForDate(LocalDate date) {
     if (date == null) {
@@ -591,10 +591,9 @@ public class CalendarController {
    * Retrieves events within a date range from the active calendar. This method is specifically
    * designed for the GUI interaction.
    *
-   * @param startDate The start date of the range (inclusive)
-   * @param endDate   The end date of the range (inclusive)
-   * @return A list of events in the specified date range, or an empty list if there are none or an
-   * error occurs
+   * @param startDate The start date of the range
+   * @param endDate   The end date of the range
+   * @return A list of events in the specified date range, or an empty list if there are no events
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {
