@@ -18,13 +18,6 @@ import model.event.RecurringEvent;
  * supporting both interactive (console) and headless (file) modes.
  */
 public class TextView implements ICalendarView {
-  /*
-   * This controller reference is maintained for future implementation of direct controller calls.
-   * Currently used for initialization and maintaining the MVC architecture, but specific calls
-   * are handled through command processing rather than direct controller invocation.
-   */
-  @SuppressWarnings("unused")
-  private final CalendarController controller;
   private BufferedReader reader;
   private boolean isInteractive;
   private String currentCalendar;
@@ -36,7 +29,6 @@ public class TextView implements ICalendarView {
    * @param controller the controller to use
    */
   public TextView(CalendarController controller) {
-    this.controller = controller;
     this.reader = new BufferedReader(new InputStreamReader(System.in));
     this.isInteractive = true;
     this.selectedDate = LocalDate.now();
@@ -69,8 +61,6 @@ public class TextView implements ICalendarView {
       if (line == null) {
         return "exit";  // End of file
       }
-      // Log the command to the controller if needed in the future
-      // controller could process or validate commands here before they're executed
       return line;
     } catch (IOException e) {
       System.err.println("Error reading input: " + e.getMessage());
@@ -95,7 +85,6 @@ public class TextView implements ICalendarView {
       return;
     }
 
-    // Note: ICalendar doesn't have getName() method, so we print the current calendar name
     displayMessage("Calendar: " + currentCalendar);
     displayMessage("Date: " + selectedDate);
 
@@ -150,7 +139,8 @@ public class TextView implements ICalendarView {
 
     displayMessage("Event Details:");
     displayMessage("  Name: " + event.getSubject());
-    displayMessage("  Description: " + (event.getDescription() != null ? event.getDescription() : "None"));
+    displayMessage("  Description: " + (event.getDescription() != null
+            ? event.getDescription() : "None"));
     displayMessage("  Location: " + (event.getLocation() != null ? event.getLocation() : "None"));
     displayMessage("  Start: " + event.getStartDateTime());
     displayMessage("  End: " + event.getEndDateTime());
@@ -218,8 +208,6 @@ public class TextView implements ICalendarView {
   @Override
   public void refreshView() {
     displayMessage("View refreshed.");
-    // For text view, just display current status message
-    // The actual refresh will happen when controller calls the appropriate update methods
   }
 
   /**

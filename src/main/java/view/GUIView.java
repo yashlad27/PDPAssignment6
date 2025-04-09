@@ -37,7 +37,6 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   private final GUICalendarSelectorPanel calendarSelectorPanel;
   private final GUIExportImportPanel exportImportPanel;
   private JPanel eventListResultsPanel;
-  private JScrollPane eventListScrollPane;
   private final JTextArea messageArea;
   private final CalendarController controller;
   private CalendarViewModel calendarViewModel;
@@ -420,26 +419,26 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
 
     // Create a panel for the calendar and event list results
     JPanel calendarContainer = new JPanel(new BorderLayout(0, 5));
-    
+
     // Initialize event list results panel to appear under the calendar
     eventListResultsPanel = new JPanel(new BorderLayout());
     eventListResultsPanel.setBackground(Color.WHITE);
     eventListResultsPanel.setBorder(BorderFactory.createTitledBorder("Event List Results"));
     eventListResultsPanel.setPreferredSize(new Dimension(550, 150));
-    
+
     // Event list results will be populated dynamically
     // No static text needed here
-    
+
     // Create scroll pane for event list results
-    eventListScrollPane = new JScrollPane(eventListResultsPanel);
+    JScrollPane eventListScrollPane = new JScrollPane(eventListResultsPanel);
     eventListScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     eventListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     eventListScrollPane.setBorder(null);
-    
+
     // Create a panel for the main calendar
     JPanel calendarGridPanel = new JPanel(new BorderLayout());
     calendarGridPanel.add(calendarPanel, BorderLayout.CENTER);
-    
+
     // Add the calendar and event list results to the container
     calendarContainer.add(calendarGridPanel, BorderLayout.CENTER);
     calendarContainer.add(eventListScrollPane, BorderLayout.SOUTH);
@@ -640,19 +639,19 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
   public void updateEventListRange(LocalDate startDate, LocalDate endDate, List<Event> events) {
     System.out.println("[DEBUG] Updating event list for date range " + startDate + " to " + endDate +
             " with " + (events != null ? events.size() : 0) + " events");
-            
+
     // Highlight the date range in the calendar panel
     calendarPanel.setSelectedDateRange(startDate, endDate);
-    
+
     // Clear the event list results panel and update it with new content
     updateEventListResultsPanel(startDate, endDate, events);
-    
+
     if (events != null && !events.isEmpty()) {
       // Display the first event in the detail view on the right panel
       Event firstEvent = events.get(0);
       System.out.println("[DEBUG] Auto-selected first event in range: " + firstEvent.getSubject());
       eventPanel.displayEvent(firstEvent);
-      
+
       // Make sure to update the calendar display with the events
       calendarPanel.updateEvents(events);
     } else {
@@ -661,23 +660,23 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       eventPanel.clearForm();
     }
   }
-  
+
   /**
    * Updates the event list results panel to display events under the calendar grid.
    * This keeps the create/edit panel on the right side intact.
-   * 
+   *
    * @param startDate The start date of the range (or a single date)
-   * @param endDate The end date of the range (same as startDate for single day)
-   * @param events The list of events to display
+   * @param endDate   The end date of the range (same as startDate for single day)
+   * @param events    The list of events to display
    */
   private void updateEventListResultsPanel(LocalDate startDate, LocalDate endDate, List<Event> events) {
     // Clear previous content
     eventListResultsPanel.removeAll();
-    
+
     if (events == null || events.isEmpty()) {
       // If no events, display a message
-      JLabel noEventsLabel = new JLabel("No events for " + 
-        (startDate.equals(endDate) ? "date " + startDate : "range " + startDate + " to " + endDate));
+      JLabel noEventsLabel = new JLabel("No events for " +
+              (startDate.equals(endDate) ? "date " + startDate : "range " + startDate + " to " + endDate));
       noEventsLabel.setHorizontalAlignment(SwingConstants.CENTER);
       noEventsLabel.setFont(new Font("Arial", Font.ITALIC, 12));
       eventListResultsPanel.add(noEventsLabel, BorderLayout.CENTER);
@@ -686,16 +685,16 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       JPanel listPanel = new JPanel();
       listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
       listPanel.setBackground(Color.WHITE);
-      
+
       // Add a header
-      JLabel headerLabel = new JLabel("Events for " + 
-        (startDate.equals(endDate) ? "date " + startDate : "range " + startDate + " to " + endDate) + 
-        " (" + events.size() + " events)");
+      JLabel headerLabel = new JLabel("Events for " +
+              (startDate.equals(endDate) ? "date " + startDate : "range " + startDate + " to " + endDate) +
+              " (" + events.size() + " events)");
       headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
       headerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
       headerLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
       listPanel.add(headerLabel);
-      
+
       // Add each event to the list
       for (Event event : events) {
         JPanel eventItemPanel = createEventItemPanel(event);
@@ -703,22 +702,22 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
         listPanel.add(eventItemPanel);
         listPanel.add(Box.createVerticalStrut(5)); // Add spacing between events
       }
-      
+
       // Add the list panel to a scroll pane in the results panel
       JScrollPane scrollPane = new JScrollPane(listPanel);
       scrollPane.setBorder(null);
       scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smoother scrolling
       eventListResultsPanel.add(scrollPane, BorderLayout.CENTER);
     }
-    
+
     // Update the UI
     eventListResultsPanel.revalidate();
     eventListResultsPanel.repaint();
   }
-  
+
   /**
    * Creates a panel for displaying a single event in the event list results.
-   * 
+   *
    * @param event The event to display
    * @return A panel containing the event details
    */
@@ -726,37 +725,37 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     JPanel panel = new JPanel(new BorderLayout(10, 5));
     panel.setBackground(Color.WHITE);
     panel.setBorder(BorderFactory.createCompoundBorder(
-      BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
-      BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
     ));
-    
+
     // Left side - subject and time
     JPanel detailsPanel = new JPanel();
     detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
     detailsPanel.setBackground(Color.WHITE);
-    
+
     // Subject with bold font
     JLabel subjectLabel = new JLabel(event.getSubject());
     subjectLabel.setFont(new Font("Arial", Font.BOLD, 14));
     subjectLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     detailsPanel.add(subjectLabel);
-    
+
     // Date and time - Convert from UTC to local timezone for display
     TimeZoneHandler timezoneHandler = new TimeZoneHandler();
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    
+
     // Convert start and end times from UTC to local time
     LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
     LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
-    
-    String dateTimeStr = "" + localStartDateTime.toLocalDate() + 
-                        " " + localStartDateTime.toLocalTime() + 
-                        " - " + localEndDateTime.toLocalTime();
+
+    String dateTimeStr = "" + localStartDateTime.toLocalDate() +
+            " " + localStartDateTime.toLocalTime() +
+            " - " + localEndDateTime.toLocalTime();
     JLabel timeLabel = new JLabel(dateTimeStr);
     timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     detailsPanel.add(timeLabel);
-    
+
     // Description (if present)
     if (event.getDescription() != null && !event.getDescription().isEmpty()) {
       JLabel descLabel = new JLabel(event.getDescription());
@@ -764,9 +763,9 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
       detailsPanel.add(descLabel);
     }
-    
+
     panel.add(detailsPanel, BorderLayout.CENTER);
-    
+
     // Right side - Edit button
     JButton editButton = new JButton("Edit");
     editButton.addActionListener(e -> {
@@ -775,7 +774,7 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
       eventPanel.setPanelMode(GUIEventPanel.PanelMode.EDIT);
     });
     panel.add(editButton, BorderLayout.EAST);
-    
+
     return panel;
   }
 
@@ -797,24 +796,24 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView {
     if (events != null && !events.isEmpty()) {
       // Update calendar panel events
       calendarPanel.updateEvents(events);
-      
+
       // Get the date of the first event
       LocalDate eventDate = events.get(0).getStartDateTime().toLocalDate();
-      
+
       // Display the events in the results panel under the calendar
       updateEventListResultsPanel(eventDate, eventDate, events);
-      
+
       // If we have events, select the first one to display its details in the right panel
       Event firstEvent = events.get(0);
       System.out.println("[DEBUG] Auto-selected first event: " + firstEvent.getSubject());
       eventPanel.displayEvent(firstEvent);
-      
+
       // Update the calendar panel with the date of the first event
       calendarPanel.updateEventList(eventDate);
     } else {
       // Clear the event panel if no events
       eventPanel.clearForm();
-      
+
       // Show "no events" in the results panel
       updateEventListResultsPanel(LocalDate.now(), LocalDate.now(), null);
     }

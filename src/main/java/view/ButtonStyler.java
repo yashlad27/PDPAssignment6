@@ -12,7 +12,6 @@ import javax.swing.*;
 public class ButtonStyler {
   private static final String EDIT_EVENT_TITLE = "Edit Event";
   private static final String EDIT_EVENT_MESSAGE = "Event is being edited";
-  // Theme colors
   private static final Color PRIMARY_COLOR = new Color(0x4a86e8);
   private static final Color PRIMARY_HOVER_COLOR = new Color(0x2962ff);
   private static final Color SECONDARY_COLOR = new Color(0xf0f0f0);
@@ -66,30 +65,24 @@ public class ButtonStyler {
                                    Color textColor, boolean isBold) {
     System.out.println("[DEBUG-BUTTON] Styling button: " + button.getText());
 
-    // Set basic properties
     button.setBackground(baseColor);
     button.setForeground(textColor);
     button.setFont(new Font("Arial", isBold ? Font.BOLD : Font.PLAIN, 12));
     button.setFocusPainted(false);
 
-    // These properties are critical for button visibility
     button.setOpaque(true);
     button.setContentAreaFilled(true);
     button.setBorderPainted(true);
 
-    // Fix for certain look and feels that might override these settings
     button.putClientProperty("JButton.buttonType", "square");
 
-    // Apply border with matching color - using a compound border for better visibility
     button.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(baseColor, 1),
             BorderFactory.createEmptyBorder(6, 14, 6, 14)));
 
-    // Set preferred size for consistent button dimensions
     button.setPreferredSize(new Dimension(100, 32));
     button.setMinimumSize(new Dimension(100, 32));
 
-    // Add hover effect with debug statements
     button.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {

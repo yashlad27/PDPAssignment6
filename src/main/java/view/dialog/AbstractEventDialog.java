@@ -14,7 +14,6 @@ import model.event.Event;
  */
 public abstract class AbstractEventDialog extends JDialog implements IEventDialog {
 
-  protected static final Color THEME_COLOR = new Color(0x4a86e8);
   protected static final Color HEADER_COLOR = new Color(0x4a86e8);
   protected static final Color INFO_BACKGROUND = new Color(0xFFFAE6);
   protected static final Color INFO_BORDER = new Color(0xFFCC80);
