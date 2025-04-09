@@ -53,8 +53,8 @@ public class Event {
       this.isAllDay = true;
       this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(), LocalTime.of(23, 59, 59));
     } else {
-      if (endDateTime.isBefore(startDateTime)) {
-        throw new IllegalArgumentException("End date/time cannot be before start date/time");
+      if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
+        throw new IllegalArgumentException("End date/time must be after start date/time");
       }
       this.isAllDay = false;
       this.endDateTime = endDateTime;
@@ -97,8 +97,8 @@ public class Event {
       this.isAllDay = true;
       this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(), LocalTime.of(23, 59, 59));
     } else {
-      if (endDateTime.isBefore(startDateTime)) {
-        throw new IllegalArgumentException("End date/time cannot be before start date/time");
+      if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
+        throw new IllegalArgumentException("End date/time must be after start date/time");
       }
       this.isAllDay = false;
       this.endDateTime = endDateTime;

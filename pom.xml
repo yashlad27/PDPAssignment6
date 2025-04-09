@@ -23,6 +23,9 @@
     </dependencies>
 
     <build>
+        <!-- Configure non-standard test directory structure -->
+        <testSourceDirectory>test/java</testSourceDirectory>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
