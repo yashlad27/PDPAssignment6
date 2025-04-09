@@ -1,16 +1,26 @@
 package view.dialog;
 
-import java.awt.*;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 
 import model.event.Event;
 
 /**
- * Abstract base class for event dialogs that implements common functionality.
- * This follows the Single Responsibility Principle by extracting common behavior
- * and the Template Method pattern for dialog setup.
+ * Abstract base class for event dialogs that implements common functionality. This follows the
+ * Single Responsibility Principle by extracting common behavior and the Template Method pattern for
+ * dialog setup.
  */
 public abstract class AbstractEventDialog extends JDialog implements IEventDialog {
 
@@ -37,8 +47,7 @@ public abstract class AbstractEventDialog extends JDialog implements IEventDialo
   }
 
   /**
-   * Initializes the dialog.
-   * Template method pattern: defines the skeleton of the dialog setup.
+   * Initializes the dialog. Template method pattern: defines the skeleton of the dialog setup.
    */
   protected void initDialog() {
     setSize(500, 600);
@@ -86,8 +95,8 @@ public abstract class AbstractEventDialog extends JDialog implements IEventDialo
     infoText.setLineWrap(true);
     infoText.setWrapStyleWord(true);
     infoText.setBackground(INFO_BACKGROUND);
-    infoText.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(INFO_BORDER, 1),
+    infoText.setBorder(
+        BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(INFO_BORDER, 1),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
     infoPanel.add(infoText, BorderLayout.CENTER);
