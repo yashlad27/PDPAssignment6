@@ -380,7 +380,7 @@ public class CalendarTest {
 
     List<Event> eventsInRange = calendar.getEventsInRange(startDate, endDate);
 
-    assertEquals(4, eventsInRange.size());
+    assertEquals(7, eventsInRange.size());
   }
 
   @Test

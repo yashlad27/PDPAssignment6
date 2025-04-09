@@ -34,7 +34,7 @@ public class ExportCalendarCommandTest {
     private String exportResult = null;
     private IOException exportException = null;
     private String name = "MockCalendar";
-    private TimeZone timeZone = TimeZone.getTimeZone("America/New_York");
+    private final TimeZone timeZone = TimeZone.getTimeZone("America/New_York");
 
     public void setExportResult(String result) {
       this.exportResult = result;
@@ -125,7 +125,7 @@ public class ExportCalendarCommandTest {
 
     @Override
     public List<Event> getEventsOnDate(LocalDate date) {
-      return null;
+      return List.of(); // Return empty list instead of null
     }
 
     @Override
@@ -140,7 +140,7 @@ public class ExportCalendarCommandTest {
 
     @Override
     public List<Event> getAllEvents() {
-      return null;
+      return List.of(); // Return empty list instead of null
     }
 
     @Override

@@ -704,52 +704,74 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("DateTime cannot be null");
     }
 
-    // Check all regular events
+    // First check if there are any regular events at this time
     for (Event event : events) {
-      if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
-        // Check if the dateTime is within the event time range (inclusive of start, exclusive of end)
-        if ((dateTime.isEqual(event.getStartDateTime()) || dateTime.isAfter(event.getStartDateTime()))
-                && dateTime.isBefore(event.getEndDateTime())) {
-          return true;
-        }
-      } else if (event.getDate() != null) {
-        LocalDate targetDate = dateTime.toLocalDate();
-        if (event.getDate().equals(targetDate)) {
-          return true;
-        }
+      if (isTimeWithinEventRange(dateTime, event)) {
+        return true;
       }
     }
     
-    // Check recurring events
-    LocalDate targetDate = dateTime.toLocalDate();
-    LocalTime targetTime = dateTime.toLocalTime();
-    
+    // Then check all recurring events
     for (RecurringEvent recurringEvent : recurringEvents) {
-      // Check if this recurring event occurs on the target day of week
-      if (recurringEvent.getRepeatDays().contains(targetDate.getDayOfWeek())) {
-        // Verify the date is within range (on or after start date)
-        LocalDate recurringStartDate = recurringEvent.getStartDateTime().toLocalDate();
-        if (targetDate.isBefore(recurringStartDate)) {
-          continue;
-        }
-        
-        // Check end date if specified
-        if (recurringEvent.getEndDate() != null && targetDate.isAfter(recurringEvent.getEndDate())) {
-          continue;
-        }
-        
-        // Check time range
-        LocalTime eventStartTime = recurringEvent.getStartDateTime().toLocalTime();
-        LocalTime eventEndTime = recurringEvent.getEndDateTime().toLocalTime();
-        
-        if ((targetTime.equals(eventStartTime) || targetTime.isAfter(eventStartTime))
-            && targetTime.isBefore(eventEndTime)) {
-          return true;
-        }
+      if (isRecurringEventActiveAt(dateTime, recurringEvent)) {
+        return true;
       }
     }
     
     return false;
+  }
+  
+  /**
+   * Helper method to check if a given time falls within an event's time range.
+   *
+   * @param dateTime The time to check
+   * @param event The event to check against
+   * @return true if the time is within the event's range
+   */
+  private boolean isTimeWithinEventRange(LocalDateTime dateTime, Event event) {
+    if (event.getStartDateTime() == null || event.getEndDateTime() == null) {
+      return false;
+    }
+    
+    // Check if the dateTime is within the event time range (inclusive of start, exclusive of end)
+    return (dateTime.isEqual(event.getStartDateTime()) || dateTime.isAfter(event.getStartDateTime()))
+           && dateTime.isBefore(event.getEndDateTime());
+  }
+  
+  /**
+   * Helper method to check if a recurring event is active at the given time.
+   *
+   * @param dateTime The time to check
+   * @param recurringEvent The recurring event to check against
+   * @return true if the recurring event is active at the specified time
+   */
+  private boolean isRecurringEventActiveAt(LocalDateTime dateTime, RecurringEvent recurringEvent) {
+    LocalDate targetDate = dateTime.toLocalDate();
+    DayOfWeek targetDay = targetDate.getDayOfWeek();
+    
+    // First check if this event repeats on this day of the week
+    if (!recurringEvent.getRepeatDays().contains(targetDay)) {
+      return false;
+    }
+    
+    // Check date is on or after the start date of the recurring event
+    LocalDate recurringStartDate = recurringEvent.getStartDateTime().toLocalDate();
+    if (targetDate.isBefore(recurringStartDate)) {
+      return false;
+    }
+    
+    // Check if we've passed the end date (if one is specified)
+    if (recurringEvent.getEndDate() != null && targetDate.isAfter(recurringEvent.getEndDate())) {
+      return false;
+    }
+    
+    // Check if the time falls within the event's time range
+    LocalTime targetTime = dateTime.toLocalTime();
+    LocalTime eventStartTime = recurringEvent.getStartDateTime().toLocalTime();
+    LocalTime eventEndTime = recurringEvent.getEndDateTime().toLocalTime();
+    
+    return (targetTime.equals(eventStartTime) || targetTime.isAfter(eventStartTime))
+           && targetTime.isBefore(eventEndTime);
   }
 
   @Override
