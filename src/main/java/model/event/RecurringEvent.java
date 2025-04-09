@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Represents a recurring event that repeats on specified days of the week.
@@ -262,23 +264,17 @@ public class RecurringEvent extends Event {
     while ((this.occurrences <= 0 || count < this.occurrences) && 
            (this.endDate == null || !currentDate.toLocalDate().isAfter(this.endDate))) {
       
-      System.out.println("[DEBUG] Checking date: " + currentDate + ", day of week: " + currentDate.getDayOfWeek());
-      System.out.println("[DEBUG] Repeat days: " + repeatDays);
-      
       // If the current day is one of the repeat days, create an occurrence
       if (repeatDays.contains(currentDate.getDayOfWeek())) {
-        System.out.println("[DEBUG] Creating occurrence for: " + currentDate);
         Event occurrence = createOccurrence(currentDate);
         occurrences.add(occurrence);
         count++;
-        System.out.println("[DEBUG] Added occurrence #" + count + " on " + currentDate.toLocalDate());
       }
       
       // Move to the next day
       currentDate = currentDate.plusDays(1);
     }
     
-    System.out.println("[DEBUG] Total occurrences generated: " + occurrences.size());
     return occurrences;
   }
 
@@ -332,6 +328,9 @@ public class RecurringEvent extends Event {
     return occurrences;
   }
 
+  // Cache of deterministic IDs to avoid regenerating them for the same date
+  private static final java.util.Map<String, UUID> deterministicIdCache = new java.util.HashMap<>();
+
   private Event createOccurrence(LocalDateTime date) {
     // Create occurrence using UTC times directly
     LocalDateTime startTime = date.withHour(getStartDateTime().getHour())
@@ -340,8 +339,22 @@ public class RecurringEvent extends Event {
 
     Duration duration = Duration.between(getStartDateTime(), getEndDateTime());
     LocalDateTime endTime = startTime.plus(duration);
-
-    return new Event(
+    
+    // Generate a deterministic UUID based on ONLY the recurring event ID and the DATE (not time)
+    // This ensures all occurrences on the same day share exactly the same ID, preventing duplicates
+    String dateOnlyString = date.toLocalDate().toString();
+    String deterministicSeed = recurringId.toString() + "-" + dateOnlyString;
+    
+    // Use cached UUID if available
+    UUID deterministicId;
+    if (deterministicIdCache.containsKey(deterministicSeed)) {
+      deterministicId = deterministicIdCache.get(deterministicSeed);
+    } else {
+      deterministicId = UUID.nameUUIDFromBytes(deterministicSeed.getBytes(StandardCharsets.UTF_8));
+      deterministicIdCache.put(deterministicSeed, deterministicId);
+    }
+    
+    Event occurrence = new Event(
             getSubject(),
             startTime,
             endTime,
@@ -349,6 +362,26 @@ public class RecurringEvent extends Event {
             getLocation(),
             isPublic()
     );
+    
+    // Use reflection to set the id field on the new occurrence
+    try {
+      Field idField = Event.class.getDeclaredField("id");
+      idField.setAccessible(true);
+      idField.set(occurrence, deterministicId);
+      
+      // Also set recurringId field if it exists
+      try {
+        Field recurringIdField = Event.class.getDeclaredField("recurringId");
+        recurringIdField.setAccessible(true);
+        recurringIdField.set(occurrence, recurringId);
+      } catch (NoSuchFieldException nsfe) {
+        // Ignore if the field doesn't exist
+      }
+    } catch (Exception e) {
+      System.err.println("[ERROR] Failed to set deterministic ID on occurrence: " + e.getMessage());
+    }
+    
+    return occurrence;
   }
 
   /**

@@ -407,18 +407,18 @@ public class GUIEventPanel extends JPanel {
     recurringCheckBox.addActionListener(e -> {
       handleRecurringCheckbox();
       System.out.println("[DEBUG] Recurring checkbox changed: " + recurringCheckBox.isSelected());
-      
+
       // Make sure the panel is visible in the layout
       if (recurringCheckBox.isSelected()) {
         // Force the weekday checkboxes to be visible and at least one selected
         weekdayCheckboxes.get(0).setSelected(true);
-        
+
         // Set until date to be a month later to pass validation
         Calendar untilCal = Calendar.getInstance();
         untilCal.setTime((Date) dateSpinner.getValue());
         untilCal.add(Calendar.MONTH, 1);
         untilDateSpinner.setValue(untilCal.getTime());
-        
+
         System.out.println("[DEBUG] Set Monday checkbox to selected and until date to " + untilCal.getTime());
       }
     });
@@ -654,10 +654,10 @@ public class GUIEventPanel extends JPanel {
 
     // If this is a recurring event, delegate to the specialized method
     if (event instanceof RecurringEvent) {
-        displayRecurringEvent((RecurringEvent) event);
-        return;
+      displayRecurringEvent((RecurringEvent) event);
+      return;
     }
-    
+
     setPanelMode(PanelMode.VIEW);
 
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Edit button visibility: "
@@ -675,11 +675,11 @@ public class GUIEventPanel extends JPanel {
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
     LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
     LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
-    
+
     // Create Date objects from the local times
     Date localStartDate = Date.from(localStartDateTime.atZone(ZoneId.of(systemTimezone)).toInstant());
     Date localEndDate = Date.from(localEndDateTime.atZone(ZoneId.of(systemTimezone)).toInstant());
-    
+
     dateSpinner.setValue(localStartDate);
     startTimeSpinner.setValue(localStartDate);
     endTimeSpinner.setValue(localEndDate);
@@ -843,20 +843,20 @@ public class GUIEventPanel extends JPanel {
   private void handleRecurringCheckbox() {
     boolean isRecurring = recurringCheckBox.isSelected();
     recurringOptionsPanel.setVisible(isRecurring);
-    
+
     if (isRecurring) {
       // Ensure at least one weekday is selected by default (Monday)
       if (weekdayCheckboxes.stream().noneMatch(JCheckBox::isSelected)) {
         weekdayCheckboxes.get(0).setSelected(true);  // Monday is the first checkbox
       }
-      
+
       // Set the "until date" to at least one month in the future from the event date
       Date currentDate = (Date) dateSpinner.getValue();
       Calendar untilCal = Calendar.getInstance();
       untilCal.setTime(currentDate);
       untilCal.add(Calendar.MONTH, 1);  // One month in the future
       untilDateSpinner.setValue(untilCal.getTime());
-      
+
       // Set a reasonable default for occurrences
       occurrencesSpinner.setValue(4);  // Default to 4 occurrences
     }

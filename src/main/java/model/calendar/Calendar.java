@@ -451,8 +451,11 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Date cannot be null");
     }
     
+    // Create a map to track events by ID to avoid duplicates
+    Map<UUID, Event> eventsOnDateById = new HashMap<>();
+    
     // Get regular events for the date
-    List<Event> result = getFilteredEvents(event -> {
+    List<Event> regularEvents = getFilteredEvents(event -> {
       if (event.getStartDateTime() != null) {
         LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
 
@@ -468,20 +471,28 @@ public class Calendar implements ICalendar {
       return false;
     });
     
+    // Add regular events to the map by ID to avoid duplicates
+    for (Event event : regularEvents) {
+      eventsOnDateById.put(event.getId(), event);
+    }
+    
     // Also check for recurring event occurrences on this date
     for (RecurringEvent recurringEvent : this.recurringEvents) {
       System.out.println("[DEBUG] Checking recurring event for date " + date + ": " + recurringEvent.getSubject());
       
-      // Get all occurrences between the specified date and itself (effectively just for that date)
+      // Get occurrences just for the specified date
       List<Event> occurrences = recurringEvent.getOccurrencesBetween(date, date);
       System.out.println("[DEBUG] Found " + occurrences.size() + " occurrences of recurring event " + 
                          recurringEvent.getSubject() + " on " + date);
       
-      // Add any occurrences found to the result list
-      result.addAll(occurrences);
+      // Add occurrences to the map by ID to avoid duplicates
+      for (Event occurrence : occurrences) {
+        eventsOnDateById.put(occurrence.getId(), occurrence);
+      }
     }
     
-    return result;
+    // Return the deduplicated events as a list
+    return new ArrayList<>(eventsOnDateById.values());
   }
 
   /**
@@ -501,7 +512,10 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Start date cannot be after end date");
     }
 
-    // Use the iterator pattern to get events between dates
+    // Create a map to track events by ID to avoid duplicates
+    Map<UUID, Event> eventsInRangeById = new HashMap<>();
+
+    // Use the iterator pattern to get regular events between dates
     EventFilter dateRangeFilter = event -> {
       if (event.getStartDateTime() != null) {
         LocalDate eventDate = event.getStartDateTime().toLocalDate();
@@ -510,14 +524,30 @@ public class Calendar implements ICalendar {
       return false;
     };
 
+    // Get regular events in the date range
     ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(dateRangeFilter);
-    List<Event> result = new ArrayList<>();
-
     while (iterator.hasNext()) {
-      result.add(iterator.next());
+      Event event = iterator.next();
+      eventsInRangeById.put(event.getId(), event);
+    }
+    
+    // Check each recurring event for occurrences in the range
+    LocalDate currentDate = startDate;
+    while (!currentDate.isAfter(endDate)) {
+      for (RecurringEvent recurringEvent : this.recurringEvents) {
+        // Get occurrences for the current day
+        List<Event> occurrences = recurringEvent.getOccurrencesBetween(currentDate, currentDate);
+        
+        // Add each occurrence to the map by ID to avoid duplicates
+        for (Event occurrence : occurrences) {
+          eventsInRangeById.put(occurrence.getId(), occurrence);
+        }
+      }
+      currentDate = currentDate.plusDays(1);
     }
 
-    return result;
+    // Return the deduplicated list of events
+    return new ArrayList<>(eventsInRangeById.values());
   }
 
 
