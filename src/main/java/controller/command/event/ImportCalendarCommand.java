@@ -38,19 +38,19 @@ public class ImportCalendarCommand implements ICommand {
 
     String filePath = args[0];
     File file = new File(filePath);
-    
+
     if (!file.exists()) {
       return "Error: File not found: " + filePath;
     }
-    
+
     try {
       // Import events from the CSV file
       List<Event> importedEvents = csvExporter.importEvents(file);
-      
+
       if (importedEvents.isEmpty()) {
         return "No events found in the CSV file";
       }
-      
+
       // Add each imported event to the calendar
       int successCount = 0;
       for (Event event : importedEvents) {
@@ -64,7 +64,7 @@ public class ImportCalendarCommand implements ICommand {
           System.err.println("Failed to add event '" + event.getSubject() + "': " + e.getMessage());
         }
       }
-      
+
       return successCount + " events imported successfully from " + file.getName();
     } catch (IOException e) {
       return "Failed to import calendar: " + e.getMessage();

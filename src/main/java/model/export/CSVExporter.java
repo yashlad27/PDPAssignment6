@@ -130,20 +130,68 @@ public class CSVExporter implements IDataExporter {
 
   @Override
   public String export(String filePath, List<Event> events) throws IOException {
-    try (FileWriter writer = new FileWriter(filePath)) {
-      writer.write("Subject,Start Date,Start Time,End Date,End Time,All Day," +
-              "Description,Location,Public\n");
+    System.out.println("[DEBUG] CSVExporter.export called for file: " + filePath);
+    System.out.println("[DEBUG] Number of events to export: " + (events != null ? events.size() : 0));
 
+    if (events == null || events.isEmpty()) {
+      System.out.println("[WARNING] No events to export or events list is null");
+    }
+
+    // Create parent directories if they don't exist
+    File exportFile = new File(filePath);
+    File parentDir = exportFile.getParentFile();
+    if (parentDir != null && !parentDir.exists()) {
+      System.out.println("[DEBUG] Creating parent directories: " + parentDir.getAbsolutePath());
+      boolean dirCreated = parentDir.mkdirs();
+      System.out.println("[DEBUG] Parent directories created: " + dirCreated);
+    }
+
+    System.out.println("[DEBUG] Opening FileWriter for: " + filePath);
+    try (FileWriter writer = new FileWriter(filePath)) {
+      // Write header row
+      String header = "Subject,Start Date,Start Time,End Date,End Time,All Day," +
+              "Description,Location,Public\n";
+      System.out.println("[DEBUG] Writing CSV header: " + header.trim());
+      writer.write(header);
+
+      // Track how many events we've written
+      final int[] count = {0};
+
+      System.out.println("[DEBUG] Starting to write event data");
       events.stream()
-              .map(this::formatEventForCSV)
+              .map(event -> {
+                String formatted = formatEventForCSV(event);
+                System.out.println("[DEBUG] Formatted event " + (count[0] + 1) + ": " +
+                        event.getSubject() + " -> " + formatted.substring(0,
+                        Math.min(50, formatted.length())) +
+                        (formatted.length() > 50 ? "..." : ""));
+                count[0]++;
+                return formatted;
+              })
               .forEach(line -> {
                 try {
                   writer.write(line);
                 } catch (IOException e) {
+                  System.err.println("[ERROR] Failed to write event to CSV: " + e.getMessage());
                   throw new RuntimeException("Failed to write event to CSV", e);
                 }
               });
+
+      System.out.println("[DEBUG] Successfully wrote " + count[0] + " events to CSV file");
+    } catch (IOException e) {
+      System.err.println("[ERROR] Exception while exporting CSV: " + e.getMessage());
+      throw e;
     }
+
+    // Verify the file was created and has content
+    File outputFile = new File(filePath);
+    if (outputFile.exists()) {
+      System.out.println("[DEBUG] CSV file created successfully: " + outputFile.getAbsolutePath());
+      System.out.println("[DEBUG] CSV file size: " + outputFile.length() + " bytes");
+    } else {
+      System.out.println("[WARNING] CSV file was not created");
+    }
+
     return filePath;
   }
 

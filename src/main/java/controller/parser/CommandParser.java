@@ -127,7 +127,8 @@ public class CommandParser {
 
     // Copy single event pattern
     registerPattern("copy_event", Pattern.compile(
-                    "copy event ([\"']?[^\"']+[\"']?|[^\\s]+) " + "on (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
+                    "copy event ([\"']?[^\"']+[\"']?|[^\\s]+) "
+                            + "on (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}) "
                             + "--target ([\\w-]+) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})"),
             this::parseCopyEventCommand);
 
@@ -465,7 +466,6 @@ public class CommandParser {
     String property = matcher.group(1);
     String subject = matcher.group(2);
     String startDateTime = matcher.group(3);
-    // Group 4 is available but not used in this implementation
     String newValue = matcher.group(5);
 
     String[] args = {"single", property, subject, startDateTime, newValue};

@@ -1,7 +1,6 @@
 package view;
 
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +40,8 @@ public class GUIExportImportPanel extends JPanel {
     setBorder(BorderFactory.createTitledBorder("Import/Export"));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-    // Set alignment for centering components
     setAlignmentX(Component.CENTER_ALIGNMENT);
 
-    // Create a panel for import section
     JPanel importPanel = new JPanel();
     importPanel.setLayout(new BoxLayout(importPanel, BoxLayout.Y_AXIS));
     importPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -122,12 +119,10 @@ public class GUIExportImportPanel extends JPanel {
    * Sets up event listeners for the buttons.
    */
   private void setupListeners() {
-    // Set up the Choose File button for import
     importButton.addActionListener(e -> {
       System.out.println("[DEBUG] Import Choose File button clicked");
       fileChooser.setDialogTitle("Select CSV File to Import");
 
-      // Set up file filter for CSV files
       FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
       fileChooser.setFileFilter(filter);
 
@@ -173,28 +168,73 @@ public class GUIExportImportPanel extends JPanel {
     });
 
     exportButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Export Calendar button clicked");
+      fileChooser.setDialogTitle("Save Calendar Data as CSV");
+      
+      // Set up file filter for CSV files
+      FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
+      fileChooser.setFileFilter(filter);
+      
+      // Set the default directory to the project root
+      fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+      
       if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         exportFile = fileChooser.getSelectedFile();
+        // Ensure the file has .csv extension
         if (!exportFile.getName().toLowerCase().endsWith(".csv")) {
           exportFile = new File(exportFile.getParentFile(), exportFile.getName() + ".csv");
         }
+        
+        System.out.println("[DEBUG] Selected export file: " + exportFile.getAbsolutePath());
         exportFileLabel.setText(exportFile.getName());
-        exportButton.setEnabled(true);
-      }
-    });
-
-    // Import functionality is now handled directly in the Choose File button handler
-
-    exportButton.addActionListener(e -> {
-      if (exportFile != null && listener != null) {
-        try {
-          listener.onExport(exportFile);
-          showStatus("Export successful", true);
-        } catch (Exception ex) {
-          showStatus("Export failed: " + ex.getMessage(), false);
+        
+        if (exportFile != null) {
+          try {
+            System.out.println("[DEBUG] Preparing to export calendar data to: " + exportFile.getAbsolutePath());
+            System.out.println("[DEBUG] File exists before export: " + exportFile.exists());
+            System.out.println("[DEBUG] File parent directory: " + exportFile.getParentFile().getAbsolutePath());
+            System.out.println("[DEBUG] File can write: " + exportFile.getParentFile().canWrite());
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            
+            int listenerCount = listeners.size();
+            System.out.println("[DEBUG] Notifying " + listenerCount + " export listeners");
+            
+            if (listenerCount == 0) {
+              System.out.println("[WARNING] No export listeners registered - export may not work");
+            }
+            
+            for (int i = 0; i < listeners.size(); i++) {
+              ExportImportListener l = listeners.get(i);
+              System.out.println("[DEBUG] Calling export listener #" + (i+1) + ": " + l.getClass().getName());
+              l.onExport(exportFile);
+            }
+            
+            // Verify file was created
+            System.out.println("[DEBUG] Export operation completed");
+            System.out.println("[DEBUG] File exists after export: " + exportFile.exists());
+            if (exportFile.exists()) {
+              System.out.println("[DEBUG] Export file size: " + exportFile.length() + " bytes");
+            }
+            
+            // Show success message
+            setCursor(Cursor.getDefaultCursor());
+            showStatus("Export successful: " + exportFile.getName(), true);
+            JOptionPane.showMessageDialog(
+                this,
+                "Calendar exported successfully to:\n" + exportFile.getAbsolutePath(),
+                "Export Successful",
+                JOptionPane.INFORMATION_MESSAGE);
+          } catch (Exception ex) {
+            System.err.println("[ERROR] Export failed: " + ex.getMessage());
+            ex.printStackTrace();
+            setCursor(Cursor.getDefaultCursor());
+            showStatus("Export failed: " + ex.getMessage(), false);
+            showError("Export failed: " + ex.getMessage());
+          }
         }
       }
     });
+    
   }
 
   /**
@@ -250,24 +290,5 @@ public class GUIExportImportPanel extends JPanel {
     });
     timer.setRepeats(false);
     timer.start();
-  }
-
-  public void addImportListener(ActionListener listener) {
-    importButton.addActionListener(listener);
-  }
-
-  public void addExportListener(ActionListener listener) {
-    exportButton.addActionListener(listener);
-  }
-
-  public File showFileChooser(boolean forImport) {
-    int result = forImport ?
-            fileChooser.showOpenDialog(this) :
-            fileChooser.showSaveDialog(this);
-
-    if (result == JFileChooser.APPROVE_OPTION) {
-      return fileChooser.getSelectedFile();
-    }
-    return null;
   }
 } 

@@ -45,7 +45,7 @@ public class CopyEventCommand implements ICommand {
 
     try {
       CopyStrategy strategy = null;
-      
+
       // Determine the appropriate strategy based on the command format
       if (args.length >= 2 && args[1].equals("event")) {
         strategy = ConsolidatedCopyStrategy.createSingleEventStrategy(

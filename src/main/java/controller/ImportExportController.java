@@ -1,8 +1,10 @@
 package controller;
 
 import java.io.File;
+import java.util.List;
 
 import model.calendar.ICalendar;
+import model.event.Event;
 import model.export.CSVExporter;
 import view.GUIView;
 
@@ -21,6 +23,20 @@ public class ImportExportController {
    */
   public ImportExportController(GUIView view) {
     this.view = view;
+    this.currentCalendar = null;
+  }
+  
+  /**
+   * Constructs a new ImportExportController with a specific calendar.
+   *
+   * @param calendar the calendar to use
+   * @param view the GUI view
+   */
+  public ImportExportController(ICalendar calendar, GUIView view) {
+    System.out.println("[DEBUG] Creating ImportExportController with calendar: " + 
+        (calendar != null ? calendar.getName() : "null"));
+    this.view = view;
+    this.currentCalendar = calendar;
   }
 
   /**
@@ -51,12 +67,12 @@ public class ImportExportController {
       view.showErrorMessage("Invalid file selected");
       return;
     }
-    
+
     if (currentCalendar == null) {
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     // Simply display the message - no try-catch needed for a basic UI message
     view.displayMessage("Import functionality is not yet implemented.");
   }
@@ -67,28 +83,46 @@ public class ImportExportController {
    * @param file the file to export to
    */
   public void onExport(File file) {
+    System.out.println("[DEBUG] ImportExportController.onExport called with file: " + 
+        (file != null ? file.getAbsolutePath() : "null"));
+    
     if (file == null) {
       view.showErrorMessage("Invalid file selected");
       return;
     }
-    
+
     if (currentCalendar == null) {
+      System.out.println("[DEBUG] No calendar selected for export");
       view.showErrorMessage("Please select a calendar first");
       return;
     }
-    
+
     try {
       String filePath = file.getPath();
       if (!filePath.toLowerCase().endsWith(".csv")) {
         filePath += ".csv";
+        System.out.println("[DEBUG] Added .csv extension to file path: " + filePath);
       }
+
+      // Get events from the calendar
+      List<Event> events = currentCalendar.getAllEvents();
+      System.out.println("[DEBUG] Retrieved " + events.size() + " events from calendar " + 
+          currentCalendar.getName() + " for export");
       
+      // Create the exporter and export the events
       CSVExporter exporter = new CSVExporter();
-      // Get events from the calendar and export them to the file
       File exportFile = new File(filePath);
-      exporter.exportEvents(currentCalendar.getAllEvents(), exportFile);
-      view.displayMessage("Exported events to " + file.getName());
+      System.out.println("[DEBUG] Exporting events to file: " + exportFile.getAbsolutePath());
+      
+      exporter.exportEvents(events, exportFile);
+      
+      String successMessage = "Exported " + events.size() + " events from " + 
+          currentCalendar.getName() + " to " + file.getName();
+      System.out.println("[DEBUG] Export successful: " + successMessage);
+      view.displayMessage(successMessage);
     } catch (Exception e) {
+      System.err.println("[ERROR] Failed to export events: " + e.getMessage());
+      e.printStackTrace();
       view.showErrorMessage("Error exporting events: " + e.getMessage());
     }
   }

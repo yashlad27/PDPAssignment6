@@ -37,7 +37,7 @@ public interface ICalendar {
    * @return the name of the calendar
    */
   String getName();
-  
+
   /**
    * Sets the name of the calendar.
    *
@@ -218,7 +218,7 @@ public interface ICalendar {
   /**
    * Updates an existing event with a new version.
    *
-   * @param eventId The UUID of the event to update
+   * @param eventId      The UUID of the event to update
    * @param updatedEvent The new version of the event
    * @return true if the event was successfully updated, false otherwise
    * @throws ConflictingEventException if the updated event conflicts with existing events

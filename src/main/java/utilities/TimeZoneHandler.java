@@ -100,21 +100,21 @@ public class TimeZoneHandler {
       throw new IllegalArgumentException("Invalid parameters for time conversion");
     }
 
-    // First convert to UTC
     LocalDateTime utcTime = convertToUTC(dateTime, fromTimezone);
-    // Then convert from UTC to target timezone
     return convertFromUTC(utcTime, toTimezone);
   }
 
   /**
-   * Gets a timezone converter for converting between two timezones.
-   * The converter will first convert to UTC, then to the target timezone.
-   *
-   * @param fromTimezone the source timezone
-   * @param toTimezone   the target timezone
-   * @return a TimezoneConverter for the specified conversion
+   * Functional interface for converting times between timezones.
    */
-  public TimezoneConverter getConverter(String fromTimezone, String toTimezone) {
-    return dateTime -> convertTime(dateTime, fromTimezone, toTimezone);
+  @FunctionalInterface
+  public interface TimezoneConverter {
+    /**
+     * Converts a LocalDateTime from one timezone to another.
+     *
+     * @param dateTime the LocalDateTime to convert
+     * @return the converted LocalDateTime
+     */
+    LocalDateTime convert(LocalDateTime dateTime);
   }
 }

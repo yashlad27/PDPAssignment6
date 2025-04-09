@@ -61,6 +61,6 @@ public class EditCalendarCommand implements ICommand {
 
   @Override
   public String getName() {
-    return "edit-calendar";
+    return "edit calendar";
   }
 }

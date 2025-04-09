@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Represents a recurring event that repeats on specified days of the week.
@@ -21,9 +23,8 @@ public class RecurringEvent extends Event {
   private final int occurrences;
   private final LocalDate endDate;
   private final UUID recurringId;
-  // The isAllDay field determines if the event spans the entire day
   private final boolean isAllDay;
-  
+
   /**
    * @return true if this event spans the entire day
    */
@@ -47,8 +48,9 @@ public class RecurringEvent extends Event {
    * @param isAllDay      whether the event is an all-day event
    */
   private RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                       String description, String location, boolean isPublic, Set<DayOfWeek> repeatDays,
-                       int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
+                         String description, String location,
+                         boolean isPublic, Set<DayOfWeek> repeatDays,
+                         int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
     super(subject, startDateTime, endDateTime, description, location, isPublic);
     this.repeatDays = new HashSet<>(repeatDays);
     this.occurrences = occurrences;
@@ -196,7 +198,9 @@ public class RecurringEvent extends Event {
      */
     public RecurringEvent build() {
       validate();
-      return new RecurringEvent(subject, startDateTime, endDateTime, description, location, isPublic, repeatDays, occurrences, endDate, recurringId, isAllDay);
+      return new RecurringEvent(subject, startDateTime, endDateTime,
+              description, location, isPublic, repeatDays, occurrences,
+              endDate, recurringId, isAllDay);
     }
 
     /**
@@ -254,16 +258,23 @@ public class RecurringEvent extends Event {
     List<Event> occurrences = new ArrayList<>();
     LocalDateTime currentDate = getStartDateTime();
     int count = 0;
-
-    while (count < this.occurrences) {
+    
+    // Continue until we've generated the requested number of occurrences
+    // or reached the end date if specified
+    while ((this.occurrences <= 0 || count < this.occurrences) && 
+           (this.endDate == null || !currentDate.toLocalDate().isAfter(this.endDate))) {
+      
+      // If the current day is one of the repeat days, create an occurrence
       if (repeatDays.contains(currentDate.getDayOfWeek())) {
         Event occurrence = createOccurrence(currentDate);
         occurrences.add(occurrence);
         count++;
       }
+      
+      // Move to the next day
       currentDate = currentDate.plusDays(1);
     }
-
+    
     return occurrences;
   }
 
@@ -271,7 +282,7 @@ public class RecurringEvent extends Event {
    * Gets occurrences of this recurring event between the specified dates (inclusive).
    *
    * @param startDate the start date
-   * @param endDate the end date
+   * @param endDate   the end date
    * @return a list of occurrences between the specified dates
    */
   public List<Event> getOccurrencesBetween(LocalDate startDate, LocalDate endDate) {
@@ -297,13 +308,14 @@ public class RecurringEvent extends Event {
     LocalDate eventEndDate = endDate;
 
     // Use the earlier of our calculated end date and the requested end date
-    LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate)) 
-        ? eventEndDate : endDate;
+    LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate))
+            ? eventEndDate : endDate;
 
     int count = 0;
 
     // Iterate through dates and collect occurrences
-    while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0 || count < this.occurrences)) {
+    while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0
+            || count < this.occurrences)) {
       if (repeatDays.contains(currentDateTime.getDayOfWeek())) {
         Event occurrence = createOccurrence(currentDateTime);
         occurrences.add(occurrence);
@@ -316,6 +328,9 @@ public class RecurringEvent extends Event {
     return occurrences;
   }
 
+  // Cache of deterministic IDs to avoid regenerating them for the same date
+  private static final java.util.Map<String, UUID> deterministicIdCache = new java.util.HashMap<>();
+
   private Event createOccurrence(LocalDateTime date) {
     // Create occurrence using UTC times directly
     LocalDateTime startTime = date.withHour(getStartDateTime().getHour())
@@ -324,8 +339,22 @@ public class RecurringEvent extends Event {
 
     Duration duration = Duration.between(getStartDateTime(), getEndDateTime());
     LocalDateTime endTime = startTime.plus(duration);
-
-    return new Event(
+    
+    // Generate a deterministic UUID based on ONLY the recurring event ID and the DATE (not time)
+    // This ensures all occurrences on the same day share exactly the same ID, preventing duplicates
+    String dateOnlyString = date.toLocalDate().toString();
+    String deterministicSeed = recurringId.toString() + "-" + dateOnlyString;
+    
+    // Use cached UUID if available
+    UUID deterministicId;
+    if (deterministicIdCache.containsKey(deterministicSeed)) {
+      deterministicId = deterministicIdCache.get(deterministicSeed);
+    } else {
+      deterministicId = UUID.nameUUIDFromBytes(deterministicSeed.getBytes(StandardCharsets.UTF_8));
+      deterministicIdCache.put(deterministicSeed, deterministicId);
+    }
+    
+    Event occurrence = new Event(
             getSubject(),
             startTime,
             endTime,
@@ -333,6 +362,26 @@ public class RecurringEvent extends Event {
             getLocation(),
             isPublic()
     );
+    
+    // Use reflection to set the id field on the new occurrence
+    try {
+      Field idField = Event.class.getDeclaredField("id");
+      idField.setAccessible(true);
+      idField.set(occurrence, deterministicId);
+      
+      // Also set recurringId field if it exists
+      try {
+        Field recurringIdField = Event.class.getDeclaredField("recurringId");
+        recurringIdField.setAccessible(true);
+        recurringIdField.set(occurrence, recurringId);
+      } catch (NoSuchFieldException nsfe) {
+        // Ignore if the field doesn't exist
+      }
+    } catch (Exception e) {
+      System.err.println("[ERROR] Failed to set deterministic ID on occurrence: " + e.getMessage());
+    }
+    
+    return occurrence;
   }
 
   /**
@@ -375,7 +424,7 @@ public class RecurringEvent extends Event {
   public LocalDate getEndDate() {
     return endDate;
   }
-  
+
   /**
    * Gets the end date of the recurring event (alias for getEndDate()).
    *

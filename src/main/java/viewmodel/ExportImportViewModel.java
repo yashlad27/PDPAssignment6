@@ -49,24 +49,6 @@ public class ExportImportViewModel implements IViewModel {
   }
 
   /**
-   * Adds a listener to be notified of changes.
-   *
-   * @param listener the listener to add
-   */
-  public void addListener(ExportImportViewModelListener listener) {
-    listeners.add(listener);
-  }
-
-  /**
-   * Removes a listener from notifications.
-   *
-   * @param listener the listener to remove
-   */
-  public void removeListener(ExportImportViewModelListener listener) {
-    listeners.remove(listener);
-  }
-
-  /**
    * Sets the current calendar.
    *
    * @param calendar the calendar to set
@@ -89,41 +71,39 @@ public class ExportImportViewModel implements IViewModel {
 
     try {
       System.out.println("[DEBUG] Starting CSV import from file: " + file.getAbsolutePath());
-      
-      // Create a CSVExporter instance to handle the import
+
       model.export.CSVExporter csvExporter = new model.export.CSVExporter();
-      
-      // Import events from the CSV file
+
       System.out.println("[DEBUG] Reading events from CSV file");
       List<model.event.Event> importedEvents = csvExporter.importEvents(file);
-      
-      System.out.println("[DEBUG] Successfully imported " + importedEvents.size() + " events from CSV");
-      
-      // Add each imported event to the current calendar
+
+      System.out.println("[DEBUG] Successfully imported "
+              + importedEvents.size() + " events from CSV");
+
       int successCount = 0;
       for (model.event.Event event : importedEvents) {
         try {
           System.out.println("[DEBUG] Adding event to calendar: " + event.getSubject());
-          boolean added = currentCalendar.addEvent(event, true); // Set autoDecline to true
+          boolean added = currentCalendar.addEvent(event, true);
           if (added) {
             successCount++;
           }
         } catch (Exception e) {
-          System.err.println("[ERROR] Failed to add event '" + event.getSubject() + "': " + e.getMessage());
+          System.err.println("[ERROR] Failed to add event '"
+                  + event.getSubject() + "': " + e.getMessage());
         }
       }
-      
-      System.out.println("[DEBUG] Import completed successfully. Added " + successCount + " out of " + importedEvents.size() + " events");
-      
-      // Notify listeners of successful import
+
+      System.out.println("[DEBUG] Import completed successfully. Added "
+              + successCount + " out of " + importedEvents.size() + " events");
+
       String message = "Successfully imported " + successCount + " events";
       System.out.println("[DEBUG] Notifying listeners with success message: " + message);
       notifyImportSuccess(message);
-      
-      // Force a refresh of the calendar display to show the imported events
+
       System.out.println("[DEBUG] Requesting calendar refresh to display imported events");
       refresh();
-      
+
       return successCount;
     } catch (Exception e) {
       System.err.println("[ERROR] Import failed: " + e.getMessage());
@@ -146,19 +126,16 @@ public class ExportImportViewModel implements IViewModel {
 
     try {
       System.out.println("[DEBUG] Starting CSV export to file: " + file.getAbsolutePath());
-      
-      // Get all events from the current calendar
-      String calendarName = ((model.calendar.Calendar)currentCalendar).getName();
+
+      String calendarName = ((model.calendar.Calendar) currentCalendar).getName();
       System.out.println("[DEBUG] Retrieving events from calendar: " + calendarName);
       List<model.event.Event> events = currentCalendar.getAllEvents();
       System.out.println("[DEBUG] Found " + events.size() + " events to export");
-      
-      // Create a CSVExporter instance
+
       model.export.CSVExporter csvExporter = new model.export.CSVExporter();
-      
-      // Export events to the CSV file
+
       csvExporter.exportEvents(events, file);
-      
+
       System.out.println("[DEBUG] Export completed successfully");
       notifyExportSuccess();
     } catch (Exception e) {

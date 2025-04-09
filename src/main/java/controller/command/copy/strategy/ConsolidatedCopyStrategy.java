@@ -1,5 +1,6 @@
 package controller.command.copy.strategy;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,11 +42,11 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param copyType the type of copy operation
-   * @param args the command arguments
+   * @param copyType        the type of copy operation
+   * @param args            the command arguments
    */
   private ConsolidatedCopyStrategy(CalendarManager calendarManager, TimeZoneHandler timezoneHandler,
-                                  CopyType copyType, String[] args) {
+                                   CopyType copyType, String[] args) {
     if (calendarManager == null) {
       throw new IllegalArgumentException("CalendarManager cannot be null");
     }
@@ -62,7 +63,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param args the command arguments
+   * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for single event copying
    */
   public static ConsolidatedCopyStrategy createSingleEventStrategy(
@@ -75,7 +76,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param args the command arguments
+   * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for day events copying
    */
   public static ConsolidatedCopyStrategy createDayEventsStrategy(
@@ -88,7 +89,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    *
    * @param calendarManager the calendar manager
    * @param timezoneHandler the timezone handler
-   * @param args the command arguments
+   * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for range events copying
    */
   public static ConsolidatedCopyStrategy createRangeEventsStrategy(
@@ -139,9 +140,9 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args the command arguments
    * @return result message of the copy operation
    * @throws CalendarNotFoundException if the target calendar is not found
-   * @throws EventNotFoundException if the source event is not found
+   * @throws EventNotFoundException    if the source event is not found
    * @throws ConflictingEventException if there's a conflict in the target calendar
-   * @throws InvalidEventException if the event parameters are invalid
+   * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeSingleEventCopy(String[] args) throws CalendarNotFoundException,
           EventNotFoundException, ConflictingEventException, InvalidEventException {
@@ -183,9 +184,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args the command arguments
    * @return result message of the copy operation
    * @throws CalendarNotFoundException if the target calendar is not found
-   * @throws InvalidEventException if the event parameters are invalid
+   * @throws InvalidEventException     if the event parameters are invalid
    */
-  private String executeDayEventsCopy(String[] args) throws CalendarNotFoundException, InvalidEventException {
+  private String executeDayEventsCopy(String[] args)
+          throws CalendarNotFoundException, InvalidEventException {
     // Validate format: copy events on <dateString> --target <calendarName> to <dateString>
     if (args.length < 8) {
       throw new InvalidEventException("Insufficient arguments for copy events on date command");
@@ -222,9 +224,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args the command arguments
    * @return result message of the copy operation
    * @throws CalendarNotFoundException if the target calendar is not found
-   * @throws InvalidEventException if the event parameters are invalid
+   * @throws InvalidEventException     if the event parameters are invalid
    */
-  private String executeRangeEventsCopy(String[] args) throws CalendarNotFoundException, InvalidEventException {
+  private String executeRangeEventsCopy(String[] args)
+          throws CalendarNotFoundException, InvalidEventException {
     if (args.length < 10) {
       throw new InvalidEventException(
               "Insufficient arguments for copy events between dates command");
@@ -265,7 +268,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Copies a single event from the active calendar to a target calendar.
    */
   private String copySingleEvent(String eventName, String dateTimeStr, String targetCalendarName,
-                                String targetDateTimeStr) throws Exception {
+                                 String targetDateTimeStr) throws Exception {
     LocalDateTime sourceDateTime = DateTimeUtil.parseDateTime(dateTimeStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
@@ -275,21 +278,17 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
 
-    // Find the event using the original time in source calendar's timezone
     Event sourceEvent = sourceCalendar.findEvent(eventName, sourceDateTime);
     if (sourceEvent == null) {
       throw new EventNotFoundException("Event not found: " + eventName + " at " + sourceDateTime);
     }
 
-    // Get target calendar
     ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
     String targetTimezone = ((Calendar) targetCalendar).getTimeZone().getID();
 
-    // Convert UTC times to target calendar's timezone
     LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(), targetTimezone);
     LocalDateTime endInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getEndDateTime(), targetTimezone);
 
-    // Create new event using times in target calendar's timezone
     Event newEvent = new Event(
             sourceEvent.getSubject(),
             startInTargetTz,
@@ -335,17 +334,14 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
-      // Get the source event's UTC time (it's already in UTC in storage)
       LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
-      long durationMinutes = java.time.Duration.between(
+      long durationMinutes = Duration.between(
               sourceEvent.getStartDateTime(),
               sourceEvent.getEndDateTime()
       ).toMinutes();
 
-      // Convert UTC time to target timezone
       LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
 
-      // Create new event with target time and duration
       Event newEvent = new Event(
               sourceEvent.getSubject(),
               targetDateTime,
@@ -355,7 +351,6 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
               sourceEvent.isPublic()
       );
 
-      // Add the event to the target calendar
       try {
         calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
           try {
@@ -367,7 +362,6 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
         });
         successCount++;
       } catch (Exception e) {
-        // Continue with next event if one fails
         continue;
       }
     }
@@ -387,7 +381,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Copies events within a date range from the active calendar to a target calendar.
    */
   private String copyRangeEvents(String startDateStr, String endDateStr, String targetCalendarName,
-                                String targetStartDateStr) throws Exception {
+                                 String targetStartDateStr) throws Exception {
     LocalDate sourceStartDate = DateTimeUtil.parseDate(startDateStr);
     LocalDate sourceEndDate = DateTimeUtil.parseDate(endDateStr);
 
@@ -407,17 +401,14 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
-      // Get the source event's UTC time (it's already in UTC in storage)
       LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
-      long durationMinutes = java.time.Duration.between(
+      long durationMinutes = Duration.between(
               sourceEvent.getStartDateTime(),
               sourceEvent.getEndDateTime()
       ).toMinutes();
 
-      // Convert UTC time to target timezone
       LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
 
-      // Create new event with target time and duration
       Event newEvent = new Event(
               sourceEvent.getSubject(),
               targetDateTime,
@@ -427,7 +418,6 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
               sourceEvent.isPublic()
       );
 
-      // Add the event to the target calendar
       try {
         calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
           try {
@@ -439,7 +429,6 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
         });
         successCount++;
       } catch (Exception e) {
-        // Continue with next event if one fails
         continue;
       }
     }

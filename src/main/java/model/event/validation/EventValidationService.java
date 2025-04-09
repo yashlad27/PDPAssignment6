@@ -3,6 +3,7 @@ package model.event.validation;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import model.event.Event;
@@ -10,10 +11,10 @@ import model.event.RecurringEvent;
 import model.exceptions.InvalidEventException;
 
 /**
- * Consolidated implementation of IEventValidationService that provides validation logic for events.
- * Incorporates functionality from both EventValidationService and EventValidator.
+ * Consolidated implementation that provides validation logic for events.
+ * This class implements the unified IEventValidator interface.
  */
-public class EventValidationService implements IEventValidationService, IEventValidator {
+public class EventValidationService implements IEventValidator {
   private static final int MIN_NAME_LENGTH = 1;
   private static final int MAX_NAME_LENGTH = 100;
   private static final int MAX_DESCRIPTION_LENGTH = 500;
@@ -29,10 +30,10 @@ public class EventValidationService implements IEventValidationService, IEventVa
       throw new InvalidEventException("End date/time cannot be before start date/time");
     }
 
-    // Comment out past date validation for testing
-    // if (start.isBefore(LocalDateTime.now())) {
-    //     throw new InvalidEventException("Event cannot be created in the past");
-    // }
+//     Comment out past date validation for testing
+//     if (start.isBefore(LocalDateTime.now())) {
+//         throw new InvalidEventException("Event cannot be created in the past");
+//     }
   }
 
   @Override
@@ -54,9 +55,9 @@ public class EventValidationService implements IEventValidationService, IEventVa
     }
 
     // Comment out past date validation for testing
-    // if (date.isBefore(LocalDate.now())) {
-    //     throw new InvalidEventException("Event cannot be created in the past");
-    // }
+//     if (date.isBefore(LocalDate.now())) {
+//         throw new InvalidEventException("Event cannot be created in the past");
+//     }
   }
 
   /**
@@ -150,5 +151,56 @@ public class EventValidationService implements IEventValidationService, IEventVa
     }
 
     validateEvent(event);
+  }
+
+  @Override
+  public boolean validateWeekdayString(String weekdays) {
+    if (weekdays == null || weekdays.trim().isEmpty()) {
+      return false;
+    }
+
+    String validDayCodes = "MTWRFSU";
+    for (char c : weekdays.toUpperCase().toCharArray()) {
+      if (validDayCodes.indexOf(c) == -1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public Set<DayOfWeek> parseWeekdays(String weekdays) throws InvalidEventException {
+    if (!validateWeekdayString(weekdays)) {
+      throw new InvalidEventException("Invalid weekday string: " + weekdays);
+    }
+
+    Set<DayOfWeek> days = new HashSet<>();
+    for (char c : weekdays.toUpperCase().toCharArray()) {
+      switch (c) {
+        case 'M':
+          days.add(DayOfWeek.MONDAY);
+          break;
+        case 'T':
+          days.add(DayOfWeek.TUESDAY);
+          break;
+        case 'W':
+          days.add(DayOfWeek.WEDNESDAY);
+          break;
+        case 'R':
+          days.add(DayOfWeek.THURSDAY);
+          break;
+        case 'F':
+          days.add(DayOfWeek.FRIDAY);
+          break;
+        case 'S':
+          days.add(DayOfWeek.SATURDAY);
+          break;
+        case 'U':
+          days.add(DayOfWeek.SUNDAY);
+          break;
+      }
+    }
+
+    return days;
   }
 } 

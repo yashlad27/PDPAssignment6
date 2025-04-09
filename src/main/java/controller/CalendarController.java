@@ -122,7 +122,7 @@ public class CalendarController {
   public ICalendar getCalendar(String name) throws CalendarNotFoundException {
     return calendarManager.getCalendar(name);
   }
-  
+
   /**
    * Gets the calendar manager.
    *
@@ -131,7 +131,7 @@ public class CalendarController {
   public CalendarManager getCalendarManager() {
     return calendarManager;
   }
-  
+
   /**
    * Gets all calendar names.
    *

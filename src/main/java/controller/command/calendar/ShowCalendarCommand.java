@@ -49,6 +49,6 @@ public class ShowCalendarCommand implements ICommand {
 
   @Override
   public String getName() {
-    return "show-calendar";
+    return "show calendar";
   }
 }
