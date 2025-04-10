@@ -538,12 +538,14 @@ public class GUIControllerTest {
     private boolean updateCalendarViewCalled;
     private StubEventPanel eventPanel;
     private StubCalendarPanel calendarPanel;
+    private StubCalendarSelectorPanel calendarSelectorPanel;
 
-    // Constructor that calls parent constructor with null CalendarController
     public StubGUIView() {
       super(null);
       this.eventPanel = new StubEventPanel();
       this.calendarPanel = new StubCalendarPanel();
+      this.calendarSelectorPanel = new StubCalendarSelectorPanel();
+      resetTracking();
     }
 
     // Override methods needed for testing
@@ -581,7 +583,7 @@ public class GUIControllerTest {
 
     @Override
     public GUICalendarSelectorPanel getCalendarSelectorPanel() {
-      return null; // Stub implementation
+      return calendarSelectorPanel;
     }
 
     @Override
@@ -751,6 +753,32 @@ public class GUIControllerTest {
       @Override
       public void updateRecurringEvents(List<RecurringEvent> events) {
         // Stub implementation
+      }
+    }
+
+    private class StubCalendarSelectorPanel extends GUICalendarSelectorPanel {
+      private CalendarSelectorListener listener;
+      
+      @Override
+      public void addCalendarSelectorListener(CalendarSelectorListener listener) {
+        this.listener = listener;
+      }
+      
+      @Override
+      public void updateCalendarList(List<String> calendarNames) {
+        // Just track that this was called
+        updateCalendarListCalled = true;
+      }
+      
+      @Override
+      public String getSelectedCalendarName() {
+        return "Default_Calendar";
+      }
+      
+      public void triggerCalendarSelected(String calendarName) {
+        if (listener != null) {
+          listener.onCalendarSelected(calendarName);
+        }
       }
     }
   }

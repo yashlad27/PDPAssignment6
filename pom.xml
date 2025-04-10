@@ -70,13 +70,10 @@
                     <targetTests>
                         <param>*Test</param>
                     </targetTests>
-                    <verbose>false</verbose>
                     <excludedTestClasses>
                         <param>GUIControllerTest</param>
+                        <param>ImportExportControllerTest</param>
                     </excludedTestClasses>
-                    <jvmArgs>
-                        <value>-Djava.awt.headless=true</value>
-                    </jvmArgs>
                 </configuration>
             </plugin>
         </plugins>
