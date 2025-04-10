@@ -10,11 +10,11 @@ import model.event.RecurringEvent;
 import model.exceptions.InvalidEventException;
 
 /**
- * Comprehensive interface for event validation functionality. This interface consolidates all event
- * validation methods to provide a unified interface for validating all aspects of events.
+ * Comprehensive interface for event validation functionality.
+ * This interface consolidates all event validation methods to provide
+ * a unified interface for validating all aspects of events.
  */
 public interface IEventValidator {
-
   /**
    * Validates a single event.
    *
@@ -39,7 +39,7 @@ public interface IEventValidator {
    * @throws InvalidEventException if the dates are invalid
    */
   void validateEventDates(LocalDateTime startDateTime, LocalDateTime endDateTime)
-      throws InvalidEventException;
+          throws InvalidEventException;
 
   /**
    * Validates event name.
@@ -57,7 +57,7 @@ public interface IEventValidator {
    * @throws InvalidEventException if parameters are invalid
    */
   void validateRecurringEventParams(Set<DayOfWeek> days, int occurrences)
-      throws InvalidEventException;
+          throws InvalidEventException;
 
   /**
    * Validates all-day event parameters.
@@ -75,7 +75,7 @@ public interface IEventValidator {
    * @throws InvalidEventException if the times are invalid
    */
   void validateEventTimes(LocalDateTime startTime, LocalDateTime endTime)
-      throws InvalidEventException;
+          throws InvalidEventException;
 
   /**
    * Validates event subject/name.

@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.DefaultListModel;
@@ -30,13 +29,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+
 import model.calendar.ICalendar;
 
 /**
  * Panel class that handles calendar selection and creation.
  */
 public class GUICalendarSelectorPanel extends JPanel {
-
   private static final Color THEME_COLOR = new Color(0x4a86e8);
   private static final Color THEME_LIGHT = new Color(0xe6f2ff);
   private static final Color BORDER_COLOR = new Color(0xcccccc);
@@ -54,7 +53,6 @@ public class GUICalendarSelectorPanel extends JPanel {
    * Interface for calendar selection events.
    */
   public interface CalendarSelectorListener {
-
     void onCalendarSelected(ICalendar calendar);
 
     /**
@@ -78,7 +76,6 @@ public class GUICalendarSelectorPanel extends JPanel {
   }
 
   private class CalendarItem extends JPanel {
-
     private final ICalendar calendar;
     private final JLabel nameLabel;
     private boolean isSelected;
@@ -133,13 +130,17 @@ public class GUICalendarSelectorPanel extends JPanel {
       isSelected = selected;
       if (selected) {
         setBackground(THEME_LIGHT);
-        setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(THEME_COLOR),
-            BorderFactory.createEmptyBorder(4, 4, 4, 4)));
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(THEME_COLOR),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        ));
         nameLabel.setForeground(THEME_COLOR);
       } else {
         setBackground(Color.WHITE);
-        setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_COLOR),
-            BorderFactory.createEmptyBorder(4, 4, 4, 4)));
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        ));
         nameLabel.setForeground(Color.BLACK);
       }
     }
@@ -236,6 +237,20 @@ public class GUICalendarSelectorPanel extends JPanel {
   }
 
   /**
+   * Sets the selected calendar by name.
+   *
+   * @param calendarName the name of the calendar to select
+   */
+  public void setSelectedCalendar(String calendarName) {
+    if (calendarName != null) {
+      int index = calendarListModel.indexOf(calendarName);
+      if (index >= 0) {
+        calendarList.setSelectedIndex(index);
+      }
+    }
+  }
+
+  /**
    * Adds a listener for calendar selection events.
    *
    * @param listener the listener to add
@@ -253,20 +268,6 @@ public class GUICalendarSelectorPanel extends JPanel {
     calendarListModel.clear();
     for (String name : calendarNames) {
       calendarListModel.addElement(name);
-    }
-  }
-
-  /**
-   * Sets the selected calendar by name.
-   *
-   * @param calendarName the name of the calendar to select
-   */
-  public void setSelectedCalendar(String calendarName) {
-    if (calendarName != null) {
-      int index = calendarListModel.indexOf(calendarName);
-      if (index >= 0) {
-        calendarList.setSelectedIndex(index);
-      }
     }
   }
 
@@ -333,21 +334,30 @@ public class GUICalendarSelectorPanel extends JPanel {
             System.out.println("[DEBUG] Notifying listener to switch to calendar: " + calendarName);
             listener.onCalendarSelected(calendarName);
 
-            JOptionPane.showMessageDialog(this, "Switched to calendar: " + calendarName,
-                "Calendar Selected", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Switched to calendar: " + calendarName,
+                    "Calendar Selected",
+                    JOptionPane.INFORMATION_MESSAGE);
           } catch (Exception ex) {
             System.err.println("[ERROR] Failed to switch calendar: " + ex.getMessage());
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to switch calendar: " + ex.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Failed to switch calendar: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
           }
         } else {
           System.out.println("[WARNING] No calendar selection listener registered");
         }
       } else {
         System.out.println("[DEBUG] No calendar selected in the list");
-        JOptionPane.showMessageDialog(this, "Please select a calendar from the list first",
-            "No Calendar Selected", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(
+                this,
+                "Please select a calendar from the list first",
+                "No Calendar Selected",
+                JOptionPane.WARNING_MESSAGE);
       }
     });
   }
@@ -356,8 +366,8 @@ public class GUICalendarSelectorPanel extends JPanel {
    * Shows a dialog for adding a new calendar with name and timezone.
    */
   private void showAddCalendarDialog() {
-    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add Calendar",
-        true);
+    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+            "Add Calendar", true);
     dialog.setLayout(new BorderLayout());
     dialog.setResizable(false);
 
@@ -420,8 +430,10 @@ public class GUICalendarSelectorPanel extends JPanel {
       String selectedTimezone = (String) timezoneComboBox.getSelectedItem();
 
       if (calendarName.isEmpty()) {
-        JOptionPane.showMessageDialog(dialog, "Calendar name cannot be empty.", "Invalid Input",
-            JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(dialog,
+                "Calendar name cannot be empty.",
+                "Invalid Input",
+                JOptionPane.ERROR_MESSAGE);
         return;
       }
 

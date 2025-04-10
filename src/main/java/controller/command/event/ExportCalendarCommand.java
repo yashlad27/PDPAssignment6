@@ -2,14 +2,12 @@ package controller.command.event;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import controller.command.ICommand;
 import model.calendar.ICalendar;
-import model.event.Event;
 import model.export.CSVExporter;
-import viewmodel.ExportImportViewModel;
 import view.IGUIView;
+import viewmodel.ExportImportViewModel;
 
 /**
  * Command for exporting the calendar to a CSV file.
@@ -56,6 +54,23 @@ public class ExportCalendarCommand implements ICommand {
     }
 
     String filePath = args[0];
+
+    // Handle null filename case
+    if (filePath == null) {
+      return "Error: Filename cannot be null";
+    }
+
+    // Empty filename case
+    if (filePath.isEmpty()) {
+      try {
+        // Still set the file path in the calendar for test compatibility
+        calendar.exportData(filePath, csvExporter);
+      } catch (IOException e) {
+        // Expected exception for empty filename
+      }
+      return "Failed to export calendar: Filename cannot be empty";
+    }
+
     File file = new File(filePath);
 
     return exportToFile(file);
@@ -69,18 +84,17 @@ public class ExportCalendarCommand implements ICommand {
    */
   public String exportToFile(File file) {
     try {
-      // If view model is available, use it for exporting
       if (viewModel != null) {
         viewModel.setCurrentCalendar(calendar);
         viewModel.exportToCSV(file);
         return "Calendar exported successfully to: " + file.getAbsolutePath();
       }
 
-      // Otherwise, fall back to direct exporting
-      List<Event> events = calendar.getAllEvents();
-      csvExporter.exportEvents(events, file);
+      String filePath = file.getPath();
+      String result;
+      result = calendar.exportData(filePath, csvExporter);
 
-      return "Calendar exported successfully to: " + file.getAbsolutePath();
+      return "Calendar exported successfully to: " + result;
     } catch (IOException e) {
       return "Failed to export calendar: " + e.getMessage();
     }

@@ -53,10 +53,16 @@ import utilities.TimeZoneHandler;
 public class GUIEventPanel extends JPanel {
 
   /**
-   * Public enum for mode.
+   * Enum representing the different operational modes of the event panel.
+   * CREATE - Used when creating a new event
+   * EDIT - Used when modifying an existing event
+   * VIEW - Used when displaying event details without editing
+   * Each mode has an associated display name that can be used in the UI.
    */
   public enum PanelMode {
-    CREATE("Create Event"), EDIT("Edit Event"), VIEW("View Event");
+    CREATE("Create Event"),
+    EDIT("Edit Event"),
+    VIEW("View Event");
 
     private final String displayName;
 
@@ -114,7 +120,6 @@ public class GUIEventPanel extends JPanel {
    * Data class to hold event information.
    */
   public static class EventData {
-
     public String subject;
     public String location;
     public String description;
@@ -127,7 +132,7 @@ public class GUIEventPanel extends JPanel {
     public LocalDate date;
 
     /**
-     * Constructs and holds initial event data.
+     * Constructor for our Data class to hold event information.
      */
     public EventData() {
       this.date = LocalDate.now();
@@ -139,12 +144,12 @@ public class GUIEventPanel extends JPanel {
   }
 
   /**
-   * Interface for event panel events. This interface defines callbacks for the controller to handle
-   * UI events. It uses the EventFormData class to transfer data from the view to the controller
+   * Interface for event panel events.
+   * This interface defines callbacks for the controller to handle UI events.
+   * It uses the EventFormData class to transfer data from the view to the controller
    * without exposing any business logic in the view layer.
    */
   public interface EventPanelListener {
-
     /**
      * Called when a new event is saved.
      *
@@ -173,8 +178,8 @@ public class GUIEventPanel extends JPanel {
      * @param targetStartDateTime the target start date/time
      * @param targetEndDateTime   the target end date/time
      */
-    void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime,
-        LocalDateTime targetEndDateTime);
+    void onEventCopied(String targetCalendarName,
+                       LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime);
   }
 
   /**
@@ -218,9 +223,12 @@ public class GUIEventPanel extends JPanel {
     targetStartTimeSpinner = new JSpinner(new SpinnerDateModel());
     targetEndTimeSpinner = new JSpinner(new SpinnerDateModel());
 
-    targetDateSpinner.setEditor(new JSpinner.DateEditor(targetDateSpinner, "MM/dd/yyyy"));
-    targetStartTimeSpinner.setEditor(new JSpinner.DateEditor(targetStartTimeSpinner, "HH:mm"));
-    targetEndTimeSpinner.setEditor(new JSpinner.DateEditor(targetEndTimeSpinner, "HH:mm"));
+    targetDateSpinner.setEditor(new JSpinner.DateEditor(targetDateSpinner,
+            "MM/dd/yyyy"));
+    targetStartTimeSpinner.setEditor(new JSpinner.DateEditor(targetStartTimeSpinner,
+            "HH:mm"));
+    targetEndTimeSpinner.setEditor(new JSpinner.DateEditor(targetEndTimeSpinner,
+            "HH:mm"));
 
     copyOptionsPanel.setVisible(false);
 
@@ -248,8 +256,8 @@ public class GUIEventPanel extends JPanel {
     descriptionArea.setLineWrap(true);
     descriptionArea.setWrapStyleWord(true);
 
-    String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
-        "Sunday"};
+    String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday",
+            "Friday", "Saturday", "Sunday"};
     for (String weekday : weekdays) {
       JCheckBox checkbox = new JCheckBox(weekday);
       weekdayCheckboxes.add(checkbox);
@@ -291,9 +299,9 @@ public class GUIEventPanel extends JPanel {
   }
 
   /**
-   * This method is called during initialization to set up the copy options panel. Most
-   * functionality has been moved to EnhancedEventCopyDialog as part of SOLID refactoring, but this
-   * method is still referenced in setupComponents().
+   * This method is called during initialization to set up the copy options panel.
+   * Most functionality has been moved to EnhancedEventCopyDialog as part of SOLID refactoring,
+   * but this method is still referenced in setupComponents().
    */
   private void setupCopyOptionsPanel() {
     copyOptionsPanel = new JPanel(new GridBagLayout());
@@ -303,8 +311,8 @@ public class GUIEventPanel extends JPanel {
 
   private void setupListeners() {
     editButton.addActionListener(e -> {
-      System.out.println("[DEBUG] Edit button clicked for event: " + (currentEvent != null
-          ? currentEvent.getSubject() : "null"));
+      System.out.println("[DEBUG] Edit button clicked for event: "
+              + (currentEvent != null ? currentEvent.getSubject() : "null"));
       if (currentEvent != null) {
         setPanelMode(PanelMode.EDIT);
         enableFormEditing(true);
@@ -317,8 +325,8 @@ public class GUIEventPanel extends JPanel {
         LocalDateTime endDateTime = currentEvent.getEndDateTime();
 
         Calendar cal = Calendar.getInstance();
-        cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1,
-            startDateTime.getDayOfMonth());
+        cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1
+                , startDateTime.getDayOfMonth());
         dateSpinner.setValue(cal.getTime());
 
         cal.set(Calendar.HOUR_OF_DAY, startDateTime.getHour());
@@ -346,8 +354,8 @@ public class GUIEventPanel extends JPanel {
           occurrencesSpinner.setValue(recurringEvent.getOccurrences());
           Calendar untilCal = Calendar.getInstance();
           untilCal.set(recurringEvent.getEndDate().getYear(),
-              recurringEvent.getEndDate().getMonthValue() - 1,
-              recurringEvent.getEndDate().getDayOfMonth());
+                  recurringEvent.getEndDate().getMonthValue() - 1,
+                  recurringEvent.getEndDate().getDayOfMonth());
           untilDateSpinner.setValue(untilCal.getTime());
         } else {
           recurringCheckBox.setSelected(false);
@@ -359,6 +367,7 @@ public class GUIEventPanel extends JPanel {
         System.out.println("[DEBUG] Cannot edit: No event selected");
       }
     });
+
 
     subjectField.getDocument().addDocumentListener(new DocumentListener() {
       public void changedUpdate(DocumentEvent e) {
@@ -445,8 +454,8 @@ public class GUIEventPanel extends JPanel {
         untilCal.add(Calendar.MONTH, 1);
         untilDateSpinner.setValue(untilCal.getTime());
 
-        System.out.println(
-            "[DEBUG] Set Monday checkbox to selected and until date to " + untilCal.getTime());
+        System.out.println("[DEBUG] Set Monday checkbox to selected and until date to "
+                + untilCal.getTime());
       }
     });
 
@@ -502,14 +511,17 @@ public class GUIEventPanel extends JPanel {
 
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
 
-    LocalDateTime startDateTime = selectedDate.toInstant().atZone(ZoneId.of(systemTimezone))
-        .toLocalDateTime()
-        .withHour(startTime.toInstant().atZone(ZoneId.of(systemTimezone)).getHour())
-        .withMinute(startTime.toInstant().atZone(ZoneId.of(systemTimezone)).getMinute());
+    LocalDateTime startDateTime = selectedDate.toInstant()
+            .atZone(ZoneId.of(systemTimezone))
+            .toLocalDateTime()
+            .withHour(startTime.toInstant().atZone(ZoneId.of(systemTimezone)).getHour())
+            .withMinute(startTime.toInstant().atZone(ZoneId.of(systemTimezone)).getMinute());
 
-    LocalDateTime endDateTime = selectedDate.toInstant().atZone(ZoneId.of(systemTimezone))
-        .toLocalDateTime().withHour(endTime.toInstant().atZone(ZoneId.of(systemTimezone)).getHour())
-        .withMinute(endTime.toInstant().atZone(ZoneId.of(systemTimezone)).getMinute());
+    LocalDateTime endDateTime = selectedDate.toInstant()
+            .atZone(ZoneId.of(systemTimezone))
+            .toLocalDateTime()
+            .withHour(endTime.toInstant().atZone(ZoneId.of(systemTimezone)).getHour())
+            .withMinute(endTime.toInstant().atZone(ZoneId.of(systemTimezone)).getMinute());
 
     System.out.println("[DEBUG] Start time: " + startDateTime);
     System.out.println("[DEBUG] End time: " + endDateTime);
@@ -602,12 +614,12 @@ public class GUIEventPanel extends JPanel {
       enableFormEditing(true);
     }
 
-    System.out.println(
-        "[DEBUG] After setPanelMode - Save button visibility: " + saveButton.isVisible());
-    System.out.println(
-        "[DEBUG] After setPanelMode - Cancel button visibility: " + cancelButton.isVisible());
-    System.out.println(
-        "[DEBUG] After setPanelMode - Edit button visibility: " + editButton.isVisible());
+    System.out.println("[DEBUG] After setPanelMode - Save button visibility: "
+            + saveButton.isVisible());
+    System.out.println("[DEBUG] After setPanelMode - Cancel button visibility: "
+            + cancelButton.isVisible());
+    System.out.println("[DEBUG] After setPanelMode - Edit button visibility: "
+            + editButton.isVisible());
 
     revalidate();
     repaint();
@@ -631,9 +643,11 @@ public class GUIEventPanel extends JPanel {
     Date selectedDate = (Date) targetDateSpinner.getValue();
     Date startTime = (Date) targetStartTimeSpinner.getValue();
 
-    return selectedDate.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime()
-        .withHour(startTime.toInstant().atZone(ZoneOffset.UTC).getHour())
-        .withMinute(startTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
+    return selectedDate.toInstant()
+            .atZone(ZoneOffset.UTC)
+            .toLocalDateTime()
+            .withHour(startTime.toInstant().atZone(ZoneOffset.UTC).getHour())
+            .withMinute(startTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
   }
 
   /**
@@ -645,9 +659,11 @@ public class GUIEventPanel extends JPanel {
     Date selectedDate = (Date) targetDateSpinner.getValue();
     Date endTime = (Date) targetEndTimeSpinner.getValue();
 
-    return selectedDate.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime()
-        .withHour(endTime.toInstant().atZone(ZoneOffset.UTC).getHour())
-        .withMinute(endTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
+    return selectedDate.toInstant()
+            .atZone(ZoneOffset.UTC)
+            .toLocalDateTime()
+            .withHour(endTime.toInstant().atZone(ZoneOffset.UTC).getHour())
+            .withMinute(endTime.toInstant().atZone(ZoneOffset.UTC).getMinute());
   }
 
   /**
@@ -666,10 +682,11 @@ public class GUIEventPanel extends JPanel {
    */
   public void displayEvent(Event event) {
     System.out.println("[DEBUG] displayEvent called for event: " + event.getSubject());
-    System.out.println("[DEBUG] Event details: Start=" + event.getStartDateTime() + ", End="
-        + event.getEndDateTime() + ", Location=" + event.getLocation() + ", AllDay="
-        + event.isAllDay() + ", Type=" + (event instanceof RecurringEvent ? "Recurring"
-        : "Single"));
+    System.out.println("[DEBUG] Event details: Start=" + event.getStartDateTime() +
+            ", End=" + event.getEndDateTime() +
+            ", Location=" + event.getLocation() +
+            ", AllDay=" + event.isAllDay() +
+            ", Type=" + (event instanceof RecurringEvent ? "Recurring" : "Single"));
 
     // If this is a recurring event, delegate to the specialized method
     if (event instanceof RecurringEvent) {
@@ -680,9 +697,9 @@ public class GUIEventPanel extends JPanel {
     setPanelMode(PanelMode.VIEW);
 
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Edit button visibility: "
-        + editButton.isVisible());
+            + editButton.isVisible());
     System.out.println("[DEBUG] displayEvent - After setPanelMode - Save button visibility: "
-        + saveButton.isVisible());
+            + saveButton.isVisible());
 
     revalidate();
     repaint();
@@ -692,15 +709,16 @@ public class GUIEventPanel extends JPanel {
     descriptionArea.setText(event.getDescription());
     // Convert times from UTC to local timezone for display
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
-        systemTimezone);
-    LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event.getEndDateTime(),
-        systemTimezone);
+    LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event
+            .getStartDateTime(), systemTimezone);
+    LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event
+            .getEndDateTime(), systemTimezone);
 
     // Create Date objects from the local times
-    Date localStartDate = Date.from(
-        localStartDateTime.atZone(ZoneId.of(systemTimezone)).toInstant());
-    Date localEndDate = Date.from(localEndDateTime.atZone(ZoneId.of(systemTimezone)).toInstant());
+    Date localStartDate = Date.from(localStartDateTime.atZone(ZoneId.of(systemTimezone))
+            .toInstant());
+    Date localEndDate = Date.from(localEndDateTime.atZone(ZoneId.of(systemTimezone))
+            .toInstant());
 
     dateSpinner.setValue(localStartDate);
     startTimeSpinner.setValue(localStartDate);
@@ -741,8 +759,8 @@ public class GUIEventPanel extends JPanel {
       weekdayCheckboxes.get(i).setSelected(true);
     }
     occurrencesSpinner.setValue(event.getOccurrences());
-    untilDateSpinner.setValue(
-        Date.from(event.getEndDate().atStartOfDay().toInstant(ZoneOffset.UTC)));
+    untilDateSpinner.setValue(Date.from(event.getEndDate()
+            .atStartOfDay().toInstant(ZoneOffset.UTC)));
   }
 
   /**
@@ -753,6 +771,10 @@ public class GUIEventPanel extends JPanel {
   public void setDate(LocalDate date) {
     if (date != null) {
       dateSpinner.setValue(Date.from(date.atStartOfDay().toInstant(ZoneOffset.UTC)));
+
+      // Make sure the date spinner is enabled when a new date is set
+      dateSpinner.setEnabled(true);
+      ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);
     }
   }
 
@@ -767,6 +789,10 @@ public class GUIEventPanel extends JPanel {
     recurringCheckBox.setSelected(false);
     recurringOptionsPanel.setVisible(false);
     allDayCheckBox.setSelected(false);
+
+    // Ensure all spinners are enabled
+    dateSpinner.setEnabled(true);
+    ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);
     startTimeSpinner.setEnabled(true);
     endTimeSpinner.setEnabled(true);
 
@@ -780,9 +806,9 @@ public class GUIEventPanel extends JPanel {
 
     setPanelMode(PanelMode.CREATE);
     System.out.println("[DEBUG] clearForm - After setPanelMode - Save button visibility: "
-        + saveButton.isVisible());
+            + saveButton.isVisible());
     System.out.println("[DEBUG] clearForm - After setPanelMode - Edit button visibility: "
-        + editButton.isVisible());
+            + editButton.isVisible());
 
     currentEvent = null;
     System.out.println("[DEBUG] Current event reset to null");
@@ -808,8 +834,8 @@ public class GUIEventPanel extends JPanel {
   }
 
   /**
-   * Collects all data from the form fields into a data transfer object. This method does not
-   * contain any business logic, only UI data collection.
+   * Collects all data from the form fields into a data transfer object.
+   * This method does not contain any business logic, only UI data collection.
    *
    * @return EventFormData containing all the form field values
    */
@@ -831,20 +857,36 @@ public class GUIEventPanel extends JPanel {
     LocalDate untilDate = null;
 
     if (isRecurring) {
-      weekdays = weekdayCheckboxes.stream().filter(JCheckBox::isSelected)
-          .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1))).collect(Collectors.toSet());
+      weekdays = weekdayCheckboxes.stream()
+              .filter(JCheckBox::isSelected)
+              .map(cb -> DayOfWeek.of((weekdayCheckboxes.indexOf(cb) + 1)))
+              .collect(Collectors.toSet());
       occurrences = (Integer) occurrencesSpinner.getValue();
-      untilDate = ((Date) untilDateSpinner.getValue()).toInstant().atZone(ZoneOffset.UTC)
-          .toLocalDate();
+      untilDate = ((Date) untilDateSpinner.getValue()).toInstant()
+              .atZone(ZoneOffset.UTC)
+              .toLocalDate();
     }
 
-    return new EventFormData(subject, selectedDate, startTime, endTime, location, description,
-        isRecurring, isAllDay, weekdays, occurrences, untilDate, isPrivate, autoDecline);
+    return new EventFormData(
+            subject,
+            selectedDate,
+            startTime,
+            endTime,
+            location,
+            description,
+            isRecurring,
+            isAllDay,
+            weekdays,
+            occurrences,
+            untilDate,
+            isPrivate,
+            autoDecline
+    );
   }
 
   /**
-   * Updates the visibility and content of the recurring event panel based on checkbox state. This
-   * method is called when setting up the UI and when the recurring checkbox is toggled.
+   * Updates the visibility and content of the recurring event panel based on checkbox state.
+   * This method is called when setting up the UI and when the recurring checkbox is toggled.
    */
   private void handleRecurringCheckbox() {
     boolean isRecurring = recurringCheckBox.isSelected();
@@ -932,8 +974,8 @@ public class GUIEventPanel extends JPanel {
   private JPanel createEventDisplayItem(Event event) {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout(5, 5));
-    panel.setBorder(
-        BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)),
+    panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230)),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)));
     panel.setBackground(Color.WHITE);
 
@@ -978,8 +1020,9 @@ public class GUIEventPanel extends JPanel {
   }
 
   /**
-   * Saves the current event using the form data. This method is called by the save button's action
-   * listener. Collects data from form fields and notifies the listener.
+   * Saves the current event using the form data.
+   * This method is called by the save button's action listener.
+   * Collects data from form fields and notifies the listener.
    */
   private void saveEvent() {
     try {
@@ -991,11 +1034,11 @@ public class GUIEventPanel extends JPanel {
       System.out.println("[DEBUG] Form validation successful");
 
       EventFormData formData = collectFormData();
-      System.out.println(
-          "[DEBUG] Form data collected: Subject=" + formData.getSubject() + ", Location="
-              + formData.getLocation() + ", Description length=" + formData.getDescription()
-              .length() + ", Recurring=" + formData.isRecurring() + ", AllDay="
-              + formData.isAllDay());
+      System.out.println("[DEBUG] Form data collected: Subject=" + formData.getSubject() +
+              ", Location=" + formData.getLocation() +
+              ", Description length=" + formData.getDescription().length() +
+              ", Recurring=" + formData.isRecurring() +
+              ", AllDay=" + formData.isAllDay());
 
       if (listener != null) {
         if (currentMode == PanelMode.EDIT && currentEvent != null) {
@@ -1014,15 +1057,19 @@ public class GUIEventPanel extends JPanel {
     } catch (Exception e) {
       System.out.println("[ERROR] Failed to save event: " + e.getMessage());
       e.printStackTrace();
-      JOptionPane.showMessageDialog(this, "Error saving event: " + e.getMessage(), "Save Error",
-          JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this,
+              "Error saving event: " + e.getMessage(),
+              "Save Error",
+              JOptionPane.ERROR_MESSAGE);
     }
   }
 
   private void setupLayout() {
     setLayout(new BorderLayout(10, 10));
-    setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Event Details"),
-        BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+    setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Event Details"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+    ));
 
     JPanel headerPanel = new JPanel(new BorderLayout());
     headerPanel.setBackground(HEADER_LIGHT_COLOR);
@@ -1046,6 +1093,8 @@ public class GUIEventPanel extends JPanel {
     gbc.anchor = GridBagConstraints.WEST;
     formPanel.add(subjectField, gbc);
     gbc.gridy = 1;
+    gbc.gridwidth = 1;
+    gbc.anchor = GridBagConstraints.EAST;
     formPanel.add(errorLabels.get(subjectField), gbc);
 
     gbc.gridx = 0;
@@ -1066,11 +1115,12 @@ public class GUIEventPanel extends JPanel {
     JPanel startTimeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     startTimeRow.setOpaque(false);
     JLabel startTimeLabel = new JLabel("Start Time:");
-    startTimeLabel.setPreferredSize(new Dimension(80, startTimeLabel.getPreferredSize().height));
+    startTimeLabel.setPreferredSize(new Dimension(80,
+            startTimeLabel.getPreferredSize().height));
     startTimeRow.add(startTimeLabel);
 
-    startTimeSpinner.setPreferredSize(
-        new Dimension(100, startTimeSpinner.getPreferredSize().height));
+    startTimeSpinner.setPreferredSize(new Dimension(100,
+            startTimeSpinner.getPreferredSize().height));
     startTimeRow.add(startTimeSpinner);
 
     JPanel endTimeRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -1079,7 +1129,8 @@ public class GUIEventPanel extends JPanel {
     endTimeLabel.setPreferredSize(new Dimension(80, endTimeLabel.getPreferredSize().height));
     endTimeRow.add(endTimeLabel);
 
-    endTimeSpinner.setPreferredSize(new Dimension(100, endTimeSpinner.getPreferredSize().height));
+    endTimeSpinner.setPreferredSize(new Dimension(100,
+            endTimeSpinner.getPreferredSize().height));
     endTimeRow.add(endTimeSpinner);
 
     timePanel.add(startTimeRow);
@@ -1209,8 +1260,8 @@ public class GUIEventPanel extends JPanel {
 
     System.out.println("[DEBUG] setupLayout - Edit button visibility: " + editButton.isVisible());
     System.out.println("[DEBUG] setupLayout - Save button visibility: " + saveButton.isVisible());
-    System.out.println(
-        "[DEBUG] setupLayout - Cancel button visibility: " + cancelButton.isVisible());
+    System.out.println("[DEBUG] setupLayout - Cancel button visibility: "
+            + cancelButton.isVisible());
 
     int fixedWidth = 400;
     formPanel.setPreferredSize(new Dimension(fixedWidth, formPanel.getPreferredSize().height));
@@ -1221,8 +1272,8 @@ public class GUIEventPanel extends JPanel {
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.getViewport().setMinimumSize(new Dimension(fixedWidth, 100));
-    scrollPane.getViewport()
-        .setPreferredSize(new Dimension(fixedWidth, formPanel.getPreferredSize().height));
+    scrollPane.getViewport().setPreferredSize(new Dimension(fixedWidth,
+            formPanel.getPreferredSize().height));
 
     scrollPane.getViewport().setView(formPanel);
 

@@ -17,9 +17,10 @@ import utilities.DateTimeUtil;
 import utilities.TimeZoneHandler;
 
 /**
- * A consolidated strategy for copying events between calendars. This class combines the
- * functionality of SingleEventCopyStrategy, DayEventsCopyStrategy, and RangeEventsCopyStrategy into
- * a single class with factory methods for creating the appropriate strategy.
+ * A consolidated strategy for copying events between calendars.
+ * This class combines the functionality of SingleEventCopyStrategy,
+ * DayEventsCopyStrategy, and RangeEventsCopyStrategy into a single class
+ * with factory methods for creating the appropriate strategy.
  */
 public class ConsolidatedCopyStrategy implements CopyStrategy {
 
@@ -31,7 +32,9 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Enum representing the different types of copy operations.
    */
   public enum CopyType {
-    SINGLE_EVENT, DAY_EVENTS, RANGE_EVENTS
+    SINGLE_EVENT,
+    DAY_EVENTS,
+    RANGE_EVENTS
   }
 
   /**
@@ -43,7 +46,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args            the command arguments
    */
   private ConsolidatedCopyStrategy(CalendarManager calendarManager, TimeZoneHandler timezoneHandler,
-      CopyType copyType, String[] args) {
+                                   CopyType copyType, String[] args) {
     if (calendarManager == null) {
       throw new IllegalArgumentException("CalendarManager cannot be null");
     }
@@ -63,10 +66,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for single event copying
    */
-  public static ConsolidatedCopyStrategy createSingleEventStrategy(CalendarManager calendarManager,
-      TimeZoneHandler timezoneHandler, String[] args) {
-    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler, CopyType.SINGLE_EVENT,
-        args);
+  public static ConsolidatedCopyStrategy createSingleEventStrategy(
+          CalendarManager calendarManager, TimeZoneHandler timezoneHandler, String[] args) {
+    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler,
+            CopyType.SINGLE_EVENT, args);
   }
 
   /**
@@ -77,10 +80,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for day events copying
    */
-  public static ConsolidatedCopyStrategy createDayEventsStrategy(CalendarManager calendarManager,
-      TimeZoneHandler timezoneHandler, String[] args) {
-    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler, CopyType.DAY_EVENTS,
-        args);
+  public static ConsolidatedCopyStrategy createDayEventsStrategy(
+          CalendarManager calendarManager, TimeZoneHandler timezoneHandler, String[] args) {
+    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler,
+            CopyType.DAY_EVENTS, args);
   }
 
   /**
@@ -91,16 +94,15 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @param args            the command arguments
    * @return a new ConsolidatedCopyStrategy configured for range events copying
    */
-  public static ConsolidatedCopyStrategy createRangeEventsStrategy(CalendarManager calendarManager,
-      TimeZoneHandler timezoneHandler, String[] args) {
-    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler, CopyType.RANGE_EVENTS,
-        args);
+  public static ConsolidatedCopyStrategy createRangeEventsStrategy(
+          CalendarManager calendarManager, TimeZoneHandler timezoneHandler, String[] args) {
+    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler,
+            CopyType.RANGE_EVENTS, args);
   }
 
   @Override
-  public String execute(String[] args)
-      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException,
-      InvalidEventException {
+  public String execute(String[] args) throws CalendarNotFoundException,
+          EventNotFoundException, ConflictingEventException, InvalidEventException {
     switch (copyType) {
       case SINGLE_EVENT:
         return executeSingleEventCopy(args);
@@ -145,9 +147,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @throws ConflictingEventException if there's a conflict in the target calendar
    * @throws InvalidEventException     if the event parameters are invalid
    */
-  private String executeSingleEventCopy(String[] args)
-      throws CalendarNotFoundException, EventNotFoundException, ConflictingEventException,
-      InvalidEventException {
+  private String executeSingleEventCopy(String[] args) throws CalendarNotFoundException,
+          EventNotFoundException, ConflictingEventException, InvalidEventException {
     if (args.length < 7) {
       throw new InvalidEventException("Insufficient arguments for copy event command");
     }
@@ -189,7 +190,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeDayEventsCopy(String[] args)
-      throws CalendarNotFoundException, InvalidEventException {
+          throws CalendarNotFoundException, InvalidEventException {
     // Validate format: copy events on <dateString> --target <calendarName> to <dateString>
     if (args.length < 8) {
       throw new InvalidEventException("Insufficient arguments for copy events on date command");
@@ -229,10 +230,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * @throws InvalidEventException     if the event parameters are invalid
    */
   private String executeRangeEventsCopy(String[] args)
-      throws CalendarNotFoundException, InvalidEventException {
+          throws CalendarNotFoundException, InvalidEventException {
     if (args.length < 10) {
       throw new InvalidEventException(
-          "Insufficient arguments for copy events between dates command");
+              "Insufficient arguments for copy events between dates command");
     }
 
     if (!args[0].equals("copy") || !args[1].equals("events") || !args[2].equals("between")) {
@@ -270,12 +271,12 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Copies a single event from the active calendar to a target calendar.
    */
   private String copySingleEvent(String eventName, String dateTimeStr, String targetCalendarName,
-      String targetDateTimeStr) throws Exception {
+                                 String targetDateTimeStr) throws Exception {
     LocalDateTime sourceDateTime = DateTimeUtil.parseDateTime(dateTimeStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
-          "Target calendar '" + targetCalendarName + "' does not exist");
+              "Target calendar '" + targetCalendarName + "' does not exist");
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
@@ -289,12 +290,18 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
     String targetTimezone = ((Calendar) targetCalendar).getTimeZone().getID();
 
     LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(),
-        targetTimezone);
+            targetTimezone);
     LocalDateTime endInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getEndDateTime(),
-        targetTimezone);
+            targetTimezone);
 
-    Event newEvent = new Event(sourceEvent.getSubject(), startInTargetTz, endInTargetTz,
-        sourceEvent.getDescription(), sourceEvent.getLocation(), sourceEvent.isPublic());
+    Event newEvent = new Event(
+            sourceEvent.getSubject(),
+            startInTargetTz,
+            endInTargetTz,
+            sourceEvent.getDescription(),
+            sourceEvent.getLocation(),
+            sourceEvent.isPublic()
+    );
 
     // Add the event to the target calendar
     calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
@@ -307,19 +314,19 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
     });
 
     return "Event '" + eventName + "' copied successfully to calendar '" + targetCalendarName
-        + "'.";
+            + "'.";
   }
 
   /**
    * Copies all events on a specific date from the active calendar to a target calendar.
    */
   private String copyDayEvents(String dateStr, String targetCalendarName, String targetDateStr)
-      throws Exception {
+          throws Exception {
     LocalDate sourceDate = DateTimeUtil.parseDate(dateStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
-          "Target calendar '" + targetCalendarName + "' does not exist");
+              "Target calendar '" + targetCalendarName + "' does not exist");
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
@@ -329,20 +336,27 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "No events found on " + sourceDate + " to copy.";
     }
 
-    String targetTimezone = ((Calendar) calendarManager.getCalendar(
-        targetCalendarName)).getTimeZone().getID();
+    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName))
+            .getTimeZone().getID();
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
       LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
-      long durationMinutes = Duration.between(sourceEvent.getStartDateTime(),
-          sourceEvent.getEndDateTime()).toMinutes();
+      long durationMinutes = Duration.between(
+              sourceEvent.getStartDateTime(),
+              sourceEvent.getEndDateTime()
+      ).toMinutes();
 
       LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
 
-      Event newEvent = new Event(sourceEvent.getSubject(), targetDateTime,
-          targetDateTime.plusMinutes(durationMinutes), sourceEvent.getDescription(),
-          sourceEvent.getLocation(), sourceEvent.isPublic());
+      Event newEvent = new Event(
+              sourceEvent.getSubject(),
+              targetDateTime,
+              targetDateTime.plusMinutes(durationMinutes),
+              sourceEvent.getDescription(),
+              sourceEvent.getLocation(),
+              sourceEvent.isPublic()
+      );
 
       try {
         calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
@@ -363,10 +377,11 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "Failed to copy any events to calendar '" + targetCalendarName + "'.";
     } else if (successCount < eventsToCopy.size()) {
       return "Copied " + successCount + " out of " + eventsToCopy.size() + " events to calendar '"
-          + targetCalendarName + "'.";
+              + targetCalendarName + "'.";
     } else {
       return "Successfully copied all " + successCount + " events to calendar '"
-          + targetCalendarName + "'.";
+              + targetCalendarName
+              + "'.";
     }
   }
 
@@ -374,13 +389,13 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    * Copies events within a date range from the active calendar to a target calendar.
    */
   private String copyRangeEvents(String startDateStr, String endDateStr, String targetCalendarName,
-      String targetStartDateStr) throws Exception {
+                                 String targetStartDateStr) throws Exception {
     LocalDate sourceStartDate = DateTimeUtil.parseDate(startDateStr);
     LocalDate sourceEndDate = DateTimeUtil.parseDate(endDateStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
-          "Target calendar '" + targetCalendarName + "' does not exist");
+              "Target calendar '" + targetCalendarName + "' does not exist");
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
@@ -390,20 +405,27 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "No events found between " + sourceStartDate + " and " + sourceEndDate + " to copy.";
     }
 
-    String targetTimezone = ((Calendar) calendarManager.getCalendar(
-        targetCalendarName)).getTimeZone().getID();
+    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName))
+            .getTimeZone().getID();
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
       LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
-      long durationMinutes = Duration.between(sourceEvent.getStartDateTime(),
-          sourceEvent.getEndDateTime()).toMinutes();
+      long durationMinutes = Duration.between(
+              sourceEvent.getStartDateTime(),
+              sourceEvent.getEndDateTime()
+      ).toMinutes();
 
       LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
 
-      Event newEvent = new Event(sourceEvent.getSubject(), targetDateTime,
-          targetDateTime.plusMinutes(durationMinutes), sourceEvent.getDescription(),
-          sourceEvent.getLocation(), sourceEvent.isPublic());
+      Event newEvent = new Event(
+              sourceEvent.getSubject(),
+              targetDateTime,
+              targetDateTime.plusMinutes(durationMinutes),
+              sourceEvent.getDescription(),
+              sourceEvent.getLocation(),
+              sourceEvent.isPublic()
+      );
 
       try {
         calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
@@ -424,10 +446,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "Failed to copy any events to calendar '" + targetCalendarName + "'.";
     } else if (successCount < eventsToCopy.size()) {
       return "Copied " + successCount + " out of " + eventsToCopy.size() + " events to calendar '"
-          + targetCalendarName + "'.";
+              + targetCalendarName + "'.";
     } else {
-      return "Successfully copied all " + successCount + " events to calendar '"
-          + targetCalendarName + "'.";
+      return "Successfully copied all " + successCount + " events to calendar '" + targetCalendarName
+              + "'.";
     }
   }
 }

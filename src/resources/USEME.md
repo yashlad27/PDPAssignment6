@@ -1,130 +1,70 @@
-# Calendar Application User Guide
+# Calendar Application - User Guide
 
-This document provides instructions on how to use the Calendar Application's graphical user interface (GUI) to perform various operations.
+## Overview
+This Calendar Application allows you to manage your schedule by creating, viewing, and organizing events in multiple calendars. The application features a monthly calendar view, event management, and import/export functionality.
 
-## Table of Contents
-- [Calendar Management](#calendar-management)
-- [Event Management](#event-management)
-- [Date Navigation](#date-navigation)
-- [Import and Export](#import-and-export)
-- [Status and Information](#status-and-information)
+## Navigation
 
-## Calendar Management
+### Calendar View
+- The central area displays a monthly calendar view
+- Navigation buttons (left/right arrows) allow you to move between months
+- "Today" button returns you to the current date
+- The currently selected day is highlighted with a blue outline
 
-### Creating a New Calendar
-- Locate the "Calendar" section in the left sidebar
-- Enter a name for your new calendar in the text field
-- Select a timezone from the dropdown menu (e.g., "America/New_York")
-- Click the "Add" button
-- Your new calendar will be created and automatically selected
+### Selecting a Date
+- Click on any date in the monthly view to select it
+- The selected date will be highlighted and any events for that date will appear in the event list
 
-### Switching Between Calendars
-- Locate the "Calendar" section in the left sidebar
-- Select a calendar from the dropdown list
-- Click the "Use" button
-- The application will switch to the selected calendar and display its events
+## Managing Calendars
 
-## Event Management
+### Viewing Calendars
+- The left sidebar displays a list of your calendars
+- The current calendar in use is displayed at the bottom ("Current Calendar: None selected")
 
-### Creating a New Event
-- Select a date in the calendar grid by clicking on it
-- Fill in the event details in the form on the right:
-  - Subject (required): Enter a name for your event
-  - Date: The selected date (can be changed using the date picker)
-  - Start Time: Set the event start time
-  - End Time: Set the event end time
-  - Location: Enter the event location (optional)
-  - Description: Add details about the event (optional)
-  - All Day: Check this box if the event lasts all day
-  - Private: Check this box if the event is private
-- Click the "Save" button to create the event
-- The event will appear in the event list for the selected date
+### Adding a Calendar
+- Click the "Add..." button to create a new calendar
 
-### Viewing Events
-- Click on a date in the calendar grid
-- All events for that date will be displayed in the event list below the calendar
-- Dates with events are highlighted in the calendar grid
-- Select an event from the list to view its details in the form on the right
+### Using a Calendar
+- Select a calendar from the list
+- Click the "Use" button to make it the active calendar
 
-### Editing an Event
-- Select the date containing the event you want to edit
-- Click on the event in the event list to select it
-- The event details will be displayed in the form on the right
-- Click the "Edit" button to enable editing mode
-- Modify the event details as needed
-- Click the "Save" button to save your changes
+## Working with Events
 
-### Copying an Event
-- Select the date containing the event you want to copy
-- Click on the event in the event list to select it
-- Click the "Copy" button
-- In the copy dialog that appears:
-  - Select the target calendar from the dropdown list
-  - Adjust the date and time if needed
-  - Click "Copy" to create a copy of the event
+### Creating Events
+1. Select a date in the calendar
+2. In the "Event Details" panel on the right:
+   - Enter a Subject (event title)
+   - Verify or change the Date
+   - Set Start Time and End Time using the dropdown selectors
+   - Enter a Location (optional)
+   - Add Description in the text area
+   - Select options:
+     - All Day Event (for events without specific times)
+     - Recurring Event (for repeating events)
+     - Private Event (for personal events)
+     - Auto-decline (automatically decline conflicting invitations)
+3. Click "Save" to create the event
 
-## Date Navigation
+### Editing Events
+1. Select an existing event from the event list
+2. Modify the event details in the right panel
+3. Click "Edit" to confirm changes or "Cancel" to discard changes
 
-### Changing Months
-- Use the arrow buttons at the top of the calendar to navigate between months
-- Click "<<" to go to the previous month
-- Click ">>" to go to the next month
-
-### Jumping to a Specific Date
-- Use the date picker in the event form to select a specific date
-- The calendar will automatically navigate to the month containing that date
+### Checking Calendar Status
+- Click the "Check Status" button to view information about the current calendar
 
 ## Import and Export
 
-### Importing Events from CSV
-- Locate the "Import/Export" section in the left sidebar
-- Click the "Choose File..." button
-- Browse to and select a CSV file containing event data
-- The file will be automatically imported, and events will be added to the current calendar
-- A success message will be displayed showing the number of events imported
+### Importing Events
+1. Select "Import from CSV" in the Import/Export section
+2. Click "Choose File..." to select a CSV file
+3. Follow the prompts to complete the import
 
-### Exporting Events to CSV
-- Locate the "Import/Export" section in the left sidebar
-- Click the "Export Calendar" button
-- Choose a location and filename for the CSV file
-- Click "Save"
-- All events from the current calendar will be exported to the CSV file
-- A success message will be displayed confirming the export
+### Exporting Events
+1. Select "Export to CSV" in the Import/Export section
+2. Click "Export Calendar" to export the current calendar
+3. Choose a location to save the exported file
 
-## Status and Information
-
-### Checking Date Status
-- Select a date in the calendar
-- Click the "Check Status" button in the left sidebar
-- The status bar will display whether the selected date is busy or available
-
-### Listing Events for a Date
-- Select a date in the calendar
-- Click the "List Events" button in the left sidebar
-- All events for the selected date will be displayed in the event list
-
-### Viewing Events in a Date Range
-- Select a start date in the calendar
-- Click the "Show Range" button in the left sidebar
-- Select an end date when prompted
-- All events within the date range will be displayed in the event list
-
-### Viewing Application Messages
-- The status bar at the bottom of the application displays important messages
-- Success messages are displayed in green
-- Error messages are displayed in red
-- Information messages are displayed in blue
-
-## Additional Features
-
-### Recurring Events
-- When creating or editing an event, check the "Recurring" checkbox
-- Select the days of the week on which the event should recur
-- Optionally set an end date for the recurring event
-- Click "Save" to create the recurring event
-
-### All-Day Events
-- When creating or editing an event, check the "All Day" checkbox
-- The start and end times will be disabled
-- The event will be displayed as an all-day event in the calendar
-
+## Event List
+- The bottom section displays event list results for the selected date
+- Events are shown with their time, title, and location

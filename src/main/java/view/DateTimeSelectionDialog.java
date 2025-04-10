@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
+
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -16,30 +17,32 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
 
 /**
- * A dialog for selecting a specific date and time.
+ * A dialog component for selecting date and time values.
+ * This dialog provides separate spinners for date and time selection,
+ * allowing users to easily choose a specific date and time combination.
+ * The dialog returns the selected date-time as a LocalDateTime object.
  */
 public class DateTimeSelectionDialog extends JDialog {
-
   private final JSpinner dateSpinner;
   private final JSpinner timeSpinner;
   private LocalDateTime selectedDateTime;
 
   /**
-   * Constructs a {@code DateTimeSelectionDialog}.
+   * Creates a new date-time selection dialog.
    *
-   * @param parent          The parent frame of this dialog.
-   * @param initialDateTime The initial date and time to be displayed.
+   * @param parent          The parent frame that owns this dialog
+   * @param initialDateTime The initial date and time to display in the dialog
    */
   public DateTimeSelectionDialog(JFrame parent, LocalDateTime initialDateTime) {
     super(parent, "Select Date and Time", true);
     setLayout(new BorderLayout(5, 5));
 
     // Initialize components
-    dateSpinner = new JSpinner(
-        new SpinnerDateModel(Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
+    dateSpinner = new JSpinner(new SpinnerDateModel(
+            Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
             null, null, java.util.Calendar.DAY_OF_MONTH));
-    timeSpinner = new JSpinner(
-        new SpinnerDateModel(Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
+    timeSpinner = new JSpinner(new SpinnerDateModel(
+            Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
             null, null, Calendar.MINUTE));
 
     // Format spinners
@@ -64,8 +67,9 @@ public class DateTimeSelectionDialog extends JDialog {
       Date date = (Date) dateSpinner.getValue();
       Date time = (Date) timeSpinner.getValue();
       selectedDateTime = LocalDateTime.of(
-          date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-          time.toInstant().atZone(ZoneId.systemDefault()).toLocalTime());
+              date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+              time.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+      );
       dispose();
     });
 

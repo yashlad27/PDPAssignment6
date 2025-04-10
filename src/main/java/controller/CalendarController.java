@@ -17,16 +17,17 @@ import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.exceptions.CalendarNotFoundException;
+import view.GUIView;
 import view.ICalendarView;
 
 /**
  * Controller class that manages calendar operations and user interactions.
  *
- * <p>This class serves as the main controller in the MVC architecture, handling
+ * <p> This class serves as the main controller in the MVC architecture, handling
  * Command processing and execution, Calendar management operations, Event management operations and
  * Interactive and headless mode operations
  *
- * <p>The controller supports two modes of operation:
+ * <p> The controller supports two modes of operation:
  * 1. Interactive Mode: Processes commands entered by users in real-time 2. Headless Mode: Processes
  * commands from a file without user interaction
  *
@@ -57,7 +58,7 @@ public class CalendarController {
    * @throws IllegalArgumentException if calendarManager is null
    */
   public CalendarController(ICommandFactory commandFactory, ICommandFactory calendarCommandFactory,
-      CalendarManager calendarManager, ICalendarView view) {
+                            CalendarManager calendarManager, ICalendarView view) {
     if (calendarManager == null) {
       throw new IllegalArgumentException("CalendarManager cannot be null");
     }
@@ -194,15 +195,16 @@ public class CalendarController {
    */
   private boolean isCalendarCommand(String command) {
     return command.startsWith("create calendar") || command.startsWith("edit calendar")
-        || command.startsWith("use calendar") || command.startsWith("copy event")
-        || command.startsWith("copy events");
+            || command.startsWith("use calendar") || command.startsWith("copy event")
+            || command.startsWith("copy events");
   }
 
   /**
    * Updates the command factory when switching between calendars.
    *
    * <p>This method: 1. Gets the currently active calendar 2. Creates a new command factory for
-   * that calendar 3. Updates the command parser with the new factory
+   * that
+   * calendar 3. Updates the command parser with the new factory
    *
    * <p>This ensures that commands are executed in the context of the currently active calendar.
    */
@@ -265,10 +267,12 @@ public class CalendarController {
    * Parses a command string into tokens, properly handling quoted strings.
    *
    * <p>This method: 1. Splits the command on whitespace 2. Preserves quoted strings as single
-   * tokens 3. Handles both single and double quotes 4. Removes the quotes from the final tokens
+   * tokens
+   * 3. Handles both single and double quotes 4. Removes the quotes from the final tokens
    *
    * <p>Example: Input: create event "Team Meeting" from 2023-01-01 Output: ["create", "event",
-   * "Team Meeting", "from", "2023-01-01"]
+   * "Team
+   * Meeting", "from", "2023-01-01"]
    *
    * @param commandStr The command string to parse
    * @return Array of command tokens
@@ -304,8 +308,9 @@ public class CalendarController {
    * Starts the controller in interactive mode.
    *
    * <p>In this mode, the controller: 1. Displays welcome message 2. Enters a command processing
-   * loop 3. Reads commands from user input 4. Processes each command and displays results 5.
-   * Continues until 'exit' command is received 6. Displays termination message
+   * loop
+   * 3. Reads commands from user input 4. Processes each command and displays results 5. Continues
+   * until 'exit' command is received 6. Displays termination message
    */
   public void startInteractiveMode() {
     view.displayMessage("Calendar Application Started");
@@ -328,7 +333,8 @@ public class CalendarController {
    * as the last command
    *
    * <p>The method enforces several validations: - File must not be empty - File must contain at
-   * least one command - Last command must be 'exit' - Commands must be properly formatted
+   * least
+   * one command - Last command must be 'exit' - Commands must be properly formatted
    *
    * @param commandsFilePath Path to the file containing commands
    * @return true if all commands were executed successfully
@@ -361,13 +367,12 @@ public class CalendarController {
 
   private List<String> readCommands(BufferedReader reader) {
     return reader.lines().map(String::trim).filter(line -> !line.isEmpty())
-        .collect(Collectors.toList());
+            .collect(Collectors.toList());
   }
 
   private boolean validateCommands(List<String> commands) {
     if (commands.isEmpty()) {
-      view.displayError("Error: Command file is empty. "
-          + "At least one command (exit) is required.");
+      view.displayError("Error: Command file is empty. At least one command (exit) is required.");
       return false;
     }
 
@@ -400,8 +405,8 @@ public class CalendarController {
   }
 
   /**
-   * Creates a new calendar with the specified name and timezone. This method is specifically
-   * designed for the GUI interaction.
+   * Creates a new calendar with the specified name and timezone.
+   * This method is specifically designed for the GUI interaction.
    *
    * @param name     The name of the calendar to create
    * @param timezone The timezone for the calendar
@@ -427,55 +432,39 @@ public class CalendarController {
   }
 
   /**
-   * Sets the selected calendar by name. This method is specifically designed for the GUI
-   * interaction.
+   * Sets the selected calendar.
    *
-   * @param calendarName The name of the calendar to select
-   * @return true if the calendar was selected successfully, false otherwise
+   * @param calendar the calendar to select
    */
-  public boolean setSelectedCalendarByName(String calendarName) {
-    if (calendarName == null || calendarName.trim().isEmpty()) {
-      return false;
-    }
-
-    try {
-      String command = "use calendar \"" + calendarName + "\"";
-      String result = processCommand(command);
-      updateCommandFactory();
-      return !result.startsWith("Error");
-    } catch (Exception e) {
-      view.displayError("Error selecting calendar: " + e.getMessage());
-      return false;
+  public void setSelectedCalendar(ICalendar calendar) {
+    if (view instanceof GUIView) {
+      GUIView guiView = (GUIView) view;
+      guiView.getCalendarPanel().updateCalendarName(calendar.getName());
     }
   }
 
   /**
-   * Sets the selected calendar. This method is specifically designed for the GUI interaction.
+   * Sets the selected calendar by name.
    *
-   * @param calendar The calendar to select
-   * @return true if the calendar was selected successfully, false otherwise
+   * @param calendarName the name of the calendar to select
    */
-  public boolean setSelectedCalendar(ICalendar calendar) {
-    if (calendar == null) {
-      return false;
-    }
-
+  public void setSelectedCalendarByName(String calendarName) {
     try {
-      return setSelectedCalendarByName(calendar.toString());
-    } catch (Exception e) {
-      view.displayError("Error selecting calendar: " + e.getMessage());
-      return false;
+      ICalendar calendar = calendarManager.getCalendar(calendarName);
+      setSelectedCalendar(calendar);
+    } catch (CalendarNotFoundException e) {
+      view.displayError("Calendar not found: " + e.getMessage());
     }
   }
 
   /**
-   * Updates the calendar list in the view. This method is specifically designed for the GUI
-   * interaction.
+   * Updates the calendar list in the view.
+   * This method is specifically designed for the GUI interaction.
    */
   public void updateCalendarList() {
     try {
-      List<String> calendarNames = new ArrayList<>(
-          calendarManager.getCalendarRegistry().getCalendarNames());
+      List<String> calendarNames = new ArrayList<>(calendarManager
+              .getCalendarRegistry().getCalendarNames());
       view.updateCalendarList(calendarNames);
     } catch (Exception e) {
       view.displayError("Error updating calendar list: " + e.getMessage());
@@ -483,8 +472,8 @@ public class CalendarController {
   }
 
   /**
-   * Imports a calendar from a CSV file. This method is specifically designed for the GUI
-   * interaction.
+   * Imports a calendar from a CSV file.
+   * This method is specifically designed for the GUI interaction.
    *
    * @param filePath The path to the CSV file
    * @return true if the calendar was imported successfully, false otherwise
@@ -511,8 +500,8 @@ public class CalendarController {
   }
 
   /**
-   * Exports the active calendar to a CSV file. This method is specifically designed for the GUI
-   * interaction.
+   * Exports the active calendar to a CSV file.
+   * This method is specifically designed for the GUI interaction.
    *
    * @param filePath The path to the CSV file
    * @return true if the calendar was exported successfully, false otherwise
@@ -539,8 +528,8 @@ public class CalendarController {
   }
 
   /**
-   * Sets the selected date and retrieves events for that date. This method is specifically designed
-   * for the GUI interaction.
+   * Sets the selected date and retrieves events for that date.
+   * This method is specifically designed for the GUI interaction.
    *
    * @param date The date to select
    */
@@ -564,11 +553,11 @@ public class CalendarController {
   }
 
   /**
-   * Retrieves events for a specific date from the active calendar. This method is specifically
-   * designed for the GUI interaction.
+   * Retrieves events for a specific date from the active calendar.
+   * This method is specifically designed for the GUI interaction.
    *
    * @param date The date to get events for
-   * @return A list of events on the specified date, or an empty list if there are no events
+   * @return A list of events on the specified date, or an empty list if there are none
    */
   public List<Event> getEventsForDate(LocalDate date) {
     if (date == null) {
@@ -588,12 +577,12 @@ public class CalendarController {
   }
 
   /**
-   * Retrieves events within a date range from the active calendar. This method is specifically
-   * designed for the GUI interaction.
+   * Retrieves events within a date range from the active calendar.
+   * This method is specifically designed for the GUI interaction.
    *
-   * @param startDate The start date of the range
-   * @param endDate   The end date of the range
-   * @return A list of events in the specified date range, or an empty list if there are no events
+   * @param startDate The start date of the range (inclusive)
+   * @param endDate   The end date of the range (inclusive)
+   * @return A list of events in the specified date range, or an empty list if there are none
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {
@@ -613,8 +602,8 @@ public class CalendarController {
   }
 
   /**
-   * Checks the status of a specific date (busy or free). This method is specifically designed for
-   * the GUI interaction.
+   * Checks the status of a specific date (busy or free).
+   * This method is specifically designed for the GUI interaction.
    *
    * @param date The date to check
    * @return true if the date has events (busy), false otherwise (free)
