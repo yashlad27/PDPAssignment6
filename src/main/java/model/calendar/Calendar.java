@@ -702,17 +702,22 @@ public class Calendar implements ICalendar {
     if (dateTime == null) {
       throw new IllegalArgumentException("DateTime cannot be null");
     }
-
+    
+    // Convert the check time to UTC for comparison with stored event times
+    TimeZoneHandler handler = new TimeZoneHandler();
+    String systemTimezone = handler.getSystemDefaultTimezone();
+    LocalDateTime utcDateTime = handler.convertToUTC(dateTime, systemTimezone);
+    
     // First check if there are any regular events at this time
     for (Event event : events) {
-      if (isTimeWithinEventRange(dateTime, event)) {
+      if (isTimeWithinEventRange(utcDateTime, event)) {
         return true;
       }
     }
 
     // Then check all recurring events
     for (RecurringEvent recurringEvent : recurringEvents) {
-      if (isRecurringEventActiveAt(dateTime, recurringEvent)) {
+      if (isRecurringEventActiveAt(utcDateTime, recurringEvent)) {
         return true;
       }
     }

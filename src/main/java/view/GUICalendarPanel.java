@@ -285,16 +285,13 @@ public class GUICalendarPanel extends JPanel {
     JPanel controlPanel = new JPanel(new BorderLayout(10, 10));
     controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-    eventListArea.setBorder(BorderFactory.createCompoundBorder(BorderFactory
-            .createLineBorder(new Color(0xDDDDDD)),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-    JScrollPane eventScroll = new JScrollPane(eventListArea);
-    eventScroll.setPreferredSize(new Dimension(0, 150));
+    // Create an empty panel instead of showing the event list area
+    JPanel emptyPanel = new JPanel();
+    emptyPanel.setPreferredSize(new Dimension(0, 0));
+    controlPanel.add(emptyPanel, BorderLayout.CENTER);
 
-    controlPanel.add(eventScroll, BorderLayout.CENTER);
-
+    // Keep the check status button
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-
     statusButton = createStyledButton("Check Status");
     statusButton.addActionListener(e -> {
       if (listener != null && selectedDate != null) {
@@ -439,10 +436,24 @@ public class GUICalendarPanel extends JPanel {
     // Add event indicators to the date button
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
-
+      
+      // Convert events to local time zone for display
+      TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+      String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+      
+      // Filter the events to only include those that actually occur on this date in local time
+      List<Event> eventsOnThisDate = new ArrayList<>();
+      for (Event event : events) {
+        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+        LocalDate eventDate = localStartDateTime.toLocalDate();
+        if (eventDate.equals(date)) {
+          eventsOnThisDate.add(event);
+        }
+      }
+      
       // Deduplicate events based on subject to prevent multiple indicators for recurring events
       Map<String, Event> uniqueEventsBySubject = new HashMap<>();
-      for (Event event : events) {
+      for (Event event : eventsOnThisDate) {
         uniqueEventsBySubject.putIfAbsent(event.getSubject(), event);
       }
       List<Event> uniqueEvents = new ArrayList<>(uniqueEventsBySubject.values());
@@ -522,8 +533,13 @@ public class GUICalendarPanel extends JPanel {
   public void updateEvents(List<Event> events) {
     // Track which dates are being updated in this operation
     Set<LocalDate> datesToUpdate = new HashSet<>();
+    TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+    String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+    
     for (Event event : events) {
-      LocalDate eventDate = event.getStartDateTime().toLocalDate();
+      // Convert UTC time to local time for display and date association
+      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDate eventDate = localStartDateTime.toLocalDate();
       datesToUpdate.add(eventDate);
     }
 
@@ -538,8 +554,9 @@ public class GUICalendarPanel extends JPanel {
 
     // Add each event to its corresponding date in the map
     for (Event event : events) {
-      // Ensure we're using the correct date from the event
-      LocalDate eventDate = event.getStartDateTime().toLocalDate();
+      // Convert UTC time to local time for display and date association
+      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDate eventDate = localStartDateTime.toLocalDate();
 
       // Get or create the list for this date
       List<Event> dateEvents = eventsByDate.computeIfAbsent(eventDate, k -> new ArrayList<>());
@@ -589,8 +606,13 @@ public class GUICalendarPanel extends JPanel {
    * @param recurringEvents the list of recurring events to display
    */
   public void updateRecurringEvents(List<RecurringEvent> recurringEvents) {
+    TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+    String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+    
     for (RecurringEvent event : recurringEvents) {
-      LocalDate startDate = event.getStartDateTime().toLocalDate();
+      // Convert UTC time to local time for display and date association
+      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDate startDate = localStartDateTime.toLocalDate();
       LocalDate endDate = event.getEndDate();
 
       for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
@@ -685,10 +707,9 @@ public class GUICalendarPanel extends JPanel {
    * @param date the date to show events for
    */
   public void updateEventList(LocalDate date) {
-    // Updating event list for date
+    // We're not displaying events in this panel, but still need to process them
     if (currentCalendar == null) {
       System.out.println("[DEBUG] No calendar selected");
-      displayMessageInEventList("No calendar selected");
       return;
     }
 
@@ -697,46 +718,19 @@ public class GUICalendarPanel extends JPanel {
       boolean hasEvents = eventsByDate.containsKey(date) && !eventsByDate.get(date).isEmpty();
 
       if (!hasEvents) {
-        displayMessageInEventList("No events for " + date);
+        // No need to display a message as we're not showing the event list here
         return;
       }
-
-      // Get events for the selected date
+      
+      // Get events for the selected date but don't display them here
       List<Event> eventsOnDate = new ArrayList<>(eventsByDate.get(date));
       
       // Remove duplicate recurring events
       eventsOnDate = dedupRecurringEvents(eventsOnDate);
-
-      // Format the event list as HTML for better styling
-      StringBuilder html = new StringBuilder();
-      html.append("<html><body style='font-family: Arial; font-size: 10pt;'>");
-      html.append("<h3>Events for date ").append(date).append(" (").append(eventsOnDate.size()).append(" events)</h3>");
-      html.append("<div style='padding: 5px;'>");
-
-      for (Event event : eventsOnDate) {
-        String subject = event.getSubject();
-        String startTime = event.getStartDateTime().toLocalTime().toString();
-        String endTime = event.getEndDateTime().toLocalTime().toString();
-        String location = event.getLocation() != null ? event.getLocation() : "";
-
-        // Format the event display
-        html.append("<div style='margin-bottom: 10px;'>");
-        html.append("<span style='font-weight: bold;'>").append(subject).append("</span><br>");
-        html.append(startTime).append(" - ").append(endTime);
-        
-        if (!location.isEmpty()) {
-          html.append("<br><span style='color: #666;'>").append(location).append("</span>");
-        }
-        
-        html.append("</div>");
-      }
-
-      html.append("</div></body></html>");
-      eventListArea.setText(html.toString());
-      eventListArea.setCaretPosition(0);
+      
+      // The events display is handled elsewhere in the app
     } catch (Exception e) {
       System.err.println("Error updating event list: " + e.getMessage());
-      displayMessageInEventList("Error loading events: " + e.getMessage());
     }
   }
   
@@ -833,7 +827,7 @@ public class GUICalendarPanel extends JPanel {
       highlightEvent(panel);
       currentSelectedEvent = eventInstance;
       System.out.println("[DEBUG] Stored current event reference: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
-      handleEventAction("edit", "edit");
+      handleEventAction(currentSelectedEvent.getId().toString(), "edit");
     });
     buttonPanel.add(editButton);
 
@@ -847,7 +841,7 @@ public class GUICalendarPanel extends JPanel {
       highlightEvent(panel);
       currentSelectedEvent = eventInstance;
       System.out.println("[DEBUG] Stored current event reference: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
-      handleEventAction("copy", "copy");
+      handleEventAction(currentSelectedEvent.getId().toString(), "copy");
     });
     buttonPanel.add(copyButton);
 
@@ -861,7 +855,7 @@ public class GUICalendarPanel extends JPanel {
       highlightEvent(panel);
       currentSelectedEvent = eventInstance;
       System.out.println("[DEBUG] Stored current event reference: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
-      handleEventAction("print", "print");
+      handleEventAction(currentSelectedEvent.getId().toString(), "print");
     });
     buttonPanel.add(printButton);
 
@@ -882,7 +876,6 @@ public class GUICalendarPanel extends JPanel {
 
     eventPanel.setBackground(HEADER_LIGHT_COLOR);
   }
-
 
   private void handleEventAction(String eventId, String action) {
     Event targetEvent = currentSelectedEvent;
@@ -906,6 +899,17 @@ public class GUICalendarPanel extends JPanel {
     } else {
       System.out.println("[ERROR] No event selected or listener not set");
     }
+  }
+
+  /**
+   * Displays a formatted HTML message in the event list area with better styling.
+   * 
+   * @param htmlMessage the HTML message to display
+   */
+  private void displayFormattedMessageInEventList(String htmlMessage) {
+    eventListArea.setContentType("text/html");
+    eventListArea.setText(htmlMessage);
+    eventListArea.setCaretPosition(0);
   }
 
   private void displayMessageInEventList(String message) {
@@ -1149,16 +1153,40 @@ public class GUICalendarPanel extends JPanel {
    */
   public void updateDateStatus(LocalDate date, boolean isBusy, int eventCount) {
     if (date == null) return;
+    
+    // When checking if a date is busy, use the local date (not UTC)
+    TimeZoneHandler timezoneHandler = new TimeZoneHandler();
+    String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+    
+    // Re-check if the date is busy using local time
+    boolean isActuallyBusy = false;
+    int actualEventCount = 0;
+    
+    if (eventsByDate.containsKey(date)) {
+      List<Event> events = eventsByDate.get(date);
+      List<Event> eventsOnThisDate = new ArrayList<>();
+      
+      for (Event event : events) {
+        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+        LocalDate eventDate = localStartDateTime.toLocalDate();
+        if (eventDate.equals(date)) {
+          eventsOnThisDate.add(event);
+        }
+      }
+      
+      actualEventCount = eventsOnThisDate.size();
+      isActuallyBusy = !eventsOnThisDate.isEmpty();
+    }
 
     JButton dateButton = dateButtons.get(date);
     if (dateButton != null) {
-      if (isBusy) {
+      if (isActuallyBusy) {
         dateButton.setBackground(new Color(255, 240, 240));
         dateButton.setText("<html>" + date.getDayOfMonth()
                 + "<br><span style='color:red;font-size:8pt'>"
-                + eventCount
+                + actualEventCount
                 + " event"
-                + (eventCount > 1 ? "s" : "") + "</span></html>");
+                + (actualEventCount > 1 ? "s" : "") + "</span></html>");
       } else {
         if (date.equals(selectedDate)) {
           dateButton.setBackground(HEADER_LIGHT_COLOR);

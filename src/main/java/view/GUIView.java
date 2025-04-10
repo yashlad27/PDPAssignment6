@@ -1,6 +1,11 @@
 package view;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
@@ -10,7 +15,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import controller.CalendarController;
 import controller.GUIController;
@@ -23,11 +40,11 @@ import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
 
 /**
- * Main GUI view class that integrates all GUI components and implements both ICalendarView
- * and IGUIView interfaces.
+ * Main GUI view class that integrates all GUI components and implements both ICalendarView,
+ * IGUIView, and CalendarViewFeatures interfaces.
  * This class provides the main window and layout for the calendar application.
  */
-public class GUIView extends JFrame implements ICalendarView, IGUIView {
+public class GUIView extends JFrame implements ICalendarView, IGUIView, CalendarViewFeatures {
   private static final Color THEME_COLOR = new Color(0x4a86e8);
   private static final Color BORDER_COLOR = new Color(0xcccccc);
   private static final int SIDEBAR_WIDTH = 180;

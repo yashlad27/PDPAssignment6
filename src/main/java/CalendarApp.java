@@ -1,4 +1,4 @@
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 import controller.CalendarController;
 import controller.GUIController;
@@ -9,6 +9,7 @@ import model.calendar.ICalendar;
 import model.exceptions.CalendarNotFoundException;
 import model.factory.CalendarFactory;
 import utilities.TimeZoneHandler;
+import view.CalendarViewFeatures;
 import view.GUIView;
 import view.ICalendarView;
 import view.TextView;
@@ -210,13 +211,18 @@ public class CalendarApp {
    * Starts the application in GUI mode.
    */
   private static void startGUIMode() {
-    if (view instanceof GUIView) {
-      final GUIView guiView = (GUIView) view;
+    if (view instanceof CalendarViewFeatures) {
+      final CalendarViewFeatures guiView = (CalendarViewFeatures) view;
       final GUIController guiController = new GUIController(calendarManager, guiView);
       SwingUtilities.invokeLater(() -> {
         try {
           guiController.initialize();
-          guiView.displayGUI();
+          if (guiView instanceof GUIView) {
+            ((GUIView) guiView).displayGUI();
+          } else {
+            System.err.println("View does not implement displayGUI method");
+            System.exit(1);
+          }
         } catch (CalendarNotFoundException e) {
           System.err.println("Failed to initialize GUI: " + e.getMessage());
           System.exit(1);

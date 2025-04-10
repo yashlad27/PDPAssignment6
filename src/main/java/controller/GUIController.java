@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 
 import controller.command.edit.strategy.ConsolidatedEventEditor;
 import controller.command.event.ExportCalendarCommand;
@@ -35,6 +35,7 @@ import model.exceptions.InvalidEventException;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
 import view.ButtonStyler;
+import view.CalendarViewFeatures;
 import view.EventFormData;
 import view.GUICalendarPanel;
 import view.GUICalendarSelectorPanel;
@@ -48,7 +49,7 @@ import viewmodel.ExportImportViewModel;
  */
 public class GUIController {
   private final CalendarManager calendarManager;
-  private final GUIView view;
+  private final CalendarViewFeatures view;
   private final TimeZoneHandler timezoneHandler;
   private ICalendar currentCalendar;
 
@@ -56,9 +57,9 @@ public class GUIController {
    * Constructs a new GUIController.
    *
    * @param calendarManager the calendar manager
-   * @param view            the GUI view
+   * @param view            the GUI view implementing CalendarViewFeatures
    */
-  public GUIController(CalendarManager calendarManager, GUIView view) {
+  public GUIController(CalendarManager calendarManager, CalendarViewFeatures view) {
     this.calendarManager = calendarManager;
     this.view = view;
     this.timezoneHandler = new TimeZoneHandler();
@@ -455,7 +456,20 @@ public class GUIController {
     }
     try {
       List<Event> events = getEventsOnDate(date);
-      boolean isBusy = !events.isEmpty();
+      
+      // Convert all events to local time for proper status checking
+      List<Event> localEvents = new ArrayList<>();
+      String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+      
+      for (Event event : events) {
+        // Only consider events that actually occur on this date in local time
+        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+        if (localStartDateTime.toLocalDate().equals(date)) {
+          localEvents.add(event);
+        }
+      }
+      
+      boolean isBusy = !localEvents.isEmpty();
       view.getCalendarPanel().updateStatus(isBusy);
     } catch (Exception e) {
       view.displayError("Failed to update status: " + e.getMessage());
@@ -720,7 +734,14 @@ public class GUIController {
     try {
       System.out.println("[DEBUG] About to show edit popup image");
       // Show the image popup first
-      ButtonStyler.showEditEventPopup((JFrame) view);
+      // Use the provided ButtonStyler, but avoid direct casting to JFrame
+      if (view instanceof JFrame) {
+        ButtonStyler.showEditEventPopup((JFrame) view);
+      } else {
+        // Alternative approach if view is not a JFrame
+        System.out.println("[DEBUG] View is not a JFrame, using alternative approach for popup");
+        ButtonStyler.showEditEventPopup(null); // Using null or another frame if available
+      }
       System.out.println("[DEBUG] Edit popup image display method called");
     } catch (Exception e) {
       System.err.println("[ERROR] Error showing edit popup: " + e.getMessage());
@@ -1168,13 +1189,6 @@ public class GUIController {
     }
   }
 
-  /**
-   * Executes copying an event to another calendar.
-   *
-   * @param event              the event to copy
-   * @param targetCalendarName the name of the target calendar
-   * @return a message indicating the result of the operation
-   */
   /**
    * Handles the closing of the application.
    */
@@ -1709,36 +1723,29 @@ public class GUIController {
   /**
    * Sets the selected date and updates all relevant views.
    *
-   * @param date The date to select
+   * @param date the date to set as selected
    */
-  public void setSelectedDate(LocalDate date) {
+  private void setSelectedDate(LocalDate date) {
     if (date == null) {
       return;
     }
-
-    try {
-      System.out.println("[DEBUG] Setting selected date to: " + date);
-
-      // First update the model's knowledge of the selected date
-      view.setSelectedDate(date);
-
-      // Then get events for this date
-      List<Event> events = getEventsOnDate(date);
-      System.out.println("[DEBUG] Found " + events.size() + " events for date " + date);
-
-      // Update all relevant view components with a consistent flow
-      view.updateSelectedDate(date);
-      view.updateEventList(events);
-      view.getCalendarPanel().updateEventList(date);
-      updateStatus(date);
-
-      // Force a refresh to ensure events are visible
-      view.getCalendarPanel().repaint();
-    } catch (Exception e) {
-      System.out.println("[ERROR] Error setting selected date: " + e.getMessage());
-      e.printStackTrace();
-      view.displayError("Error setting selected date: " + e.getMessage());
-    }
+    
+    System.out.println("[DEBUG] Setting selected date to: " + date);
+    
+    // Clear the current event form and set it to CREATE mode
+    view.getEventPanel().clearForm();
+    
+    // Set the selected date in the event form
+    view.getEventPanel().setDate(date);
+    
+    // Update the calendar panel to show this date as selected
+    view.getCalendarPanel().setSelectedDate(date);
+    
+    // Load and display events for this date
+    updateEvents(date);
+    
+    // Update the status for this date
+    updateStatus(date);
   }
 
 }

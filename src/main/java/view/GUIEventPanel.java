@@ -1,6 +1,14 @@
 package view;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +24,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -731,6 +754,10 @@ public class GUIEventPanel extends JPanel {
   public void setDate(LocalDate date) {
     if (date != null) {
       dateSpinner.setValue(Date.from(date.atStartOfDay().toInstant(ZoneOffset.UTC)));
+      
+      // Make sure the date spinner is enabled when a new date is set
+      dateSpinner.setEnabled(true);
+      ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);
     }
   }
 
@@ -745,6 +772,10 @@ public class GUIEventPanel extends JPanel {
     recurringCheckBox.setSelected(false);
     recurringOptionsPanel.setVisible(false);
     allDayCheckBox.setSelected(false);
+    
+    // Ensure all spinners are enabled
+    dateSpinner.setEnabled(true);
+    ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);
     startTimeSpinner.setEnabled(true);
     endTimeSpinner.setEnabled(true);
 
@@ -1045,6 +1076,8 @@ public class GUIEventPanel extends JPanel {
     gbc.anchor = GridBagConstraints.WEST;
     formPanel.add(subjectField, gbc);
     gbc.gridy = 1;
+    gbc.gridwidth = 1;
+    gbc.anchor = GridBagConstraints.EAST;
     formPanel.add(errorLabels.get(subjectField), gbc);
 
     gbc.gridx = 0;
