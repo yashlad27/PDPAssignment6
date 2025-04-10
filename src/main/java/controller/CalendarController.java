@@ -23,11 +23,11 @@ import view.ICalendarView;
 /**
  * Controller class that manages calendar operations and user interactions.
  *
- * <p>This class serves as the main controller in the MVC architecture, handling
+ * <p> This class serves as the main controller in the MVC architecture, handling
  * Command processing and execution, Calendar management operations, Event management operations and
  * Interactive and headless mode operations
  *
- * <p>The controller supports two modes of operation:
+ * <p> The controller supports two modes of operation:
  * 1. Interactive Mode: Processes commands entered by users in real-time 2. Headless Mode: Processes
  * commands from a file without user interaction
  *
@@ -463,7 +463,8 @@ public class CalendarController {
    */
   public void updateCalendarList() {
     try {
-      List<String> calendarNames = new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames());
+      List<String> calendarNames = new ArrayList<>(calendarManager
+              .getCalendarRegistry().getCalendarNames());
       view.updateCalendarList(calendarNames);
     } catch (Exception e) {
       view.displayError("Error updating calendar list: " + e.getMessage());
@@ -556,7 +557,7 @@ public class CalendarController {
    * This method is specifically designed for the GUI interaction.
    *
    * @param date The date to get events for
-   * @return A list of events on the specified date, or an empty list if there are none or an error occurs
+   * @return A list of events on the specified date, or an empty list if there are none
    */
   public List<Event> getEventsForDate(LocalDate date) {
     if (date == null) {
@@ -581,7 +582,7 @@ public class CalendarController {
    *
    * @param startDate The start date of the range (inclusive)
    * @param endDate   The end date of the range (inclusive)
-   * @return A list of events in the specified date range, or an empty list if there are none or an error occurs
+   * @return A list of events in the specified date range, or an empty list if there are none
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {

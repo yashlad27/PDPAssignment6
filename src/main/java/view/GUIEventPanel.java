@@ -51,6 +51,14 @@ import utilities.TimeZoneHandler;
  * Panel class that handles event creation, editing, and display.
  */
 public class GUIEventPanel extends JPanel {
+
+  /**
+   * Enum representing the different operational modes of the event panel.
+   * CREATE - Used when creating a new event
+   * EDIT - Used when modifying an existing event
+   * VIEW - Used when displaying event details without editing
+   * Each mode has an associated display name that can be used in the UI.
+   */
   public enum PanelMode {
     CREATE("Create Event"),
     EDIT("Edit Event"),
@@ -123,6 +131,9 @@ public class GUIEventPanel extends JPanel {
     public LocalDate untilDate;
     public LocalDate date;
 
+    /**
+     * Constructor for our Data class to hold event information.
+     */
     public EventData() {
       this.date = LocalDate.now();
       this.startTime = LocalTime.of(9, 0);
@@ -245,7 +256,8 @@ public class GUIEventPanel extends JPanel {
     descriptionArea.setLineWrap(true);
     descriptionArea.setWrapStyleWord(true);
 
-    String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+    String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday",
+            "Friday", "Saturday", "Sunday"};
     for (String weekday : weekdays) {
       JCheckBox checkbox = new JCheckBox(weekday);
       weekdayCheckboxes.add(checkbox);
@@ -442,7 +454,8 @@ public class GUIEventPanel extends JPanel {
         untilCal.add(Calendar.MONTH, 1);
         untilDateSpinner.setValue(untilCal.getTime());
 
-        System.out.println("[DEBUG] Set Monday checkbox to selected and until date to " + untilCal.getTime());
+        System.out.println("[DEBUG] Set Monday checkbox to selected and until date to "
+                + untilCal.getTime());
       }
     });
 
@@ -696,12 +709,16 @@ public class GUIEventPanel extends JPanel {
     descriptionArea.setText(event.getDescription());
     // Convert times from UTC to local timezone for display
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
-    LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
+    LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event
+            .getStartDateTime(), systemTimezone);
+    LocalDateTime localEndDateTime = timezoneHandler.convertFromUTC(event
+            .getEndDateTime(), systemTimezone);
 
     // Create Date objects from the local times
-    Date localStartDate = Date.from(localStartDateTime.atZone(ZoneId.of(systemTimezone)).toInstant());
-    Date localEndDate = Date.from(localEndDateTime.atZone(ZoneId.of(systemTimezone)).toInstant());
+    Date localStartDate = Date.from(localStartDateTime.atZone(ZoneId.of(systemTimezone))
+            .toInstant());
+    Date localEndDate = Date.from(localEndDateTime.atZone(ZoneId.of(systemTimezone))
+            .toInstant());
 
     dateSpinner.setValue(localStartDate);
     startTimeSpinner.setValue(localStartDate);
@@ -754,7 +771,7 @@ public class GUIEventPanel extends JPanel {
   public void setDate(LocalDate date) {
     if (date != null) {
       dateSpinner.setValue(Date.from(date.atStartOfDay().toInstant(ZoneOffset.UTC)));
-      
+
       // Make sure the date spinner is enabled when a new date is set
       dateSpinner.setEnabled(true);
       ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);
@@ -772,7 +789,7 @@ public class GUIEventPanel extends JPanel {
     recurringCheckBox.setSelected(false);
     recurringOptionsPanel.setVisible(false);
     allDayCheckBox.setSelected(false);
-    
+
     // Ensure all spinners are enabled
     dateSpinner.setEnabled(true);
     ((JSpinner.DefaultEditor) dateSpinner.getEditor()).getTextField().setEditable(true);

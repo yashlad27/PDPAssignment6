@@ -50,8 +50,6 @@ public class GUICalendarPanel extends JPanel {
   private final Map<LocalDate, List<Event>> eventsByDate;
   private JButton statusButton;
   private JEditorPane eventListArea;
-  private JSpinner startDateSpinner;
-  private JSpinner endDateSpinner;
   private YearMonth currentMonth;
   private LocalDate selectedDate;
   private ICalendar selectedCalendar;
@@ -153,8 +151,8 @@ public class GUICalendarPanel extends JPanel {
     eventListArea = new JEditorPane();
     eventListArea.setEditable(false);
     eventListArea.setContentType("text/html");
-    startDateSpinner = new JSpinner(new SpinnerDateModel());
-    endDateSpinner = new JSpinner(new SpinnerDateModel());
+    JSpinner startDateSpinner = new JSpinner(new SpinnerDateModel());
+    JSpinner endDateSpinner = new JSpinner(new SpinnerDateModel());
 
     add(createNavigationPanel(), BorderLayout.NORTH);
     add(createCalendarPanel(), BorderLayout.CENTER);
@@ -258,20 +256,20 @@ public class GUICalendarPanel extends JPanel {
     JPanel calendarInfoPanel = new JPanel(new BorderLayout(5, 0));
     calendarInfoPanel.setBackground(HEADER_LIGHT_COLOR);
     calendarInfoPanel.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(HEADER_COLOR),
-        BorderFactory.createEmptyBorder(5, 10, 5, 10)));
-    
+            BorderFactory.createLineBorder(HEADER_COLOR),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+
     JLabel calendarLabel = new JLabel("Current Calendar:");
     calendarLabel.setFont(new Font("Arial", Font.BOLD, 12));
     calendarLabel.setForeground(TEXT_COLOR);
-    
+
     JLabel calendarNameLabel = new JLabel("None selected");
     calendarNameLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     calendarNameLabel.setForeground(TEXT_COLOR);
-    
+
     calendarInfoPanel.add(calendarLabel, BorderLayout.WEST);
     calendarInfoPanel.add(this.calendarNameLabel = calendarNameLabel, BorderLayout.CENTER);
-    
+
     // Add components to the action panel
     actionPanel.add(checkStatusButton);
     actionPanel.add(calendarInfoPanel);
@@ -436,21 +434,22 @@ public class GUICalendarPanel extends JPanel {
     // Add event indicators to the date button
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
-      
+
       // Convert events to local time zone for display
       TimeZoneHandler timezoneHandler = new TimeZoneHandler();
       String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-      
+
       // Filter the events to only include those that actually occur on this date in local time
       List<Event> eventsOnThisDate = new ArrayList<>();
       for (Event event : events) {
-        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+                systemTimezone);
         LocalDate eventDate = localStartDateTime.toLocalDate();
         if (eventDate.equals(date)) {
           eventsOnThisDate.add(event);
         }
       }
-      
+
       // Deduplicate events based on subject to prevent multiple indicators for recurring events
       Map<String, Event> uniqueEventsBySubject = new HashMap<>();
       for (Event event : eventsOnThisDate) {
@@ -519,7 +518,8 @@ public class GUICalendarPanel extends JPanel {
 
   /**
    * Clears all events from the calendar view.
-   * This is useful when switching between calendars to ensure no events from the previous calendar remain.
+   * This is useful when switching between calendars to ensure no events from the previous
+   * calendar remain.
    */
   public void clearEvents() {
     eventsByDate.clear();
@@ -530,15 +530,23 @@ public class GUICalendarPanel extends JPanel {
     }
   }
 
+  /**
+   * Updates the calendar with events from the provided list.
+   * Converts event times from UTC to local timezone for proper display.
+   * Handles clearing existing events and adding new ones while avoiding duplicates.
+   *
+   * @param events the list of events to display on the calendar
+   */
   public void updateEvents(List<Event> events) {
     // Track which dates are being updated in this operation
     Set<LocalDate> datesToUpdate = new HashSet<>();
     TimeZoneHandler timezoneHandler = new TimeZoneHandler();
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    
+
     for (Event event : events) {
       // Convert UTC time to local time for display and date association
-      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+              systemTimezone);
       LocalDate eventDate = localStartDateTime.toLocalDate();
       datesToUpdate.add(eventDate);
     }
@@ -555,11 +563,13 @@ public class GUICalendarPanel extends JPanel {
     // Add each event to its corresponding date in the map
     for (Event event : events) {
       // Convert UTC time to local time for display and date association
-      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+              systemTimezone);
       LocalDate eventDate = localStartDateTime.toLocalDate();
 
       // Get or create the list for this date
-      List<Event> dateEvents = eventsByDate.computeIfAbsent(eventDate, k -> new ArrayList<>());
+      List<Event> dateEvents = eventsByDate
+              .computeIfAbsent(eventDate, k -> new ArrayList<>());
 
       // Avoid duplicate events
       if (!containsEventWithSameId(dateEvents, event)) {
@@ -608,19 +618,18 @@ public class GUICalendarPanel extends JPanel {
   public void updateRecurringEvents(List<RecurringEvent> recurringEvents) {
     TimeZoneHandler timezoneHandler = new TimeZoneHandler();
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    
+
     for (RecurringEvent event : recurringEvents) {
-      // Convert UTC time to local time for display and date association
-      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+      LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+              systemTimezone);
       LocalDate startDate = localStartDateTime.toLocalDate();
       LocalDate endDate = event.getEndDate();
 
       for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
         if (event.getRepeatDays().contains(date.getDayOfWeek())) {
-          // Get or create the list for this date
-          List<Event> dateEvents = eventsByDate.computeIfAbsent(date, k -> new ArrayList<>());
+          List<Event> dateEvents = eventsByDate
+                  .computeIfAbsent(date, k -> new ArrayList<>());
 
-          // Only add the event if it's not a duplicate
           if (!containsEventWithSameId(dateEvents, event)) {
             dateEvents.add(event);
           }
@@ -714,37 +723,38 @@ public class GUICalendarPanel extends JPanel {
     }
 
     try {
-      System.out.println("[DEBUG] Updating events for date " + date + " with " + (eventsByDate.containsKey(date) ? eventsByDate.get(date).size() : 0) + " events");
+      System.out.println("[DEBUG] Updating events for date " + date + " with "
+              + (eventsByDate.containsKey(date) ? eventsByDate.get(date).size() : 0) + " events");
       boolean hasEvents = eventsByDate.containsKey(date) && !eventsByDate.get(date).isEmpty();
 
       if (!hasEvents) {
         // No need to display a message as we're not showing the event list here
         return;
       }
-      
+
       // Get events for the selected date but don't display them here
       List<Event> eventsOnDate = new ArrayList<>(eventsByDate.get(date));
-      
+
       // Remove duplicate recurring events
       eventsOnDate = dedupRecurringEvents(eventsOnDate);
-      
+
       // The events display is handled elsewhere in the app
     } catch (Exception e) {
       System.err.println("Error updating event list: " + e.getMessage());
     }
   }
-  
+
   /**
    * Removes duplicate recurring events with the same subject and start time.
    * Keeps only one instance of each recurring event for display purposes.
-   * 
+   *
    * @param events The list of events to deduplicate
    * @return A new list with duplicates removed
    */
   private List<Event> dedupRecurringEvents(List<Event> events) {
     // Use a map to track events by subject to prevent duplicates
     Map<String, Event> uniqueEvents = new HashMap<>();
-    
+
     // Keep only one event per subject+time combination
     for (Event event : events) {
       String key = event.getSubject() + "-" + event.getStartDateTime().toLocalTime();
@@ -752,7 +762,7 @@ public class GUICalendarPanel extends JPanel {
         uniqueEvents.put(key, event);
       }
     }
-    
+
     // Return the deduplicated events
     return new ArrayList<>(uniqueEvents.values());
   }
@@ -768,7 +778,8 @@ public class GUICalendarPanel extends JPanel {
     final Event eventInstance = event;
     JPanel panel = new JPanel(new BorderLayout(5, 5));
     panel.setBackground(Color.WHITE);
-    panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_COLOR), BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+    panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_COLOR),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
     JPanel detailsPanel = new JPanel();
     detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
@@ -786,10 +797,13 @@ public class GUICalendarPanel extends JPanel {
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
 
     // Convert start and end times from UTC to local time
-    LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
-    LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
+    LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+            systemTimezone);
+    LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(),
+            systemTimezone);
 
-    JLabel timeLabel = new JLabel(localStartTime.toLocalTime() + " - " + localEndTime.toLocalTime());
+    JLabel timeLabel = new JLabel(localStartTime.toLocalTime() + " - "
+            + localEndTime.toLocalTime());
     timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     timeLabel.setForeground(Color.DARK_GRAY);
     timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -826,7 +840,8 @@ public class GUICalendarPanel extends JPanel {
       System.out.println("[DEBUG] Edit button clicked for event: " + event.getSubject());
       highlightEvent(panel);
       currentSelectedEvent = eventInstance;
-      System.out.println("[DEBUG] Stored current event reference: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+      System.out.println("[DEBUG] Stored current event reference: "
+              + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
       handleEventAction(currentSelectedEvent.getId().toString(), "edit");
     });
     buttonPanel.add(editButton);
@@ -840,7 +855,8 @@ public class GUICalendarPanel extends JPanel {
       System.out.println("[DEBUG] Copy button clicked for event: " + event.getSubject());
       highlightEvent(panel);
       currentSelectedEvent = eventInstance;
-      System.out.println("[DEBUG] Stored current event reference: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+      System.out.println("[DEBUG] Stored current event reference: "
+              + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
       handleEventAction(currentSelectedEvent.getId().toString(), "copy");
     });
     buttonPanel.add(copyButton);
@@ -854,7 +870,8 @@ public class GUICalendarPanel extends JPanel {
       System.out.println("[DEBUG] Print button clicked for event: " + event.getSubject());
       highlightEvent(panel);
       currentSelectedEvent = eventInstance;
-      System.out.println("[DEBUG] Stored current event reference: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+      System.out.println("[DEBUG] Stored current event reference: "
+              + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
       handleEventAction(currentSelectedEvent.getId().toString(), "print");
     });
     buttonPanel.add(printButton);
@@ -864,6 +881,12 @@ public class GUICalendarPanel extends JPanel {
     return panel;
   }
 
+  /**
+   * Highlights the selected event panel and resets the background of other event panels.
+   * This provides visual feedback to the user about which event is currently selected.
+   *
+   * @param eventPanel the panel to highlight
+   */
   private void highlightEvent(JPanel eventPanel) {
     if (eventPanel.getParent() instanceof JPanel) {
       JPanel parent = (JPanel) eventPanel.getParent();
@@ -880,11 +903,13 @@ public class GUICalendarPanel extends JPanel {
   private void handleEventAction(String eventId, String action) {
     Event targetEvent = currentSelectedEvent;
 
-    System.out.println("[DEBUG] Current selected event ID: " + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
+    System.out.println("[DEBUG] Current selected event ID: "
+            + (currentSelectedEvent != null ? currentSelectedEvent.getId() : "null"));
     System.out.println("[DEBUG] Event action requested: " + action);
 
     if (targetEvent != null && listener != null) {
-      System.out.println("[DEBUG] Selected event: " + targetEvent.getSubject() + " with ID: " + targetEvent.getId());
+      System.out.println("[DEBUG] Selected event: "
+              + targetEvent.getSubject() + " with ID: " + targetEvent.getId());
 
       switch (action) {
         case "edit":
@@ -892,7 +917,8 @@ public class GUICalendarPanel extends JPanel {
           listener.onEditEvent(targetEvent);
           break;
         case "print":
-          System.out.println("[DEBUG] Sending print event to listener: " + targetEvent.getSubject());
+          System.out.println("[DEBUG] Sending print event to listener: "
+                  + targetEvent.getSubject());
           listener.onPrintEvent(targetEvent);
           break;
       }
@@ -903,7 +929,7 @@ public class GUICalendarPanel extends JPanel {
 
   /**
    * Displays a formatted HTML message in the event list area with better styling.
-   * 
+   *
    * @param htmlMessage the HTML message to display
    */
   private void displayFormattedMessageInEventList(String htmlMessage) {
@@ -970,13 +996,16 @@ public class GUICalendarPanel extends JPanel {
     eventsContainer.add(titleLabel);
 
     for (Event event : events) {
-      String currentEventId = event.getSubject().replace(' ', '_') + "-" + event.getStartDateTime().toString();
+      String currentEventId = event.getSubject().replace(' ', '_')
+              + "-" + event.getStartDateTime().toString();
       System.out.println("[DEBUG] Using event ID format: " + currentEventId);
       System.out.println("[DEBUG] Creating event entry with ID: " + currentEventId);
 
       JPanel eventPanel = new JPanel(new BorderLayout(5, 5));
       eventPanel.setBackground(Color.WHITE);
-      eventPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_COLOR), BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+      eventPanel.setBorder(BorderFactory
+              .createCompoundBorder(BorderFactory.createLineBorder(BORDER_COLOR),
+                      BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
       JPanel detailsPanel = new JPanel();
       detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
@@ -989,7 +1018,9 @@ public class GUICalendarPanel extends JPanel {
       detailsPanel.add(subjectLabel);
       detailsPanel.add(Box.createVerticalStrut(3));
 
-      String dateTimeStr = event.getStartDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + " - " + event.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+      String dateTimeStr = event.getStartDateTime()
+              .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + " - "
+              + event.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"));
       JLabel dateTimeLabel = new JLabel(dateTimeStr);
       dateTimeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
       dateTimeLabel.setForeground(Color.DARK_GRAY);
@@ -1025,7 +1056,8 @@ public class GUICalendarPanel extends JPanel {
       editButton.setFocusPainted(false);
       final String eventIdForEdit = currentEventId;
       editButton.addActionListener(e -> {
-        System.out.println("[DEBUG] Edit button clicked for event in range view: " + eventIdForEdit);
+        System.out.println("[DEBUG] Edit button clicked for event in range view: "
+                + eventIdForEdit);
         highlightEvent(eventPanel);
         handleEventAction(eventIdForEdit, "edit");
       });
@@ -1039,7 +1071,8 @@ public class GUICalendarPanel extends JPanel {
       printButton.setFocusPainted(false);
       final String eventIdForPrint = currentEventId;
       printButton.addActionListener(e -> {
-        System.out.println("[DEBUG] Print button clicked for event in range view: " + eventIdForPrint);
+        System.out.println("[DEBUG] Print button clicked for event in range view: "
+                + eventIdForPrint);
         highlightEvent(eventPanel);
         handleEventAction(eventIdForPrint, "print");
       });
@@ -1089,24 +1122,6 @@ public class GUICalendarPanel extends JPanel {
   }
 
   /**
-   * Returns the currently selected event.
-   *
-   * @return the currently selected event, or null if none is selected
-   */
-  public Event getCurrentSelectedEvent() {
-    return currentSelectedEvent;
-  }
-
-  /**
-   * Sets the currently selected event.
-   *
-   * @param event the event to set as selected
-   */
-  public void setCurrentSelectedEvent(Event event) {
-    this.currentSelectedEvent = event;
-  }
-
-  /**
    * Updates the events for a specific date.
    *
    * @param date   the date to update events for
@@ -1153,27 +1168,28 @@ public class GUICalendarPanel extends JPanel {
    */
   public void updateDateStatus(LocalDate date, boolean isBusy, int eventCount) {
     if (date == null) return;
-    
+
     // When checking if a date is busy, use the local date (not UTC)
     TimeZoneHandler timezoneHandler = new TimeZoneHandler();
     String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
-    
+
     // Re-check if the date is busy using local time
     boolean isActuallyBusy = false;
     int actualEventCount = 0;
-    
+
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
       List<Event> eventsOnThisDate = new ArrayList<>();
-      
+
       for (Event event : events) {
-        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
+        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+                systemTimezone);
         LocalDate eventDate = localStartDateTime.toLocalDate();
         if (eventDate.equals(date)) {
           eventsOnThisDate.add(event);
         }
       }
-      
+
       actualEventCount = eventsOnThisDate.size();
       isActuallyBusy = !eventsOnThisDate.isEmpty();
     }

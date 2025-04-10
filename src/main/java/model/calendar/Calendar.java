@@ -65,6 +65,14 @@ public class Calendar implements ICalendar {
     this.timezoneHandler = new TimeZoneHandler();
   }
 
+  /**
+   * Constructs a new Calendar with the specified name and timezone.
+   * Initializes the event collections, maps for accessing events by ID,
+   * property updaters for event modifications, and timezone handling.
+   *
+   * @param name     the name of the calendar
+   * @param timezone the timezone identifier for this calendar (e.g., "America/New_York")
+   */
   public Calendar(String name, String timezone) {
     this.name = name;
     this.timezone = TimeZone.getTimeZone(timezone);
@@ -92,7 +100,8 @@ public class Calendar implements ICalendar {
       throw new IllegalArgumentException("Event cannot be null");
     }
 
-    LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(), timezone.getID());
+    LocalDateTime startUTC = timezoneHandler.convertToUTC(event.getStartDateTime(),
+            timezone.getID());
     LocalDateTime endUTC = timezoneHandler.convertToUTC(event.getEndDateTime(), timezone.getID());
 
     Event utcEvent = new Event(
@@ -115,7 +124,8 @@ public class Calendar implements ICalendar {
     events.add(utcEvent);
     // Store the event in the eventById map for future lookup
     eventById.put(utcEvent.getId(), utcEvent);
-    System.out.println("[DEBUG] Calendar.addEvent - Added event to map with ID: " + utcEvent.getId());
+    System.out.println("[DEBUG] Calendar.addEvent - Added event to map with ID: "
+            + utcEvent.getId());
 
     return true;
   }
@@ -144,8 +154,10 @@ public class Calendar implements ICalendar {
 
     List<Event> utcOccurrences = new ArrayList<>();
     for (Event occurrence : occurrences) {
-      LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(), timezone.getID());
-      LocalDateTime endUTC = timezoneHandler.convertToUTC(occurrence.getEndDateTime(), timezone.getID());
+      LocalDateTime startUTC = timezoneHandler.convertToUTC(occurrence.getStartDateTime(),
+              timezone.getID());
+      LocalDateTime endUTC = timezoneHandler.convertToUTC(occurrence.getEndDateTime(),
+              timezone.getID());
       Event utcOccurrence = new Event(
               occurrence.getSubject(),
               startUTC,
@@ -197,7 +209,8 @@ public class Calendar implements ICalendar {
    */
   @Override
   public boolean createRecurringEventUntil(String name, LocalDateTime start, LocalDateTime end,
-                                           String weekdays, LocalDate untilDate, boolean autoDecline) throws ConflictingEventException {
+                                           String weekdays, LocalDate untilDate,
+                                           boolean autoDecline) throws ConflictingEventException {
     try {
       Set<DayOfWeek> repeatDays = DateTimeUtil.parseWeekdays(weekdays);
 
@@ -345,9 +358,8 @@ public class Calendar implements ICalendar {
                                 String newValue) {
     int count = 0;
 
-    List<Event> matchingEvents = events.stream().filter(
-                    e -> e.getSubject().equals(subject) && !e.getStartDateTime().isBefore(startDateTime))
-            .collect(Collectors.toList());
+    List<Event> matchingEvents = events.stream().filter(e -> e.getSubject().equals(subject)
+                    && !e.getStartDateTime().isBefore(startDateTime)).collect(Collectors.toList());
 
     for (Event event : matchingEvents) {
       if (updateEventProperty(event, property, newValue)) {
@@ -702,12 +714,12 @@ public class Calendar implements ICalendar {
     if (dateTime == null) {
       throw new IllegalArgumentException("DateTime cannot be null");
     }
-    
+
     // Convert the check time to UTC for comparison with stored event times
     TimeZoneHandler handler = new TimeZoneHandler();
     String systemTimezone = handler.getSystemDefaultTimezone();
     LocalDateTime utcDateTime = handler.convertToUTC(dateTime, systemTimezone);
-    
+
     // First check if there are any regular events at this time
     for (Event event : events) {
       if (isTimeWithinEventRange(utcDateTime, event)) {
@@ -810,7 +822,8 @@ public class Calendar implements ICalendar {
       return false; // Event not found
     }
 
-    System.out.println("[DEBUG] Calendar.updateEvent - Found existing event: " + existingEvent.getSubject());
+    System.out.println("[DEBUG] Calendar.updateEvent - Found existing event: "
+            + existingEvent.getSubject());
 
     // Store the existing event temporarily and remove it from collections
     events.remove(existingEvent);
@@ -838,10 +851,11 @@ public class Calendar implements ICalendar {
               updatedEvent.isAllDay()
       );
 
-      System.out.println("[DEBUG] Calendar.updateEvent - Created new event object: " + newEvent.getSubject() +
-              ", ID=" + newEvent.getId() +
-              ", Start=" + newEvent.getStartDateTime() +
-              ", End=" + newEvent.getEndDateTime());
+      System.out.println("[DEBUG] Calendar.updateEvent - Created new event object: "
+              + newEvent.getSubject()
+              + ", ID=" + newEvent.getId()
+              + ", Start=" + newEvent.getStartDateTime()
+              + ", End=" + newEvent.getEndDateTime());
 
       // Add the updated event
       events.add(newEvent);
@@ -853,7 +867,6 @@ public class Calendar implements ICalendar {
     } catch (Exception e) {
       System.out.println("[ERROR] Exception in Calendar.updateEvent: " + e.getMessage());
       e.printStackTrace();
-      // Put the original event back if there's any other error
       events.add(existingEvent);
       eventById.put(eventId, existingEvent);
       return false;

@@ -68,7 +68,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    */
   public static ConsolidatedCopyStrategy createSingleEventStrategy(
           CalendarManager calendarManager, TimeZoneHandler timezoneHandler, String[] args) {
-    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler, CopyType.SINGLE_EVENT, args);
+    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler,
+            CopyType.SINGLE_EVENT, args);
   }
 
   /**
@@ -81,7 +82,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    */
   public static ConsolidatedCopyStrategy createDayEventsStrategy(
           CalendarManager calendarManager, TimeZoneHandler timezoneHandler, String[] args) {
-    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler, CopyType.DAY_EVENTS, args);
+    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler,
+            CopyType.DAY_EVENTS, args);
   }
 
   /**
@@ -94,7 +96,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    */
   public static ConsolidatedCopyStrategy createRangeEventsStrategy(
           CalendarManager calendarManager, TimeZoneHandler timezoneHandler, String[] args) {
-    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler, CopyType.RANGE_EVENTS, args);
+    return new ConsolidatedCopyStrategy(calendarManager, timezoneHandler,
+            CopyType.RANGE_EVENTS, args);
   }
 
   @Override
@@ -286,8 +289,10 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
     ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
     String targetTimezone = ((Calendar) targetCalendar).getTimeZone().getID();
 
-    LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(), targetTimezone);
-    LocalDateTime endInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getEndDateTime(), targetTimezone);
+    LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(),
+            targetTimezone);
+    LocalDateTime endInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getEndDateTime(),
+            targetTimezone);
 
     Event newEvent = new Event(
             sourceEvent.getSubject(),
@@ -308,7 +313,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       }
     });
 
-    return "Event '" + eventName + "' copied successfully to calendar '" + targetCalendarName + "'.";
+    return "Event '" + eventName + "' copied successfully to calendar '" + targetCalendarName
+            + "'.";
   }
 
   /**
@@ -330,7 +336,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "No events found on " + sourceDate + " to copy.";
     }
 
-    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName)).getTimeZone().getID();
+    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName))
+            .getTimeZone().getID();
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
@@ -372,7 +379,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "Copied " + successCount + " out of " + eventsToCopy.size() + " events to calendar '"
               + targetCalendarName + "'.";
     } else {
-      return "Successfully copied all " + successCount + " events to calendar '" + targetCalendarName
+      return "Successfully copied all " + successCount + " events to calendar '"
+              + targetCalendarName
               + "'.";
     }
   }
@@ -397,7 +405,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "No events found between " + sourceStartDate + " and " + sourceEndDate + " to copy.";
     }
 
-    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName)).getTimeZone().getID();
+    String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName))
+            .getTimeZone().getID();
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {

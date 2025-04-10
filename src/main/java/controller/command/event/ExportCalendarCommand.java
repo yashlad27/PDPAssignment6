@@ -6,8 +6,8 @@ import java.io.IOException;
 import controller.command.ICommand;
 import model.calendar.ICalendar;
 import model.export.CSVExporter;
-import viewmodel.ExportImportViewModel;
 import view.IGUIView;
+import viewmodel.ExportImportViewModel;
 
 /**
  * Command for exporting the calendar to a CSV file.
@@ -17,7 +17,6 @@ public class ExportCalendarCommand implements ICommand {
   private final ICalendar calendar;
   private final CSVExporter csvExporter;
   private ExportImportViewModel viewModel;
-  private IGUIView view;
 
   /**
    * Constructs a new ExportCalendarCommand.
@@ -31,13 +30,13 @@ public class ExportCalendarCommand implements ICommand {
     this.calendar = calendar;
     this.csvExporter = new CSVExporter();
   }
-  
+
   /**
    * Constructs a new ExportCalendarCommand with a view model and view.
    *
-   * @param calendar the calendar model
+   * @param calendar  the calendar model
    * @param viewModel the export/import view model
-   * @param view the GUI view
+   * @param view      the GUI view
    */
   public ExportCalendarCommand(ICalendar calendar, ExportImportViewModel viewModel, IGUIView view) {
     if (calendar == null) {
@@ -46,7 +45,6 @@ public class ExportCalendarCommand implements ICommand {
     this.calendar = calendar;
     this.csvExporter = new CSVExporter();
     this.viewModel = viewModel;
-    this.view = view;
   }
 
   @Override
@@ -56,12 +54,12 @@ public class ExportCalendarCommand implements ICommand {
     }
 
     String filePath = args[0];
-    
+
     // Handle null filename case
     if (filePath == null) {
       return "Error: Filename cannot be null";
     }
-    
+
     // Empty filename case
     if (filePath.isEmpty()) {
       try {
@@ -72,35 +70,30 @@ public class ExportCalendarCommand implements ICommand {
       }
       return "Failed to export calendar: Filename cannot be empty";
     }
-    
+
     File file = new File(filePath);
-    
+
     return exportToFile(file);
   }
-  
+
   /**
    * Exports calendar events to a file directly.
-   * 
+   *
    * @param file the file to export to
    * @return status message
    */
   public String exportToFile(File file) {
     try {
-      // If view model is available, use it for exporting
       if (viewModel != null) {
         viewModel.setCurrentCalendar(calendar);
         viewModel.exportToCSV(file);
         return "Calendar exported successfully to: " + file.getAbsolutePath();
       }
-      
-      // Otherwise, fall back to direct exporting
+
       String filePath = file.getPath();
       String result;
-      
-      // Try to use the calendar's exportData method (for backward compatibility with tests)
-      // This path will execute in test cases and respect the mock behavior
       result = calendar.exportData(filePath, csvExporter);
-      
+
       return "Calendar exported successfully to: " + result;
     } catch (IOException e) {
       return "Failed to export calendar: " + e.getMessage();

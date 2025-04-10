@@ -125,11 +125,13 @@ public class EventViewModel implements IViewModel {
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "start", startDateTime.toString());
+                selectedEvent.getId(), selectedEvent.getSubject(), "start",
+                startDateTime.toString());
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "end", endDateTime.toString());
+                selectedEvent.getId(), selectedEvent.getSubject(), "end",
+                endDateTime.toString());
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
@@ -137,7 +139,8 @@ public class EventViewModel implements IViewModel {
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "description", description);
+                selectedEvent.getId(), selectedEvent.getSubject(), "description",
+                description);
         editor.executeEdit(controller.getCurrentCalendar());
 
         notifyEventUpdated(selectedEvent);
@@ -227,7 +230,8 @@ public class EventViewModel implements IViewModel {
   }
 
   /**
-   * Checks if the list of events contains an event with the same ID or the same subject on the same day.
+   * Checks if the list of events contains an event with the same ID or
+   * the same subject on the same day.
    * Moved from GUICalendarPanel to follow business logic separation.
    *
    * @param events the list of events to check
@@ -286,10 +290,12 @@ public class EventViewModel implements IViewModel {
     }
 
     StringBuilder sb = new StringBuilder();
-    sb.append("<div style='margin-bottom: 10px; padding: 8px; border-left: 4px solid #4a86e8; background-color: #f8f9fa;'>");
+    sb.append("<div style='margin-bottom: 10px; padding: 8px; border-left: " +
+            "4px solid #4a86e8; background-color: #f8f9fa;'>");
 
     // Title with time
-    sb.append("<div style='font-weight: bold; color: #4a86e8;'>").append(event.getSubject()).append("</div>");
+    sb.append("<div style='font-weight: bold; color: #4a86e8;'>")
+            .append(event.getSubject()).append("</div>");
 
     // Time information
     sb.append("<div style='font-size: 0.9em; color: #555;'>");
@@ -307,7 +313,8 @@ public class EventViewModel implements IViewModel {
 
     // Description if available
     if (event.getDescription() != null && !event.getDescription().isEmpty()) {
-      sb.append("<div style='font-size: 0.9em; color: #666; margin-top: 4px;'><i>Description:</i> ")
+      sb.append("<div style='font-size: 0.9em; color: #666;" +
+                      " margin-top: 4px;'><i>Description:</i> ")
               .append(event.getDescription())
               .append("</div>");
     }
@@ -329,7 +336,8 @@ public class EventViewModel implements IViewModel {
     html.append("<html><body style='font-family: Arial, sans-serif;'>");
 
     if (events == null || events.isEmpty()) {
-      html.append("<p>No events found between ").append(startDate).append(" and ").append(endDate).append("</p>");
+      html.append("<p>No events found between ").append(startDate)
+              .append(" and ").append(endDate).append("</p>");
       html.append("</body></html>");
       return html.toString();
     }
