@@ -1,12 +1,34 @@
 package view;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 
 import model.calendar.ICalendar;
 
@@ -215,6 +237,20 @@ public class GUICalendarSelectorPanel extends JPanel {
   }
 
   /**
+   * Sets the selected calendar by name.
+   *
+   * @param calendarName the name of the calendar to select
+   */
+  public void setSelectedCalendar(String calendarName) {
+    if (calendarName != null) {
+      int index = calendarListModel.indexOf(calendarName);
+      if (index >= 0) {
+        calendarList.setSelectedIndex(index);
+      }
+    }
+  }
+
+  /**
    * Adds a listener for calendar selection events.
    *
    * @param listener the listener to add
@@ -232,20 +268,6 @@ public class GUICalendarSelectorPanel extends JPanel {
     calendarListModel.clear();
     for (String name : calendarNames) {
       calendarListModel.addElement(name);
-    }
-  }
-
-  /**
-   * Sets the selected calendar by name.
-   *
-   * @param calendarName the name of the calendar to select
-   */
-  public void setSelectedCalendar(String calendarName) {
-    if (calendarName != null) {
-      int index = calendarListModel.indexOf(calendarName);
-      if (index >= 0) {
-        calendarList.setSelectedIndex(index);
-      }
     }
   }
 

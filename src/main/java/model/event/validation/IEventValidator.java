@@ -56,7 +56,8 @@ public interface IEventValidator {
    * @param occurrences number of occurrences
    * @throws InvalidEventException if parameters are invalid
    */
-  void validateRecurringEventParams(Set<DayOfWeek> days, int occurrences) throws InvalidEventException;
+  void validateRecurringEventParams(Set<DayOfWeek> days, int occurrences)
+          throws InvalidEventException;
 
   /**
    * Validates all-day event parameters.
@@ -73,7 +74,8 @@ public interface IEventValidator {
    * @param endTime   the end time of the event
    * @throws InvalidEventException if the times are invalid
    */
-  void validateEventTimes(LocalDateTime startTime, LocalDateTime endTime) throws InvalidEventException;
+  void validateEventTimes(LocalDateTime startTime, LocalDateTime endTime)
+          throws InvalidEventException;
 
   /**
    * Validates event subject/name.

@@ -17,16 +17,17 @@ import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.exceptions.CalendarNotFoundException;
+import view.GUIView;
 import view.ICalendarView;
 
 /**
  * Controller class that manages calendar operations and user interactions.
  *
- * <p>This class serves as the main controller in the MVC architecture, handling
+ * <p> This class serves as the main controller in the MVC architecture, handling
  * Command processing and execution, Calendar management operations, Event management operations and
  * Interactive and headless mode operations
  *
- * <p>The controller supports two modes of operation:
+ * <p> The controller supports two modes of operation:
  * 1. Interactive Mode: Processes commands entered by users in real-time 2. Headless Mode: Processes
  * commands from a file without user interaction
  *
@@ -431,45 +432,28 @@ public class CalendarController {
   }
 
   /**
-   * Sets the selected calendar by name.
-   * This method is specifically designed for the GUI interaction.
+   * Sets the selected calendar.
    *
-   * @param calendarName The name of the calendar to select
-   * @return true if the calendar was selected successfully, false otherwise
+   * @param calendar the calendar to select
    */
-  public boolean setSelectedCalendarByName(String calendarName) {
-    if (calendarName == null || calendarName.trim().isEmpty()) {
-      return false;
-    }
-
-    try {
-      String command = "use calendar \"" + calendarName + "\"";
-      String result = processCommand(command);
-      updateCommandFactory();
-      return !result.startsWith("Error");
-    } catch (Exception e) {
-      view.displayError("Error selecting calendar: " + e.getMessage());
-      return false;
+  public void setSelectedCalendar(ICalendar calendar) {
+    if (view instanceof GUIView) {
+      GUIView guiView = (GUIView) view;
+      guiView.getCalendarPanel().updateCalendarName(calendar.getName());
     }
   }
 
   /**
-   * Sets the selected calendar.
-   * This method is specifically designed for the GUI interaction.
+   * Sets the selected calendar by name.
    *
-   * @param calendar The calendar to select
-   * @return true if the calendar was selected successfully, false otherwise
+   * @param calendarName the name of the calendar to select
    */
-  public boolean setSelectedCalendar(ICalendar calendar) {
-    if (calendar == null) {
-      return false;
-    }
-
+  public void setSelectedCalendarByName(String calendarName) {
     try {
-      return setSelectedCalendarByName(calendar.toString());
-    } catch (Exception e) {
-      view.displayError("Error selecting calendar: " + e.getMessage());
-      return false;
+      ICalendar calendar = calendarManager.getCalendar(calendarName);
+      setSelectedCalendar(calendar);
+    } catch (CalendarNotFoundException e) {
+      view.displayError("Calendar not found: " + e.getMessage());
     }
   }
 
@@ -479,7 +463,8 @@ public class CalendarController {
    */
   public void updateCalendarList() {
     try {
-      List<String> calendarNames = new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames());
+      List<String> calendarNames = new ArrayList<>(calendarManager
+              .getCalendarRegistry().getCalendarNames());
       view.updateCalendarList(calendarNames);
     } catch (Exception e) {
       view.displayError("Error updating calendar list: " + e.getMessage());
@@ -572,7 +557,7 @@ public class CalendarController {
    * This method is specifically designed for the GUI interaction.
    *
    * @param date The date to get events for
-   * @return A list of events on the specified date, or an empty list if there are none or an error occurs
+   * @return A list of events on the specified date, or an empty list if there are none
    */
   public List<Event> getEventsForDate(LocalDate date) {
     if (date == null) {
@@ -597,7 +582,7 @@ public class CalendarController {
    *
    * @param startDate The start date of the range (inclusive)
    * @param endDate   The end date of the range (inclusive)
-   * @return A list of events in the specified date range, or an empty list if there are none or an error occurs
+   * @return A list of events in the specified date range, or an empty list if there are none
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (startDate == null || endDate == null) {

@@ -1,8 +1,18 @@
 package view.dialog;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 
 import model.event.Event;
@@ -14,7 +24,6 @@ import model.event.Event;
  */
 public abstract class AbstractEventDialog extends JDialog implements IEventDialog {
 
-  protected static final Color THEME_COLOR = new Color(0x4a86e8);
   protected static final Color HEADER_COLOR = new Color(0x4a86e8);
   protected static final Color INFO_BACKGROUND = new Color(0xFFFAE6);
   protected static final Color INFO_BORDER = new Color(0xFFCC80);

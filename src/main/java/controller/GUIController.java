@@ -9,8 +9,10 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +22,8 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import controller.command.edit.strategy.ConsolidatedEventEditor;
+import controller.command.event.ExportCalendarCommand;
+import controller.command.event.ImportCalendarCommand;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
@@ -32,12 +35,12 @@ import model.exceptions.InvalidEventException;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
 import view.ButtonStyler;
+import view.CalendarViewFeatures;
 import view.EventFormData;
 import view.GUICalendarPanel;
 import view.GUICalendarSelectorPanel;
 import view.GUIEventPanel;
 import view.GUIExportImportPanel;
-import view.GUIView;
 import viewmodel.ExportImportViewModel;
 
 /**
@@ -45,7 +48,7 @@ import viewmodel.ExportImportViewModel;
  */
 public class GUIController {
   private final CalendarManager calendarManager;
-  private final GUIView view;
+  private final CalendarViewFeatures view;
   private final TimeZoneHandler timezoneHandler;
   private ICalendar currentCalendar;
 
@@ -53,9 +56,9 @@ public class GUIController {
    * Constructs a new GUIController.
    *
    * @param calendarManager the calendar manager
-   * @param view            the GUI view
+   * @param view            the GUI view implementing CalendarViewFeatures
    */
-  public GUIController(CalendarManager calendarManager, GUIView view) {
+  public GUIController(CalendarManager calendarManager, CalendarViewFeatures view) {
     this.calendarManager = calendarManager;
     this.view = view;
     this.timezoneHandler = new TimeZoneHandler();
@@ -86,7 +89,8 @@ public class GUIController {
       System.out.println("Setting up view with calendar: " + defaultCalendar);
       view.setSelectedCalendar(defaultCalendar);
       view.updateCalendarView(currentCalendar);
-      view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
+      view.updateCalendarList(new ArrayList<>(calendarManager
+              .getCalendarRegistry().getCalendarNames()));
 
       System.out.println("Setting up event listeners...");
       setupEventListeners();
@@ -111,125 +115,128 @@ public class GUIController {
    */
   private void setupEventListeners() {
     // Calendar selection
-    view.getCalendarSelectorPanel().addCalendarSelectorListener(new GUICalendarSelectorPanel.CalendarSelectorListener() {
-      @Override
-      public void onCalendarSelected(ICalendar calendar) {
-        System.out.println("[DEBUG] Calendar selected (ICalendar): " + calendar);
-        try {
-          if (calendar == null) {
-            view.displayError("Please select a valid calendar");
-            return;
-          }
-          System.out.println("[DEBUG] Calendar details: " + calendar.toString());
-          System.out.println("[DEBUG] Calendar has " + calendar.getAllEvents().size() + " events");
-          currentCalendar = calendar;
-          view.updateCalendarView(calendar);
+    view.getCalendarSelectorPanel()
+            .addCalendarSelectorListener(new GUICalendarSelectorPanel.CalendarSelectorListener() {
+              @Override
+              public void onCalendarSelected(ICalendar calendar) {
+                System.out.println("[DEBUG] Calendar selected (ICalendar): " + calendar);
+                try {
+                  if (calendar == null) {
+                    view.displayError("Please select a valid calendar");
+                    return;
+                  }
+                  System.out.println("[DEBUG] Calendar details: " + calendar.toString());
+                  System.out.println("[DEBUG] Calendar has "
+                          + calendar.getAllEvents().size() + " events");
+                  currentCalendar = calendar;
+                  view.updateCalendarView(calendar);
 
-          // Update events display
-          List<Event> events = getAllEvents();
-          List<RecurringEvent> recurringEvents = getAllRecurringEvents();
-          view.getCalendarPanel().updateEvents(events);
-          view.getCalendarPanel().updateRecurringEvents(recurringEvents);
-          view.displayMessage("Selected calendar: " + calendar.toString());
-        } catch (Exception e) {
-          System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
-          view.displayError("Failed to select calendar: " + e.getMessage());
-        }
-      }
+                  // Update the calendar name in the calendar panel
+                  view.getCalendarPanel().updateCalendarName(calendar.getName());
 
-      @Override
-      public void onCalendarSelected(String calendarName) {
-        System.out.println("[DEBUG] Calendar selected by name: " + calendarName);
-        try {
-          if (calendarName == null || calendarName.isEmpty()) {
-            view.displayError("Please select a valid calendar");
-            return;
-          }
+                  // Update events display
+                  List<Event> events = getAllEvents();
+                  List<RecurringEvent> recurringEvents = getAllRecurringEvents();
+                  view.getCalendarPanel().updateEvents(events);
+                  view.getCalendarPanel().updateRecurringEvents(recurringEvents);
+                  view.displayMessage("Selected calendar: " + calendar.toString());
+                } catch (Exception e) {
+                  System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
+                  view.displayError("Failed to select calendar: " + e.getMessage());
+                }
+              }
 
-          // Get the calendar by name
-          ICalendar calendar = calendarManager.getCalendar(calendarName);
-          if (calendar == null) {
-            System.out.println("[ERROR] Could not find calendar with name: " + calendarName);
-            view.displayError("Could not find calendar: " + calendarName);
-            return;
-          }
+              @Override
+              public void onCalendarSelected(String calendarName) {
+                System.out.println("[DEBUG] Calendar selected by name: " + calendarName);
+                try {
+                  if (calendarName == null || calendarName.isEmpty()) {
+                    view.displayError("Please select a valid calendar");
+                    return;
+                  }
 
-          System.out.println("[DEBUG] Found calendar: " + calendar.toString());
-          System.out.println("[DEBUG] Calendar has " + calendar.getAllEvents().size() + " events");
+                  // Get the calendar by name
+                  ICalendar calendar = calendarManager.getCalendar(calendarName);
+                  if (calendar == null) {
+                    System.out.println("[ERROR] Could not find calendar with name: "
+                            + calendarName);
+                    view.displayError("Could not find calendar: " + calendarName);
+                    return;
+                  }
 
-          // Set as current calendar
-          currentCalendar = calendar;
+                  System.out.println("[DEBUG] Found calendar: " + calendar.toString());
+                  System.out.println("[DEBUG] Calendar has " + calendar.getAllEvents().size()
+                          + " events");
 
-          // First clear any existing events in the view
-          view.getCalendarPanel().clearEvents();
+                  currentCalendar = calendar;
 
-          // Then update the view with the new calendar
-          view.updateCalendarView(calendar);
-          view.setSelectedCalendar(calendarName);
+                  view.getCalendarPanel().updateCalendarName(calendarName);
 
-          // Get current date and month
-          LocalDate currentDate = view.getCalendarPanel().getSelectedDate();
-          YearMonth currentMonth = YearMonth.from(currentDate);
-          System.out.println("[DEBUG] Getting events for current month: " + currentMonth);
+                  view.getCalendarPanel().clearEvents();
 
-          // Get ALL events from the calendar to ensure we show all events in the grid
-          List<Event> allEvents = currentCalendar.getAllEvents();
-          List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
-          System.out.println("[DEBUG] Found " + allEvents.size() + " total events in calendar");
-          System.out.println("[DEBUG] Calendar has " + recurringEvents.size() + " recurring events in total");
+                  view.updateCalendarView(calendar);
+                  view.setSelectedCalendar(calendarName);
 
-          // Update the UI with all events for proper display in the grid
-          view.getCalendarPanel().updateEvents(allEvents);
-          view.getCalendarPanel().updateRecurringEvents(recurringEvents);
+                  LocalDate currentDate = view.getCalendarPanel().getSelectedDate();
+                  YearMonth currentMonth = YearMonth.from(currentDate);
+                  System.out.println("[DEBUG] Getting events for current month: " + currentMonth);
 
-          // Also update the event list for the current selected date
-          List<Event> eventsOnDate = currentCalendar.getEventsOnDate(currentDate);
-          view.updateEventList(eventsOnDate);
+                  List<Event> allEvents = currentCalendar.getAllEvents();
+                  List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
+                  System.out.println("[DEBUG] Found " + allEvents.size()
+                          + " total events in calendar");
+                  System.out.println("[DEBUG] Calendar has " + recurringEvents.size()
+                          + " recurring events in total");
 
-          // Update the status message
-          view.displayMessage("Selected calendar: " + calendarName);
+                  view.getCalendarPanel().updateEvents(allEvents);
+                  view.getCalendarPanel().updateRecurringEvents(recurringEvents);
 
-          // Force refresh all views
-          view.refreshView();
+                  List<Event> eventsOnDate = currentCalendar.getEventsOnDate(currentDate);
+                  view.updateEventList(eventsOnDate);
 
-          // Force refresh the calendar display to ensure events are visible
-          view.refreshView();
-        } catch (Exception e) {
-          System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
-          e.printStackTrace();
-          view.displayError("Failed to select calendar: " + e.getMessage());
-        }
-      }
+                  view.displayMessage("Selected calendar: " + calendarName);
 
-      @Override
-      public void onCalendarCreated(String name, String timezone) {
-        System.out.println("[DEBUG] Calendar creation initiated: " + name + " with timezone: " + timezone);
-        try {
-          // Validate timezone format
-          if (!timezone.contains("/")) {
-            System.out.println("[DEBUG] Invalid timezone format: " + timezone);
-            view.showErrorMessage("Invalid timezone format. Please use Area/Location format.");
-            return;
-          }
+                  view.refreshView();
 
-          // Create the calendar
-          calendarManager.createCalendar(name, timezone);
-          System.out.println("[DEBUG] Calendar created");
+                  view.refreshView();
+                } catch (Exception e) {
+                  System.out.println("[DEBUG] Calendar selection error: " + e.getMessage());
+                  e.printStackTrace();
+                  view.displayError("Failed to select calendar: " + e.getMessage());
+                }
+              }
 
-          // Update the view
-          view.updateCalendarList(new ArrayList<>(calendarManager.getCalendarRegistry().getCalendarNames()));
-          view.setSelectedCalendar(name);
-          currentCalendar = calendarManager.getCalendar(name);
-          view.displayMessage("Calendar created successfully: " + name);
-          view.refreshView();
-        } catch (Exception ex) {
-          System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
-          view.showErrorMessage("Could not create calendar: " + ex.getMessage());
-        }
-      }
-    });
+              @Override
+              public void onCalendarCreated(String name, String timezone) {
+                System.out.println("[DEBUG] Calendar creation initiated: "
+                        + name + " with timezone: " + timezone);
+                try {
+                  // Validate timezone format
+                  if (!timezone.contains("/")) {
+                    System.out.println("[DEBUG] Invalid timezone format: " + timezone);
+                    view.showErrorMessage("Invalid timezone format. "
+                            + "Please use Area/Location format.");
+                    return;
+                  }
 
-    // Calendar panel events
+                  // Create the calendar
+                  calendarManager.createCalendar(name, timezone);
+                  System.out.println("[DEBUG] Calendar created");
+
+                  // Update the view
+                  view.updateCalendarList(new ArrayList<>(calendarManager
+                          .getCalendarRegistry().getCalendarNames()));
+                  view.setSelectedCalendar(name);
+                  currentCalendar = calendarManager.getCalendar(name);
+                  view.displayMessage("Calendar created successfully: " + name);
+                  view.refreshView();
+                } catch (Exception ex) {
+                  System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
+                  view.showErrorMessage("Could not create calendar: " + ex.getMessage());
+                }
+              }
+            });
+
     view.getCalendarPanel().addCalendarPanelListener(new GUICalendarPanel.CalendarPanelListener() {
       @Override
       public void onDateSelected(LocalDate date) {
@@ -239,12 +246,7 @@ public class GUIController {
             view.displayError("Please select a valid date");
             return;
           }
-
-          // Explicitly log the date to verify it's correct
           System.out.println("[DEBUG] Processing date selection for: " + date);
-
-          // Use proper controller methods instead of direct view updates
-          // This ensures all necessary model checks are performed
           setSelectedDate(date);
         } catch (Exception e) {
           System.out.println("[ERROR] Date selection error: " + e.getMessage());
@@ -328,7 +330,8 @@ public class GUIController {
       }
 
       @Override
-      public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+      public void onEventCopied(String targetCalendarName, LocalDateTime targetStartDateTime,
+                                LocalDateTime targetEndDateTime) {
         Event currentEvent = view.getEventPanel().getCurrentEvent();
         if (currentEvent == null) {
           view.displayError("No event selected to copy");
@@ -336,7 +339,8 @@ public class GUIController {
         }
 
         // Copy the event using the strategy
-        boolean success = copyEvent(currentEvent, targetCalendarName, targetStartDateTime, targetEndDateTime);
+        boolean success = copyEvent(currentEvent, targetCalendarName, targetStartDateTime,
+                targetEndDateTime);
         if (success) {
           view.displayMessage("Event copied successfully");
           view.getEventPanel().clearForm();
@@ -362,100 +366,67 @@ public class GUIController {
       }
     });
 
-    // Export/Import panel events
-    view.getExportImportPanel().addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
-      @Override
-      public void onImport(File file) {
-        if (file != null) {
-          try {
-            System.out.println("[DEBUG] Starting import process for file: " + file.getAbsolutePath());
+    view.getExportImportPanel()
+            .addExportImportListener(new GUIExportImportPanel.ExportImportListener() {
+              @Override
+              public void onImport(File file) {
+                if (file != null) {
+                  try {
+                    ExportImportViewModel exportImportViewModel = view.getExportImportViewModel();
+                    exportImportViewModel.setCalendarManager(calendarManager);
+                    exportImportViewModel.setView(view);
+                    ICalendar currentCalendar = exportImportViewModel.findSuitableCalendar();
 
-            // Get the selected calendar from the view
-            ICalendar currentCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
-            System.out.println("[DEBUG] Selected calendar from selector panel: " +
-                    (currentCalendar != null ? currentCalendar.toString() : "null"));
+                    if (currentCalendar == null) {
+                      view.showErrorMessage("No calendar available. "
+                              + "Please create a calendar first.");
+                      return;
+                    }
 
-            // If no calendar is selected in the selector panel, try getting the current calendar from the controller
-            if (currentCalendar == null) {
-              System.out.println("[DEBUG] No calendar selected in selector panel, using current calendar from controller");
-              currentCalendar = GUIController.this.currentCalendar;
-            }
+                    ImportCalendarCommand importCommand = new ImportCalendarCommand(
+                            currentCalendar, exportImportViewModel, view);
 
-            // If still null, try getting the first available calendar
-            if (currentCalendar == null) {
-              System.out.println("[DEBUG] Still no calendar, trying to get first available calendar");
-              try {
-                // Try to get the active calendar
-                currentCalendar = calendarManager.getActiveCalendar();
-                System.out.println("[DEBUG] Using active calendar: " + currentCalendar.toString());
-              } catch (CalendarNotFoundException e) {
-                // If no active calendar, try to get the first calendar by name
-                Set<String> calendarNames = calendarManager.getCalendarRegistry().getCalendarNames();
-                if (!calendarNames.isEmpty()) {
-                  String firstName = calendarNames.iterator().next();
-                  currentCalendar = calendarManager.getCalendar(firstName);
-                  System.out.println("[DEBUG] Using first available calendar: " + currentCalendar.toString());
+                    String result = importCommand.importFromFile(file);
+
+                    if (!result.startsWith("Successfully")) {
+                      view.showErrorMessage(result);
+                    }
+                  } catch (Exception e) {
+                    view.showErrorMessage("Failed to import calendar data: " + e.getMessage());
+                  }
                 }
               }
-            }
 
-            // Final check if we have a valid calendar
-            if (currentCalendar == null) {
-              System.out.println("[ERROR] No calendar available for import");
-              view.showErrorMessage("No calendar available. Please create a calendar first.");
-              return;
-            }
+              @Override
+              public void onExport(File file) {
+                try {
+                  ExportImportViewModel exportImportViewModel = view.getExportImportViewModel();
+                  exportImportViewModel.setCalendarManager(calendarManager);
+                  exportImportViewModel.setView(view);
 
-            System.out.println("[DEBUG] Using calendar for import: " + ((model.calendar.Calendar) currentCalendar).getName());
+                  ICalendar calendarToExport = GUIController.this.currentCalendar;
+                  if (calendarToExport == null) {
+                    calendarToExport = exportImportViewModel.findSuitableCalendar();
+                  }
 
-            // Use the ExportImportViewModel to handle the import
-            ExportImportViewModel exportImportViewModel = view.getExportImportViewModel();
-            exportImportViewModel.setCurrentCalendar(currentCalendar);
+                  if (calendarToExport == null) {
+                    view.displayError("Please select a calendar first");
+                    return;
+                  }
 
-            // Import the events
-            System.out.println("[DEBUG] Starting import process via ExportImportViewModel");
-            int importedCount = exportImportViewModel.importFromCSV(file);
+                  ExportCalendarCommand exportCommand = new ExportCalendarCommand(
+                          calendarToExport, exportImportViewModel, view);
 
-            System.out.println("[DEBUG] Import completed. Imported " + importedCount + " events");
+                  String result = exportCommand.exportToFile(file);
 
-            // Update the calendar view to show the imported events
-            System.out.println("[DEBUG] Updating calendar view with imported events");
-            view.getCalendarPanel().updateCalendar(currentCalendar);
-
-            // The success message will be shown by the ExportImportViewModel callback
-          } catch (Exception e) {
-            System.err.println("[ERROR] Import failed: " + e.getMessage());
-            e.printStackTrace();
-            view.showErrorMessage("Failed to import calendar data: " + e.getMessage());
-          }
-        }
-      }
-
-      @Override
-      public void onExport(File file) {
-        System.out.println("[DEBUG] GUIController.onExport called with file: " +
-                (file != null ? file.getAbsolutePath() : "null"));
-
-        try {
-          // Get the current calendar for export
-          if (GUIController.this.currentCalendar == null) {
-            System.out.println("[DEBUG] No current calendar set in GUIController");
-            view.displayError("Please select a calendar first");
-            return;
-          }
-
-          System.out.println("[DEBUG] Using ImportExportController to export calendar: " +
-                  GUIController.this.currentCalendar.getName());
-
-          // Create ImportExportController and use it for export
-          ImportExportController exportController = new ImportExportController(
-                  GUIController.this.currentCalendar, view);
-          exportController.onExport(file);
-        } catch (Exception e) {
-          view.showErrorMessage("Failed to export calendar data: " + e.getMessage());
-        }
-      }
-    });
+                  if (result.startsWith("Calendar exported")) {
+                    view.displayMessage("Export Successful: " + result);
+                  }
+                } catch (Exception e) {
+                  view.showErrorMessage("Failed to export calendar data: " + e.getMessage());
+                }
+              }
+            });
   }
 
   /**
@@ -469,7 +440,19 @@ public class GUIController {
     }
     try {
       List<Event> events = getEventsOnDate(date);
-      boolean isBusy = !events.isEmpty();
+
+      List<Event> localEvents = new ArrayList<>();
+      String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+
+      for (Event event : events) {
+        LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event
+                .getStartDateTime(), systemTimezone);
+        if (localStartDateTime.toLocalDate().equals(date)) {
+          localEvents.add(event);
+        }
+      }
+
+      boolean isBusy = !localEvents.isEmpty();
       view.getCalendarPanel().updateStatus(isBusy);
     } catch (Exception e) {
       view.displayError("Failed to update status: " + e.getMessage());
@@ -507,18 +490,17 @@ public class GUIController {
 
     try {
       System.out.println("[DEBUG] Listing events for date: " + date);
-      System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.getName() : "null"));
+      System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null
+              ? currentCalendar.getName() : "null"));
 
       if (currentCalendar == null) {
         view.displayError("No calendar selected");
         return;
       }
 
-      // Get events for the selected date from the current calendar
       List<Event> events = currentCalendar.getEventsOnDate(date);
       System.out.println("[DEBUG] Found " + events.size() + " events for date " + date);
 
-      // Update the event list display
       view.updateEventList(events);
       view.getCalendarPanel().updateEventList(date);
 
@@ -553,7 +535,8 @@ public class GUIController {
       }
 
       System.out.println("[DEBUG] Showing events in range: " + startDate + " to " + endDate);
-      System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null ? currentCalendar.getName() : "null"));
+      System.out.println("[DEBUG] Current calendar: " + (currentCalendar != null
+              ? currentCalendar.getName() : "null"));
 
       if (currentCalendar == null) {
         view.displayError("No calendar selected");
@@ -592,7 +575,6 @@ public class GUIController {
     try {
       return currentCalendar.getEventsOnDate(date);
     } catch (Exception e) {
-      // Don't show error for empty calendars
       if (!e.getMessage().contains("Insufficient arguments")) {
         view.displayError("Failed to get events for date: " + e.getMessage());
       }
@@ -614,7 +596,6 @@ public class GUIController {
     try {
       return currentCalendar.getEventsInRange(startDate, endDate);
     } catch (Exception e) {
-      // Don't show error for empty calendars
       if (!e.getMessage().contains("Insufficient arguments")) {
         view.displayError("Failed to get events in range: " + e.getMessage());
       }
@@ -634,7 +615,6 @@ public class GUIController {
     try {
       return currentCalendar.getAllEvents();
     } catch (Exception e) {
-      // Don't show error for empty calendars
       if (!e.getMessage().contains("Insufficient arguments")) {
         view.displayError("Failed to get all events: " + e.getMessage());
       }
@@ -654,70 +634,10 @@ public class GUIController {
     try {
       return currentCalendar.getAllRecurringEvents();
     } catch (Exception e) {
-      // Don't show error for empty calendars
       if (!e.getMessage().contains("Insufficient arguments")) {
         view.displayError("Failed to get all recurring events: " + e.getMessage());
       }
       return List.of();
-    }
-  }
-
-  /**
-   * Handles the creation of a new event.
-   */
-  public void createNewEvent() {
-    if (currentCalendar == null) {
-      view.displayError("Please select a calendar first");
-      return;
-    }
-    view.getEventPanel().clearForm();
-    view.getEventPanel().setDate(view.getCalendarPanel().getSelectedDate());
-  }
-
-  /**
-   * Handles the deletion of an event.
-   *
-   * @param event the event to delete
-   */
-  public void deleteEvent(Event event) {
-    if (currentCalendar == null) {
-      view.displayError("Please select a calendar first");
-      return;
-    }
-
-    try {
-      String[] args = new String[]{"single", "delete", event.getSubject(), event.getStartDateTime().toString()};
-      ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
-              UUID.fromString(args[1]), args[2], args[3], args[4]);
-      editor.executeEdit(currentCalendar);
-      view.displayMessage("Event deleted successfully");
-      view.refreshView();
-    } catch (Exception e) {
-      view.displayError("Failed to delete event: " + e.getMessage());
-    }
-  }
-
-  /**
-   * Handles the deletion of a recurring event.
-   *
-   * @param event the recurring event to delete
-   */
-  public void deleteRecurringEvent(RecurringEvent event) {
-    if (currentCalendar == null) {
-      view.displayError("Please select a calendar first");
-      return;
-    }
-
-    try {
-      String[] args = new String[]{"series_from_date", "delete", event.getSubject(), event.getStartDateTime().toString()};
-      LocalDate fromDate = LocalDate.parse(args[5]);
-      ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSeriesFromDateEditor(
-              UUID.fromString(args[1]), args[2], args[3], args[4], fromDate);
-      editor.executeEdit(currentCalendar);
-      view.displayMessage("Recurring event deleted successfully");
-      view.refreshView();
-    } catch (Exception e) {
-      view.displayError("Failed to delete recurring event: " + e.getMessage());
     }
   }
 
@@ -729,12 +649,17 @@ public class GUIController {
   public void editEvent(Event event) {
     System.out.println("[DEBUG] GUIController.editEvent called for: " + event.getSubject());
     System.out.println("[DEBUG] Editing event: " + event.getSubject());
-    System.out.println("[DEBUG] Event details: ID=" + event.getId() + ", start=" + event.getStartDateTime() + ", end=" + event.getEndDateTime());
+    System.out.println("[DEBUG] Event details: ID=" + event.getId() + ", start="
+            + event.getStartDateTime() + ", end=" + event.getEndDateTime());
 
     try {
       System.out.println("[DEBUG] About to show edit popup image");
-      // Show the image popup first
-      ButtonStyler.showEditEventPopup((JFrame) view);
+      if (view instanceof JFrame) {
+        ButtonStyler.showEditEventPopup((JFrame) view);
+      } else {
+        System.out.println("[DEBUG] View is not a JFrame, using alternative approach for popup");
+        ButtonStyler.showEditEventPopup(null);
+      }
       System.out.println("[DEBUG] Edit popup image display method called");
     } catch (Exception e) {
       System.err.println("[ERROR] Error showing edit popup: " + e.getMessage());
@@ -743,38 +668,13 @@ public class GUIController {
 
     try {
       System.out.println("[DEBUG] About to show event edit dialog");
-      // Then show the event edit dialog
       view.showEventEditDialog(event, false);
       System.out.println("[DEBUG] Event edit dialog displayed");
     } catch (Exception e) {
       System.err.println("[ERROR] Error showing edit dialog: " + e.getMessage());
       e.printStackTrace();
     }
-
-    // The view will handle the editing process and call back to the controller
-    // when the edit is confirmed via the onEventUpdated method
   }
-
-  /**
-   * Handles the editing of a recurring event.
-   *
-   * @param event the recurring event to edit
-   */
-  public void editRecurringEvent(RecurringEvent event) {
-    System.out.println("[DEBUG] Editing recurring event: " + event.getSubject());
-
-    // Show the event edit dialog
-    view.showEventEditDialog(event, true);
-
-    // The view will handle the editing process and call back to the controller
-    // when the edit is confirmed via the onEventUpdated method
-  }
-
-  /**
-   * Shows the copy event dialog for the given event.
-   *
-   * @param event the event to copy
-   */
 
   /**
    * Handles a new event being saved from the event panel.
@@ -790,21 +690,18 @@ public class GUIController {
         return;
       }
 
-      // Convert EventFormData to the format expected by the command executor
       String[] args = convertFormDataToCommandArgs(formData, "create");
 
       if (args == null || args.length < 2) {
         view.displayError("Invalid event data");
         return;
       }
-
-      // Log detailed information about the event being created
       System.out.println("[DEBUG] Creating event with following parameters:");
       System.out.println("[DEBUG] Subject: " + formData.getSubject());
       System.out.println("[DEBUG] Start Time: " + formData.getStartTime());
       System.out.println("[DEBUG] End Time: " + formData.getEndTime());
       System.out.println("[DEBUG] Is Recurring: " + formData.isRecurring());
-      
+
       if (formData.isRecurring()) {
         System.out.println("[DEBUG] Recurring event details:");
         System.out.println("[DEBUG] Repeat days: " + formData.getWeekdays());
@@ -814,7 +711,7 @@ public class GUIController {
           System.out.println("[DEBUG] End date: " + formData.getRecurringEndDate());
         }
       }
-      
+
       String result = executeCommand("create", args);
       if (result.startsWith("Error")) {
         System.out.println("[ERROR] Failed to create event: " + result);
@@ -824,80 +721,75 @@ public class GUIController {
         System.out.println("[DEBUG] Result from command: " + result);
         view.displayMessage(result);
 
-        // Get the selected date from the form data and convert from Date to LocalDate
         Date selectedDate = formData.getSelectedDate();
         LocalDate eventDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         System.out.println("[DEBUG] Updating display for date: " + eventDate);
 
-        // After creating an event, we need to update the ENTIRE calendar with all events
         List<Event> allEvents = currentCalendar.getAllEvents();
         System.out.println("[DEBUG] Total events in calendar after creation: " + allEvents.size());
         view.getCalendarPanel().updateEvents(allEvents);
-        
-        // Also fetch and update recurring events
+
         List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
         System.out.println("[DEBUG] Total recurring events in calendar: " + recurringEvents.size());
-        
+
         if (!recurringEvents.isEmpty() && formData.isRecurring()) {
-            // Log details about the most recently added recurring event (likely the one just created)
-            RecurringEvent lastAdded = recurringEvents.get(recurringEvents.size() - 1);
-            System.out.println("*************************************************************");
-            System.out.println("[DEBUG-RECURRING] Latest recurring event details:");
-            System.out.println("[DEBUG-RECURRING] Subject: " + lastAdded.getSubject());
-            System.out.println("[DEBUG-RECURRING] Start Date/Time: " + lastAdded.getStartDateTime());
-            System.out.println("[DEBUG-RECURRING] End Date/Time: " + lastAdded.getEndDateTime());
-            System.out.println("[DEBUG-RECURRING] Location: " + lastAdded.getLocation());
-            System.out.println("[DEBUG-RECURRING] Description: " + lastAdded.getDescription());
-            System.out.println("[DEBUG-RECURRING] Repeat days: " + lastAdded.getRepeatDays());
-            System.out.println("[DEBUG-RECURRING] All-day: " + lastAdded.isAllDay());
-            
-            // Log recurring event constraints (occurrences or end date)
-            if (lastAdded.getOccurrences() > 0) {
-                System.out.println("[DEBUG-RECURRING] Occurrences limit: " + lastAdded.getOccurrences());
-            } else if (lastAdded.getEndDate() != null) {
-                System.out.println("[DEBUG-RECURRING] End date: " + lastAdded.getEndDate());
-            }
-            System.out.println("[DEBUG-RECURRING] Recurring ID: " + lastAdded.getRecurringId());
-            
-            // Get and log occurrences for different time periods
-            LocalDate today = LocalDate.now();
-            
-            // Current week occurrences
-            LocalDate startOfWeek = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-            LocalDate endOfWeek = today.with(java.time.temporal.TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
-            List<Event> weeklyOccurrences = lastAdded.getOccurrencesBetween(startOfWeek, endOfWeek);
-            System.out.println("[DEBUG-RECURRING] Generated " + weeklyOccurrences.size() + " occurrences for current week");
-            
-            // Current month occurrences
-            LocalDate firstOfMonth = today.withDayOfMonth(1);
-            LocalDate lastOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-            List<Event> monthlyOccurrences = lastAdded.getOccurrencesBetween(firstOfMonth, lastOfMonth);
-            System.out.println("[DEBUG-RECURRING] Generated " + monthlyOccurrences.size() + " occurrences for current month");
-            
-            // Log first 5 occurrences with detailed info
-            System.out.println("[DEBUG-RECURRING] Sample occurrences:");
-            List<Event> allOccurrences = lastAdded.getAllOccurrences();
-            int occurrencesToShow = Math.min(5, allOccurrences.size());
-            for (int i = 0; i < occurrencesToShow; i++) {
-                Event occurrence = allOccurrences.get(i);
-                System.out.println("[DEBUG-RECURRING] #" + (i+1) + ": " + occurrence.getStartDateTime().toLocalDate() 
-                        + " (" + occurrence.getStartDateTime().getDayOfWeek() + ") with ID: " + occurrence.getId());
-            }
-            System.out.println("*************************************************************");
+          RecurringEvent lastAdded = recurringEvents.get(recurringEvents.size() - 1);
+          System.out.println("*************************************************************");
+          System.out.println("[DEBUG-RECURRING] Latest recurring event details:");
+          System.out.println("[DEBUG-RECURRING] Subject: " + lastAdded.getSubject());
+          System.out.println("[DEBUG-RECURRING] Start Date/Time: " + lastAdded.getStartDateTime());
+          System.out.println("[DEBUG-RECURRING] End Date/Time: " + lastAdded.getEndDateTime());
+          System.out.println("[DEBUG-RECURRING] Location: " + lastAdded.getLocation());
+          System.out.println("[DEBUG-RECURRING] Description: " + lastAdded.getDescription());
+          System.out.println("[DEBUG-RECURRING] Repeat days: " + lastAdded.getRepeatDays());
+          System.out.println("[DEBUG-RECURRING] All-day: " + lastAdded.isAllDay());
+
+          // Log recurring event constraints (occurrences or end date)
+          if (lastAdded.getOccurrences() > 0) {
+            System.out.println("[DEBUG-RECURRING] Occurrences limit: " + lastAdded.getOccurrences());
+          } else if (lastAdded.getEndDate() != null) {
+            System.out.println("[DEBUG-RECURRING] End date: " + lastAdded.getEndDate());
+          }
+          System.out.println("[DEBUG-RECURRING] Recurring ID: " + lastAdded.getRecurringId());
+
+          // Get and log occurrences for different time periods
+          LocalDate today = LocalDate.now();
+
+          // Current week occurrences
+          LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+          LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+          List<Event> weeklyOccurrences = lastAdded.getOccurrencesBetween(startOfWeek, endOfWeek);
+          System.out.println("[DEBUG-RECURRING] Generated " + weeklyOccurrences.size()
+                  + " occurrences for current week");
+
+          // Current month occurrences
+          LocalDate firstOfMonth = today.withDayOfMonth(1);
+          LocalDate lastOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+          List<Event> monthlyOccurrences = lastAdded.getOccurrencesBetween(firstOfMonth,
+                  lastOfMonth);
+          System.out.println("[DEBUG-RECURRING] Generated " + monthlyOccurrences.size()
+                  + " occurrences for current month");
+
+          // Log first 5 occurrences with detailed info
+          System.out.println("[DEBUG-RECURRING] Sample occurrences:");
+          List<Event> allOccurrences = lastAdded.getAllOccurrences();
+          int occurrencesToShow = Math.min(5, allOccurrences.size());
+          for (int i = 0; i < occurrencesToShow; i++) {
+            Event occurrence = allOccurrences.get(i);
+            System.out.println("[DEBUG-RECURRING] #" + (i + 1) + ": "
+                    + occurrence.getStartDateTime().toLocalDate()
+                    + " (" + occurrence.getStartDateTime().getDayOfWeek()
+                    + ") with ID: " + occurrence.getId());
+          }
+          System.out.println("*************************************************************");
         }
-        
+
         view.getCalendarPanel().updateRecurringEvents(recurringEvents);
-        
-        // Make sure the current date's events are shown in the list
+
         updateEvents(eventDate);
-        
-        // Force a complete UI refresh
+
         view.refreshView();
-
-        // Make sure the date is selected and events for that date are shown
         setSelectedDate(eventDate);
-
-        // Clear the form after successful creation
         view.getEventPanel().clearForm();
       }
     } catch (Exception e) {
@@ -929,72 +821,142 @@ public class GUIController {
         return;
       }
 
-      // Get data from the form
       String subject = formData.getSubject();
       String description = formData.getDescription();
       String location = formData.getLocation();
       boolean isAllDay = formData.isAllDay();
 
-      // Get start and end date/time
       LocalDateTime startDateTime;
       LocalDateTime endDateTime;
 
       if (isAllDay) {
-        // For all-day events, set time to beginning and end of day
         LocalDate eventDate = formData.getSelectedDate().toInstant()
                 .atZone(ZoneId.systemDefault()).toLocalDate();
         startDateTime = eventDate.atStartOfDay();
         endDateTime = eventDate.atTime(23, 59, 59);
       } else {
-        // Regular events with specific times
         Date startDate = formData.getStartTime();
         Date endDate = formData.getEndTime();
 
-        startDateTime = startDate.toInstant()
-                .atZone(ZoneId.systemDefault()).toLocalDateTime();
-        endDateTime = endDate.toInstant()
-                .atZone(ZoneId.systemDefault()).toLocalDateTime();
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Raw start time: " + startDate);
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Raw end time: " + endDate);
+
+        LocalDate selectedDate = formData.getSelectedDate().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(startDate);
+        int startHour = startCal.get(Calendar.HOUR_OF_DAY);
+        int startMinute = startCal.get(Calendar.MINUTE);
+
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(endDate);
+        int endHour = endCal.get(Calendar.HOUR_OF_DAY);
+        int endMinute = endCal.get(Calendar.MINUTE);
+
+        startDateTime = selectedDate.atTime(startHour, startMinute);
+        endDateTime = selectedDate.atTime(endHour, endMinute);
+
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Parsed start time: "
+                + startDateTime);
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Parsed end time: "
+                + endDateTime);
+
+        if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
+          System.out.println("[ERROR] GUIController.onEventUpdated - End time validation failed: " +
+                  "Start=" + startDateTime + ", End=" + endDateTime);
+          view.displayError("End date/time cannot be before or equal to start date/time");
+          return;
+        }
       }
 
       // Convert times from local timezone to UTC for storage
       TimeZoneHandler timezoneHandler = new TimeZoneHandler();
       String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
+      String calendarTimezone = currentCalendar.getTimeZone().getID();
 
       // Convert to UTC for storage
       LocalDateTime utcStartDateTime = timezoneHandler.convertToUTC(startDateTime, systemTimezone);
       LocalDateTime utcEndDateTime = timezoneHandler.convertToUTC(endDateTime, systemTimezone);
 
       System.out.println("[DEBUG] Event times - Local Start: " + startDateTime);
+      System.out.println("[DEBUG] Event times - Local End: " + endDateTime);
       System.out.println("[DEBUG] Event times - UTC Start: " + utcStartDateTime);
+      System.out.println("[DEBUG] Event times - UTC End: " + utcEndDateTime);
+      System.out.println("[DEBUG] Calendar timezone: " + calendarTimezone);
 
-      // Create updated event with UTC times - preserve the original event ID
-      Event updatedEvent = new Event(
-              currentEvent.getId(), // Preserve the original event ID
-              subject,
-              utcStartDateTime,
-              utcEndDateTime,
-              description,
-              location,
-              currentEvent.isPublic()
-      );
+      try {
+        Event updatedEvent = new Event(
+                currentEvent.getId(),
+                subject,
+                utcStartDateTime,
+                utcEndDateTime,
+                description,
+                location,
+                currentEvent.isPublic(),
+                currentEvent.isAllDay()
+        );
 
-      System.out.println("[DEBUG] Updating event with ID: " + currentEvent.getId());
-      System.out.println("[DEBUG] Updated event ID: " + updatedEvent.getId());
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Updating event with ID: "
+                + currentEvent.getId());
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Event details before update: "
+                + "Subject=" + currentEvent.getSubject()
+                + ", Location=" + currentEvent.getLocation()
+                + ", Start=" + currentEvent.getStartDateTime()
+                + ", End=" + currentEvent.getEndDateTime());
+        System.out.println("[DEBUG] GUIController.onEventUpdated - Event details after update: "
+                + "Subject=" + updatedEvent.getSubject()
+                + ", Location=" + updatedEvent.getLocation()
+                + ", Start=" + updatedEvent.getStartDateTime()
+                + ", End=" + updatedEvent.getEndDateTime());
 
-      // Update the event in the calendar
-      boolean success = currentCalendar.updateEvent(currentEvent.getId(), updatedEvent);
+        boolean success = currentCalendar.updateEvent(currentEvent.getId(), updatedEvent);
 
-      if (success) {
-        view.displayMessage("Event updated successfully");
-        // Refresh the view to show the updated event
-        LocalDate selectedDate = startDateTime.toLocalDate();
-        setSelectedDate(selectedDate);
-        view.refreshCalendarView();
-        view.refreshEventView();
-      } else {
-        view.displayError("Failed to update event");
+        if (success) {
+          System.out.println("[DEBUG] GUIController.onEventUpdated - Update successful");
+          view.displayMessage("Event updated successfully");
+          LocalDate selectedDate = startDateTime.toLocalDate();
+          setSelectedDate(selectedDate);
+          List<Event> updatedEvents = currentCalendar.getEventsOnDate(selectedDate);
+          view.updateEvents(selectedDate, updatedEvents);
+
+          Event refreshedEvent = null;
+          for (Event event : updatedEvents) {
+            System.out.println("[DEBUG] GUIController.onEventUpdated - Found event in list: " +
+                    "ID=" + event.getId() +
+                    ", Subject=" + event.getSubject() +
+                    ", Location=" + event.getLocation());
+            if (event.getId().equals(updatedEvent.getId())) {
+              refreshedEvent = event;
+              break;
+            }
+          }
+
+          if (refreshedEvent != null) {
+            System.out.println("[DEBUG] GUIController.onEventUpdated - Displaying updated event: "
+                    + refreshedEvent.getSubject());
+            view.showEventDetails(refreshedEvent);
+          } else {
+            System.out.println("[DEBUG] GUIController.onEventUpdated "
+                    + "- Updated event not found in list, using original");
+            view.showEventDetails(updatedEvent);
+          }
+
+          // Refresh all views
+          view.refreshCalendarView();
+          view.refreshEventView();
+          view.refreshView();
+        } else {
+          System.out.println("[ERROR] GUIController.onEventUpdated - Failed to update event");
+          view.displayError("Failed to update event");
+        }
+      } catch (IllegalArgumentException e) {
+        System.out.println("[ERROR] Validation error: " + e.getMessage());
+        view.displayError("Failed to update event: " + e.getMessage());
       }
     } catch (Exception e) {
+      System.out.println("[ERROR] Exception while updating event: " + e.getMessage());
+      e.printStackTrace();
       view.displayError("Failed to update event: " + e.getMessage());
     }
   }
@@ -1008,8 +970,10 @@ public class GUIController {
    * @param targetEndDateTime   the target end date/time
    * @return true if the copy was successful, false otherwise
    */
-  public boolean copyEvent(Event event, String targetCalendarName, LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
-    System.out.println("[DEBUG] Copying event: " + event.getSubject() + " to calendar: " + targetCalendarName);
+  public boolean copyEvent(Event event, String targetCalendarName,
+                           LocalDateTime targetStartDateTime, LocalDateTime targetEndDateTime) {
+    System.out.println("[DEBUG] Copying event: " + event.getSubject()
+            + " to calendar: " + targetCalendarName);
 
     if (currentCalendar == null) {
       view.displayError("Please select a calendar first");
@@ -1031,10 +995,8 @@ public class GUIController {
         return false;
       }
 
-      // Create the event in the target calendar directly
       System.out.println("[DEBUG] Copying event directly to target calendar");
 
-      // Create a new event with the same details but at the new date/time
       Event copiedEvent = new Event(
               event.getSubject(), // Keep the original subject
               targetStartDateTime,
@@ -1044,7 +1006,6 @@ public class GUIController {
               event.isPublic()
       );
 
-      // Add the event to the target calendar with conflict checking
       try {
         targetCalendar.addEvent(copiedEvent, true);
         view.displayMessage("Event copied successfully to " + targetCalendarName);
@@ -1076,7 +1037,6 @@ public class GUIController {
     }
 
     try {
-      // Format the event details for printing
       StringBuilder eventDetails = new StringBuilder();
       eventDetails.append("Event: ").append(event.getSubject()).append("\n");
       eventDetails.append("Start: ").append(event.getStartDateTime()).append("\n");
@@ -1092,28 +1052,12 @@ public class GUIController {
 
       eventDetails.append("Public: ").append(event.isPublic() ? "Yes" : "No").append("\n");
 
-      // Display a print dialog or send to printer
-      // For now, we'll just display a message with the event details
       view.displayMessage("Printing event:\n" + eventDetails.toString());
-
-      // In a real application, we would use the Java printing API here
-      // PrinterJob job = PrinterJob.getPrinterJob();
-      // job.setPrintable(new EventPrintable(event));
-      // if (job.printDialog()) {
-      //   job.print();
-      // }
     } catch (Exception e) {
       view.showErrorMessage("Error printing event: " + e.getMessage());
     }
   }
 
-  /**
-   * Executes copying an event to another calendar.
-   *
-   * @param event              the event to copy
-   * @param targetCalendarName the name of the target calendar
-   * @return a message indicating the result of the operation
-   */
   /**
    * Handles the closing of the application.
    */
@@ -1140,20 +1084,16 @@ public class GUIController {
 
     List<String> args = new ArrayList<>();
 
-    // First argument is always the command type
     args.add(commandType);
 
-    // Add calendar name if we have a current calendar
     if (currentCalendar != null) {
-      args.add(currentCalendar.toString()); // Using toString() instead of getName()
+      args.add(currentCalendar.toString());
     } else {
-      return null; // Cannot proceed without a calendar
+      return null;
     }
 
-    // Add subject
     args.add(formData.getSubject());
 
-    // Add start date/time
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
@@ -1161,52 +1101,44 @@ public class GUIController {
     args.add(timeFormat.format(formData.getStartTime()));
     args.add(timeFormat.format(formData.getEndTime()));
 
-    // Add location if present
     if (formData.getLocation() != null && !formData.getLocation().isEmpty()) {
       args.add("-l");
       args.add(formData.getLocation());
     }
 
-    // Add description if present
     if (formData.getDescription() != null && !formData.getDescription().isEmpty()) {
       args.add("-d");
       args.add(formData.getDescription());
     }
 
-    // Add all-day flag if needed
     if (formData.isAllDay()) {
       args.add("-a");
     }
 
-    // Add recurring event options if needed
-    if (formData.isRecurring() && formData.getWeekdays() != null && !formData.getWeekdays().isEmpty()) {
+    if (formData.isRecurring() && formData.getWeekdays() != null
+            && !formData.getWeekdays().isEmpty()) {
       args.add("-r");
 
-      // Convert weekdays to string format
       StringBuilder weekdaysStr = new StringBuilder();
       for (DayOfWeek day : formData.getWeekdays()) {
         weekdaysStr.append(day.toString().substring(0, 3).toLowerCase()).append(",");
       }
-      // Remove trailing comma
       if (weekdaysStr.length() > 0) {
         weekdaysStr.deleteCharAt(weekdaysStr.length() - 1);
       }
 
       args.add(weekdaysStr.toString());
 
-      // Add end date if present
       if (formData.getUntilDate() != null) {
         args.add("-e");
         args.add(formData.getUntilDate().toString());
       }
     }
 
-    // Add private flag if needed
     if (formData.isPrivateEvent()) {
       args.add("-p");
     }
 
-    // Add auto-decline flag if needed
     if (formData.isAutoDecline()) {
       args.add("-ad");
     }
@@ -1228,7 +1160,6 @@ public class GUIController {
     }
 
     try {
-      // Get the original event properties
       String subject = event.getSubject();
       LocalDateTime startDateTime = event.getStartDateTime();
       LocalDateTime endDateTime = event.getEndDateTime();
@@ -1236,27 +1167,27 @@ public class GUIController {
       String location = event.getLocation();
       boolean isPublic = event.isPublic();
 
-      // Find the original event to verify it exists
       currentCalendar.findEvent(subject, startDateTime);
 
-      // Update event properties using editSingleEvent
       boolean updated = true;
-
-      // Only update properties that might have changed
       if (endDateTime != null) {
         String endTimeStr = endDateTime.toLocalTime().toString();
-        updated = currentCalendar.editSingleEvent(subject, startDateTime, "endTime", endTimeStr) && updated;
+        updated = currentCalendar.editSingleEvent(subject, startDateTime,
+                "endTime", endTimeStr) && updated;
       }
 
       if (description != null) {
-        updated = currentCalendar.editSingleEvent(subject, startDateTime, "description", description) && updated;
+        updated = currentCalendar.editSingleEvent(subject, startDateTime,
+                "description", description) && updated;
       }
 
       if (location != null) {
-        updated = currentCalendar.editSingleEvent(subject, startDateTime, "location", location) && updated;
+        updated = currentCalendar.editSingleEvent(subject, startDateTime,
+                "location", location) && updated;
       }
 
-      updated = currentCalendar.editSingleEvent(subject, startDateTime, "isPublic", String.valueOf(isPublic)) && updated;
+      updated = currentCalendar.editSingleEvent(subject, startDateTime,
+              "isPublic", String.valueOf(isPublic)) && updated;
 
       if (updated) {
         view.showInfoMessage("Event updated successfully: " + event.getSubject());
@@ -1276,7 +1207,8 @@ public class GUIController {
   }
 
   public String executeCommand(String command, String[] args) {
-    System.out.println("[DEBUG] Executing command: " + command + " with args: " + String.join(", ", args));
+    System.out.println("[DEBUG] Executing command: " + command
+            + " with args: " + String.join(", ", args));
     if (currentCalendar == null) {
       System.out.println("[DEBUG] No calendar selected!");
       return "Error: No calendar selected";
@@ -1291,15 +1223,11 @@ public class GUIController {
         eventType = args[0];
         subject = args[2];
 
-        // Date parsing based on command format
         if (command.equalsIgnoreCase("create") && args.length >= 6) {
-          // If we have date and separate time components (from the form)
           String dateStr = args[3];
           String startTimeStr = args[4];
-          // Format: 2025-04-19T10:00
           startDateTime = LocalDateTime.parse(dateStr + "T" + startTimeStr);
         } else {
-          // Try to parse the date directly if it's a full date-time string
           try {
             startDateTime = LocalDateTime.parse(args[3]);
           } catch (DateTimeParseException e) {
@@ -1316,49 +1244,41 @@ public class GUIController {
             return "Error: Invalid command arguments";
           }
 
-          // Handle form-based event creation (standard case from the GUI form)
           if (args.length >= 6) {
             try {
               System.out.println("[DEBUG] Creating event from form data: " + subject);
 
-              // Get start and end times
               String dateStr = args[3];
               String startTimeStr = args[4];
               String endTimeStr = args[5];
 
-              // Parse the dates
               LocalDate eventDate = LocalDate.parse(dateStr);
               LocalTime startTime = LocalTime.parse(startTimeStr);
               LocalTime endTime = LocalTime.parse(endTimeStr);
 
               LocalDateTime eventStartDateTime = LocalDateTime.of(eventDate, startTime);
               LocalDateTime endDateTime = LocalDateTime.of(eventDate, endTime);
-
-              // Parse optional arguments
               String description = "";
               String location = "";
               boolean isPrivate = false;
 
-              // Process optional args
               for (int i = 6; i < args.length; i++) {
                 if ("-d".equals(args[i]) && i + 1 < args.length) {
                   description = args[i + 1];
-                  i++; // Skip the next argument which is the description value
+                  i++;
                 } else if ("-l".equals(args[i]) && i + 1 < args.length) {
                   location = args[i + 1];
-                  i++; // Skip the next argument which is the location value
+                  i++;
                 } else if ("-p".equals(args[i])) {
                   isPrivate = true;
                 }
               }
 
-              // Check if this is a recurring event
               boolean isRecurring = false;
               Set<DayOfWeek> repeatDays = new HashSet<>();
               LocalDate untilDate = null;
               int occurrences = -1;
 
-              // Process recurring event options
               for (int i = 6; i < args.length; i++) {
                 if ("-r".equals(args[i]) && i + 1 < args.length) {
                   isRecurring = true;
@@ -1390,25 +1310,22 @@ public class GUIController {
                         System.out.println("[DEBUG] Unknown day: " + day);
                     }
                   }
-                  i++; // Skip the weekdays argument
+                  i++;
                 } else if ("-e".equals(args[i]) && i + 1 < args.length) {
-                  // End date for recurring events
                   untilDate = LocalDate.parse(args[i + 1]);
-                  i++; // Skip the end date argument
+                  i++;
                 } else if ("-o".equals(args[i]) && i + 1 < args.length) {
-                  // Number of occurrences
                   occurrences = Integer.parseInt(args[i + 1]);
-                  i++; // Skip the occurrences argument
+                  i++;
                 }
               }
 
               boolean added;
 
               if (isRecurring && !repeatDays.isEmpty()) {
-                // Create a recurring event
-                System.out.println("[DEBUG] Creating recurring event with repeat days: " + repeatDays);
+                System.out.println("[DEBUG] Creating recurring event with repeat days: "
+                        + repeatDays);
 
-                // Create a unique ID for this recurring event series
                 UUID recurringSeriesId = UUID.randomUUID();
 
                 RecurringEvent.Builder builder = new RecurringEvent.Builder(
@@ -1420,35 +1337,33 @@ public class GUIController {
                         .description(description)
                         .location(location)
                         .isPublic(!isPrivate)
-                        .recurringId(recurringSeriesId); // Use the same recurring ID for all instances
+                        .recurringId(recurringSeriesId);
 
-                // Set either occurrences or end date
                 if (untilDate != null) {
                   builder = builder.endDate(untilDate);
                   System.out.println("[DEBUG] Recurring event will repeat until: " + untilDate);
                 } else if (occurrences > 0) {
                   builder = builder.occurrences(occurrences);
-                  System.out.println("[DEBUG] Recurring event will have " + occurrences + " occurrences");
+                  System.out.println("[DEBUG] Recurring event will have "
+                          + occurrences + " occurrences");
                 } else {
-                  // Default to 10 occurrences if neither is specified
                   builder = builder.occurrences(10);
                   System.out.println("[DEBUG] Defaulting to 10 occurrences for recurring event");
                 }
 
-                // Build and add the recurring event
                 RecurringEvent builtEvent = builder.build();
-                System.out.println("[DEBUG] Adding recurring event to calendar: " + builtEvent.getSubject());
+                System.out.println("[DEBUG] Adding recurring event to calendar: "
+                        + builtEvent.getSubject());
                 added = currentCalendar.addRecurringEvent(builtEvent, false);
                 System.out.println("[DEBUG] Recurring event added: " + added);
               } else {
-                // Create a normal event
                 Event event = new Event(
                         subject,
                         startDateTime,
                         endDateTime,
                         description,
                         location,
-                        !isPrivate // isPublic is the opposite of isPrivate
+                        !isPrivate
                 );
 
                 System.out.println("[DEBUG] Adding event to calendar: Event{subject='" + subject
@@ -1461,13 +1376,13 @@ public class GUIController {
               }
 
               if (added) {
-                // Refresh all calendar views to immediately display the new event
                 LocalDate newEventDate = eventStartDateTime.toLocalDate();
                 updateEventList(newEventDate);
                 view.refreshCalendarView();
-                setSelectedDate(newEventDate);  // This updates all relevant view components
+                setSelectedDate(newEventDate);
 
-                String locationMsg = location != null && !location.isEmpty() ? " at " + location : " at no location";
+                String locationMsg = location != null && !location.isEmpty() ? " at "
+                        + location : " at no location";
                 view.displayMessage("Event \"" + subject + "\" created successfully" + locationMsg);
                 return "Event created successfully";
               } else {
@@ -1478,9 +1393,7 @@ public class GUIController {
               e.printStackTrace();
               return "Error: " + e.getMessage();
             }
-          }
-          // Handle the legacy command format with single event type
-          else if ("single".equals(eventType)) {
+          } else if ("single".equals(eventType)) {
             System.out.println("[DEBUG] Creating single event: " + subject);
             String[] eventDetails = args[4].split(",");
             if (eventDetails.length < 4) {
@@ -1489,23 +1402,22 @@ public class GUIController {
             }
 
             Event event = new Event(
-                    eventDetails[0], // subject
-                    LocalDateTime.parse(eventDetails[1]), // startDateTime
-                    LocalDateTime.parse(eventDetails[2]), // endDateTime
-                    eventDetails.length > 4 ? eventDetails[4] : "", // description
-                    eventDetails[3], // location
-                    true // isPublic
+                    eventDetails[0],
+                    LocalDateTime.parse(eventDetails[1]),
+                    LocalDateTime.parse(eventDetails[2]),
+                    eventDetails.length > 4 ? eventDetails[4] : "",
+                    eventDetails[3],
+                    true
             );
             System.out.println("[DEBUG] Adding event to calendar: " + event);
             boolean added = currentCalendar.addEvent(event, false);
             System.out.println("[DEBUG] Event added: " + added);
             if (added) {
-              // Refresh all calendar views to immediately display the new event
               LocalDate singleEventDate = startDateTime.toLocalDate();
               updateEventList(singleEventDate);
               view.refreshCalendarView();
               setSelectedDate(singleEventDate);  // This updates all relevant view components
-              view.getCalendarPanel().repaint(); // Force repaint
+              view.getCalendarPanel().repaint();
               return "Event created successfully";
             } else {
               return "Error: Failed to add event";
@@ -1518,7 +1430,8 @@ public class GUIController {
               return "Error: Invalid recurring event details format";
             }
 
-            Set<DayOfWeek> weekdays = Arrays.stream(eventDetails[5].replaceAll("[\\[\\]]", "").split(", "))
+            Set<DayOfWeek> weekdays = Arrays.stream(eventDetails[5]
+                            .replaceAll("[\\[\\]]", "").split(", "))
                     .map(DayOfWeek::valueOf)
                     .collect(Collectors.toSet());
 
@@ -1538,7 +1451,6 @@ public class GUIController {
             boolean added = currentCalendar.addRecurringEvent(recurringEvent, false);
             System.out.println("[DEBUG] Recurring event added: " + added);
             if (added) {
-              // Refresh all calendar views to immediately display the new recurring event
               LocalDate recurringEventDate = startDateTime.toLocalDate();
               updateEventList(recurringEventDate);
               view.refreshCalendarView();
@@ -1593,7 +1505,8 @@ public class GUIController {
               return "Error: Invalid recurring event details format";
             }
 
-            Set<DayOfWeek> weekdays = Arrays.stream(eventDetails[5].replaceAll("[\\[\\]]", "").split(", "))
+            Set<DayOfWeek> weekdays = Arrays.stream(eventDetails[5]
+                            .replaceAll("[\\[\\]]", "").split(", "))
                     .map(DayOfWeek::valueOf)
                     .collect(Collectors.toSet());
 
@@ -1648,36 +1561,18 @@ public class GUIController {
   /**
    * Sets the selected date and updates all relevant views.
    *
-   * @param date The date to select
+   * @param date the date to set as selected
    */
-  public void setSelectedDate(LocalDate date) {
+  private void setSelectedDate(LocalDate date) {
     if (date == null) {
       return;
     }
-
-    try {
-      System.out.println("[DEBUG] Setting selected date to: " + date);
-
-      // First update the model's knowledge of the selected date
-      view.setSelectedDate(date);
-
-      // Then get events for this date
-      List<Event> events = getEventsOnDate(date);
-      System.out.println("[DEBUG] Found " + events.size() + " events for date " + date);
-
-      // Update all relevant view components with a consistent flow
-      view.updateSelectedDate(date);
-      view.updateEventList(events);
-      view.getCalendarPanel().updateEventList(date);
-      updateStatus(date);
-
-      // Force a refresh to ensure events are visible
-      view.getCalendarPanel().repaint();
-    } catch (Exception e) {
-      System.out.println("[ERROR] Error setting selected date: " + e.getMessage());
-      e.printStackTrace();
-      view.displayError("Error setting selected date: " + e.getMessage());
-    }
+    System.out.println("[DEBUG] Setting selected date to: " + date);
+    view.getEventPanel().clearForm();
+    view.getEventPanel().setDate(date);
+    view.getCalendarPanel().setSelectedDate(date);
+    updateEvents(date);
+    updateStatus(date);
   }
 
 }

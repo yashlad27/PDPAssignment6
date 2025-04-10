@@ -1,18 +1,38 @@
 package view;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerDateModel;
 
+/**
+ * A dialog component for selecting date and time values.
+ * This dialog provides separate spinners for date and time selection,
+ * allowing users to easily choose a specific date and time combination.
+ * The dialog returns the selected date-time as a LocalDateTime object.
+ */
 public class DateTimeSelectionDialog extends JDialog {
   private final JSpinner dateSpinner;
   private final JSpinner timeSpinner;
   private LocalDateTime selectedDateTime;
 
+  /**
+   * Creates a new date-time selection dialog.
+   *
+   * @param parent          The parent frame that owns this dialog
+   * @param initialDateTime The initial date and time to display in the dialog
+   */
   public DateTimeSelectionDialog(JFrame parent, LocalDateTime initialDateTime) {
     super(parent, "Select Date and Time", true);
     setLayout(new BorderLayout(5, 5));

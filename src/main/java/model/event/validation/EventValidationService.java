@@ -21,7 +21,8 @@ public class EventValidationService implements IEventValidator {
   private static final int MAX_LOCATION_LENGTH = 200;
 
   @Override
-  public void validateEventDates(LocalDateTime start, LocalDateTime end) throws InvalidEventException {
+  public void validateEventDates(LocalDateTime start, LocalDateTime end)
+          throws InvalidEventException {
     if (start == null || end == null) {
       throw new InvalidEventException("Event dates cannot be null");
     }
@@ -30,10 +31,9 @@ public class EventValidationService implements IEventValidator {
       throw new InvalidEventException("End date/time cannot be before start date/time");
     }
 
-//     Comment out past date validation for testing
-//     if (start.isBefore(LocalDateTime.now())) {
-//         throw new InvalidEventException("Event cannot be created in the past");
-//     }
+    if (start.isBefore(LocalDateTime.now())) {
+      throw new InvalidEventException("Event cannot be created in the past");
+    }
   }
 
   @Override
@@ -54,10 +54,9 @@ public class EventValidationService implements IEventValidator {
       throw new InvalidEventException("Event date cannot be null");
     }
 
-    // Comment out past date validation for testing
-//     if (date.isBefore(LocalDate.now())) {
-//         throw new InvalidEventException("Event cannot be created in the past");
-//     }
+    if (date.isBefore(LocalDate.now())) {
+      throw new InvalidEventException("Event cannot be created in the past");
+    }
   }
 
   /**
@@ -85,7 +84,8 @@ public class EventValidationService implements IEventValidator {
       if (name == null || name.trim().isEmpty()) {
         throw new InvalidEventException("Event name cannot be empty");
       } else {
-        throw new InvalidEventException("Event name cannot exceed " + MAX_NAME_LENGTH + " characters");
+        throw new InvalidEventException("Event name cannot exceed "
+                + MAX_NAME_LENGTH + " characters");
       }
     }
   }
@@ -107,7 +107,8 @@ public class EventValidationService implements IEventValidator {
   }
 
   @Override
-  public void validateEventTimes(LocalDateTime startTime, LocalDateTime endTime) throws InvalidEventException {
+  public void validateEventTimes(LocalDateTime startTime, LocalDateTime endTime)
+          throws InvalidEventException {
     if (startTime == null || endTime == null) {
       throw new InvalidEventException("Event start and end times cannot be null");
     }

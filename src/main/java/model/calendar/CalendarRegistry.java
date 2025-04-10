@@ -175,6 +175,47 @@ public class CalendarRegistry {
     consumer.accept(calendar);
   }
 
+  /**
+   * Renames a calendar from oldName to newName.
+   * 
+   * @param oldName the current name of the calendar
+   * @param newName the new name for the calendar
+   * @throws CalendarNotFoundException if no calendar with oldName exists
+   * @throws DuplicateCalendarException if a calendar with newName already exists
+   */
+  public void renameCalendar(String oldName, String newName) 
+          throws CalendarNotFoundException, DuplicateCalendarException {
+    if (!calendars.containsKey(oldName)) {
+      throw new CalendarNotFoundException("Calendar not found: " + oldName);
+    }
+    if (calendars.containsKey(newName)) {
+      throw new DuplicateCalendarException("Calendar already exists: " + newName);
+    }
+    
+    updateCalendarName(oldName, newName);
+  }
+
+  /**
+   * Applies a consumer to the active calendar.
+   *
+   * @param consumer the consumer to apply
+   * @throws CalendarNotFoundException if no active calendar is set
+   */
+  public void applyToActiveCalendar(Consumer<Calendar> consumer)
+          throws CalendarNotFoundException {
+    if (activeCalendarName == null) {
+      throw new CalendarNotFoundException("No active calendar set");
+    }
+    applyToCalendar(activeCalendarName, consumer);
+  }
+
+  /**
+   * Updates the name of a calendar. This method is an implementation detail and
+   * should not be called directly. Use renameCalendar instead.
+   *
+   * @param oldName the old name of the calendar
+   * @param newName the new name for the calendar
+   */
   public void updateCalendarName(String oldName, String newName) {
     if (!calendars.containsKey(oldName)) {
       throw new IllegalArgumentException("Calendar not found: " + oldName);

@@ -244,7 +244,8 @@ public class ConsolidatedEventCreator implements EventCreator {
       Set<DayOfWeek> repeatDays = DateTimeUtil.parseWeekdays(weekdays);
 
       ConsolidatedEventCreator creator = new ConsolidatedEventCreator(
-              eventName, description, location, isPublic, autoDecline, EventType.ALL_DAY_RECURRING_UNTIL);
+              eventName, description, location, isPublic, autoDecline,
+              EventType.ALL_DAY_RECURRING_UNTIL);
       creator.date = date;
       creator.repeatDays = repeatDays;
       creator.untilDate = untilDate;
@@ -313,6 +314,9 @@ public class ConsolidatedEventCreator implements EventCreator {
                   + " all-day recurring events with end date");
         }
         break;
+
+      default:
+        throw new InvalidEventException("Unknown or unsupported event type: " + eventType);
     }
   }
 
@@ -320,12 +324,11 @@ public class ConsolidatedEventCreator implements EventCreator {
   public Event createEvent() throws InvalidEventException {
     validateEventParameters();
 
-    switch (eventType) {
-      case SINGLE:
-        return new Event(eventName, startDateTime, endDateTime, description, location, isPublic);
-
-      default:
-        return null;
+    if (eventType == EventType.SINGLE) {
+      return new Event(eventName, startDateTime, endDateTime, description,
+              location, isPublic, false);
+    } else {
+      return null;
     }
   }
 
@@ -347,7 +350,7 @@ public class ConsolidatedEventCreator implements EventCreator {
           LocalDateTime startOfDay = date.atStartOfDay();
           LocalDateTime endOfDay = date.atTime(23, 59, 59);
           Event allDayEvent = new Event(eventName, startOfDay, endOfDay,
-                  description, location, isPublic);
+                  description, location, isPublic, true);
           success = calendar.addEvent(allDayEvent, autoDecline);
           return success ? "All-day event created successfully" : "Failed to create all-day event";
 
@@ -423,8 +426,8 @@ public class ConsolidatedEventCreator implements EventCreator {
    */
   private static String removeQuotes(String value) {
     if (value != null && value.length() >= 2) {
-      if ((value.startsWith("\"") && value.endsWith("\"")) ||
-              (value.startsWith("'") && value.endsWith("'"))) {
+      if ((value.startsWith("\"") && value.endsWith("\""))
+              || (value.startsWith("'") && value.endsWith("'"))) {
         return value.substring(1, value.length() - 1);
       }
     }

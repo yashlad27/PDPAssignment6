@@ -271,9 +271,8 @@ public class CommandParser {
     String location = matcher.group(7);
 
     String[] args = {"recurring", eventName, startTime, endTime, weekdays, occurrences,
-            description != null ? description : "", location != null ?
-            location : "", "true",
-            "false"
+                     description != null ? description : "", location != null ? location : "",
+                     "true", "false"
     };
     return new CommandWithArgs(commandFactory.getCommand("create"), args);
   }

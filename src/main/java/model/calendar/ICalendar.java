@@ -69,8 +69,7 @@ public interface ICalendar {
    *
    * @param recurringEvent The recurring event to add, must not be null
    * @param autoDecline    If true, throws exception on conflict; if false, returns false
-   * @return true if the event was added successfully, false if there was a conflict and autoDecline
-   * is false
+   * @return true if the event was added successfully, false if there was a conflict
    */
   boolean addRecurringEvent(RecurringEvent recurringEvent, boolean autoDecline)
           throws ConflictingEventException;

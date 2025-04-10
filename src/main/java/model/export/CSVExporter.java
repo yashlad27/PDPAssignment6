@@ -131,7 +131,8 @@ public class CSVExporter implements IDataExporter {
   @Override
   public String export(String filePath, List<Event> events) throws IOException {
     System.out.println("[DEBUG] CSVExporter.export called for file: " + filePath);
-    System.out.println("[DEBUG] Number of events to export: " + (events != null ? events.size() : 0));
+    System.out.println("[DEBUG] Number of events to export: " + (events != null
+            ? events.size() : 0));
 
     if (events == null || events.isEmpty()) {
       System.out.println("[WARNING] No events to export or events list is null");

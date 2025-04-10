@@ -3,7 +3,7 @@ package viewmodel;
 /**
  * Base interface for all ViewModels in the Model-View-ViewModel (MVVM) architecture.
  *
- * <p This interface defines common functionality that all ViewModels should implement,
+ * <p> This interface defines common functionality that all ViewModels should implement,
  * establishing a standard contract for MVVM implementation. ViewModels serve as an
  * intermediary between the View and Model layers, providing data binding capabilities
  * and separation of concerns.</p>

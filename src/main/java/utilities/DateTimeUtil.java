@@ -130,4 +130,100 @@ public class DateTimeUtil {
 
     return weekdays;
   }
+  
+  /**
+   * Combines a date string and time string into a LocalDateTime.
+   *
+   * @param dateStr the date string in format "YYYY-MM-DD"
+   * @param timeStr the time string in format "HH:MM"
+   * @return the combined LocalDateTime
+   * @throws IllegalArgumentException if either date or time string is invalid
+   */
+  public static LocalDateTime combineDateAndTime(String dateStr, String timeStr) {
+    LocalDate date = parseDate(dateStr);
+    LocalTime time = parseTime(timeStr);
+    return LocalDateTime.of(date, time);
+  }
+
+  /**
+   * Formats a LocalDate to a string in the format "YYYY-MM-DD".
+   *
+   * @param date the date to format
+   * @return the formatted date string
+   * @throws IllegalArgumentException if date is null
+   */
+  public static String formatDate(LocalDate date) {
+    if (date == null) {
+      throw new IllegalArgumentException("Date cannot be null");
+    }
+    return date.format(DATE_FORMATTER);
+  }
+
+  /**
+   * Formats a LocalTime to a string in the format "HH:MM".
+   *
+   * @param time the time to format
+   * @return the formatted time string
+   * @throws IllegalArgumentException if time is null
+   */
+  public static String formatTime(LocalTime time) {
+    if (time == null) {
+      throw new IllegalArgumentException("Time cannot be null");
+    }
+    return time.format(TIME_FORMATTER);
+  }
+
+  /**
+   * Formats a LocalDateTime to a string in the format "YYYY-MM-DDThh:mm".
+   *
+   * @param dateTime the date time to format
+   * @return the formatted date time string
+   * @throws IllegalArgumentException if dateTime is null
+   */
+  public static String formatDateTime(LocalDateTime dateTime) {
+    if (dateTime == null) {
+      throw new IllegalArgumentException("DateTime cannot be null");
+    }
+    return dateTime.format(DATE_TIME_FORMATTER);
+  }
+  
+  /**
+   * Converts a set of DayOfWeek to a string of weekday characters.
+   * Uses 'M' for Monday, 'T' for Tuesday, 'W' for Wednesday, 'R' for Thursday,
+   * 'F' for Friday, 'S' for Saturday, and 'U' for Sunday.
+   *
+   * @param weekdays the set of DayOfWeek
+   * @return a string of weekday characters
+   * @throws IllegalArgumentException if the set is null or empty
+   */
+  public static String formatWeekdays(Set<DayOfWeek> weekdays) {
+    if (weekdays == null || weekdays.isEmpty()) {
+      throw new IllegalArgumentException("Weekdays set cannot be null or empty");
+    }
+
+    StringBuilder sb = new StringBuilder();
+    if (weekdays.contains(DayOfWeek.MONDAY)) {
+      sb.append('M');
+    }
+    if (weekdays.contains(DayOfWeek.TUESDAY)) {
+      sb.append('T');
+    }
+    if (weekdays.contains(DayOfWeek.WEDNESDAY)) {
+      sb.append('W');
+    }
+    if (weekdays.contains(DayOfWeek.THURSDAY)) {
+      sb.append('R');
+    }
+    if (weekdays.contains(DayOfWeek.FRIDAY)) {
+      sb.append('F');
+    }
+    if (weekdays.contains(DayOfWeek.SATURDAY)) {
+      sb.append('S');
+    }
+    if (weekdays.contains(DayOfWeek.SUNDAY)) {
+      sb.append('U');
+    }
+
+    return sb.toString();
+  }
 }

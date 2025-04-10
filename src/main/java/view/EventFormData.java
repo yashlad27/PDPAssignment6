@@ -107,14 +107,22 @@ public class EventFormData {
   }
 
   /**
-   * @return whether the event is private
+   * Determines whether this event is marked as private.
+   * Private events are typically only visible to the owner and
+   * may have restricted sharing capabilities.
+   *
+   * @return true if the event is marked as private, false otherwise
    */
   public boolean isPrivateEvent() {
     return isPrivate;
   }
 
   /**
-   * @return whether auto-decline is enabled for the event
+   * Determines whether conflicts with this event will be automatically declined.
+   * When auto-decline is enabled, any new event that conflicts with this one
+   * will be automatically rejected by the calendar system.
+   *
+   * @return true if auto-decline is enabled for this event, false otherwise
    */
   public boolean isAutoDecline() {
     return autoDecline;

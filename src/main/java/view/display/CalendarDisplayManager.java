@@ -1,6 +1,9 @@
 package view.display;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,7 +13,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import model.event.Event;
 import utilities.TimeZoneHandler;
@@ -230,7 +239,6 @@ public class CalendarDisplayManager {
       }
     }
 
-    // Refresh the panel
     calendarGrid.revalidate();
     calendarGrid.repaint();
   }
@@ -284,20 +292,25 @@ public class CalendarDisplayManager {
 
     for (Event event : events) {
       // Convert event times from UTC to local timezone for display
-      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), systemTimezone);
-      LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), systemTimezone);
-      
+      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+              systemTimezone);
+      LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(),
+              systemTimezone);
+
       String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
       sb.append("<div id='").append(currentEventId)
-              .append("' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>")
+              .append("' style='margin-bottom:10px; " +
+                      "padding:5px; border:1px solid #cccccc; border-radius:3px;'>")
               .append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>")
               .append("<span style='color:#666;'>").append(localStartTime.toLocalTime())
               .append(" - ").append(localEndTime.toLocalTime()).append("</span><br>")
               .append("<span>").append(event.getDescription()).append("</span><br>")
-              .append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>")
+              .append("<span style='color:#666;'>").append(event.getLocation() != null
+                      ? event.getLocation() : "").append("</span>")
               .append("<div style='margin-top:5px;'>")
               .append("<button onclick='printEvent(\"").append(currentEventId)
-              .append("\")' style='background-color:#4a86e8; color:white; border:none; padding:5px 10px; cursor:pointer;'>Print</button>")
+              .append("\")' style='background-color:#4a86e8; color:white; border:none;" +
+                      " padding:5px 10px; cursor:pointer;'>Print</button>")
               .append("</div></div>");
     }
 
@@ -318,23 +331,32 @@ public class CalendarDisplayManager {
    * @param endDate       the end date of the range
    * @param events        the list of events in the range
    */
-  public void updateEventListRange(JEditorPane eventListArea, LocalDate startDate, LocalDate endDate, List<Event> events) {
+  public void updateEventListRange(JEditorPane eventListArea, LocalDate startDate,
+                                   LocalDate endDate, List<Event> events) {
     StringBuilder sb = new StringBuilder();
     sb.append("<html><body style='font-family:Arial; font-size:12px;'>")
-            .append("<h3 style='color:#4a86e8;'>Events from ").append(startDate).append(" to ").append(endDate).append(":</h3>");
+            .append("<h3 style='color:#4a86e8;'>Events from ").append(startDate).append(" to ")
+            .append(endDate).append(":</h3>");
 
     for (Event event : events) {
       String currentEventId = event.getSubject() + "-" + event.getStartDateTime().toString();
       sb.append("<div id='").append(currentEventId)
-              .append("' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc; border-radius:3px;'>")
+              .append("' style='margin-bottom:10px; padding:5px; border:1px solid #cccccc;" +
+                      " border-radius:3px;'>")
               .append("<b style='color:#4a86e8;'>").append(event.getSubject()).append("</b><br>")
-              .append("<span style='color:#666;'>").append(event.getStartDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-              .append(" - ").append(event.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("</span><br>")
-              .append("<span>").append(event.getDescription() != null ? event.getDescription() : "").append("</span><br>")
-              .append("<span style='color:#666;'>").append(event.getLocation() != null ? event.getLocation() : "").append("</span>")
+              .append("<span style='color:#666;'>")
+              .append(event.getStartDateTime().format(DateTimeFormatter
+                      .ofPattern("yyyy-MM-dd HH:mm")))
+              .append(" - ").append(event.getEndDateTime()
+                      .format(DateTimeFormatter.ofPattern("HH:mm"))).append("</span><br>")
+              .append("<span>").append(event.getDescription() != null
+                      ? event.getDescription() : "").append("</span><br>")
+              .append("<span style='color:#666;'>").append(event.getLocation() != null
+                      ? event.getLocation() : "").append("</span>")
               .append("<div style='margin-top:5px;'>")
               .append("<button onclick='printEvent(\"").append(currentEventId)
-              .append("\")' style='background-color:#4a86e8; color:white; border:none; padding:5px 10px; cursor:pointer;'>Print</button>")
+              .append("\")' style='background-color:#4a86e8; color:white; border:none;" +
+                      " padding:5px 10px; cursor:pointer;'>Print</button>")
               .append("</div></div>");
     }
 

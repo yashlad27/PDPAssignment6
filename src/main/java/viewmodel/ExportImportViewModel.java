@@ -3,8 +3,12 @@ package viewmodel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
+import model.exceptions.CalendarNotFoundException;
+import view.IGUIView;
 
 /**
  * ViewModel for managing CSV import/export operations.
@@ -14,6 +18,8 @@ import model.calendar.ICalendar;
 public class ExportImportViewModel implements IViewModel {
   private ICalendar currentCalendar;
   private final List<ExportImportViewModelListener> listeners;
+  private CalendarManager calendarManager;
+  private IGUIView view;
 
   /**
    * Interface for listeners that want to be notified of changes in the ExportImportViewModel.
@@ -31,6 +37,18 @@ public class ExportImportViewModel implements IViewModel {
    */
   public ExportImportViewModel() {
     this.listeners = new ArrayList<>();
+  }
+
+  /**
+   * Constructs a new ExportImportViewModel with a calendar manager and view.
+   *
+   * @param calendarManager the calendar manager
+   * @param view            the GUI view
+   */
+  public ExportImportViewModel(CalendarManager calendarManager, IGUIView view) {
+    this.listeners = new ArrayList<>();
+    this.calendarManager = calendarManager;
+    this.view = view;
   }
 
   @Override
@@ -58,56 +76,114 @@ public class ExportImportViewModel implements IViewModel {
   }
 
   /**
+   * Sets the calendar manager.
+   *
+   * @param calendarManager the calendar manager to set
+   */
+  public void setCalendarManager(CalendarManager calendarManager) {
+    this.calendarManager = calendarManager;
+  }
+
+  /**
+   * Sets the GUI view.
+   *
+   * @param view the view to set
+   */
+  public void setView(IGUIView view) {
+    this.view = view;
+  }
+
+  /**
+   * Finds a suitable calendar for import/export operations.
+   * Tries to get the calendar in the following order:
+   * 1. From the selector panel
+   * 2. From the current calendar in this view model
+   * 3. The active calendar from the calendar manager
+   * 4. The first available calendar from the registry
+   *
+   * @return a suitable calendar or null if none found
+   */
+  public ICalendar findSuitableCalendar() {
+    if (calendarManager == null) {
+      return currentCalendar;
+    }
+
+    // Try to get the calendar from the selector panel if view is available
+    ICalendar selectedCalendar = null;
+    if (view != null && view.getCalendarSelectorPanel() != null) {
+      selectedCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
+    }
+
+    // If nothing selected, use the current calendar
+    if (selectedCalendar == null) {
+      selectedCalendar = currentCalendar;
+    }
+
+    // If still null, try getting from calendar manager
+    if (selectedCalendar == null) {
+      try {
+        // Try to get the active calendar
+        selectedCalendar = calendarManager.getActiveCalendar();
+      } catch (CalendarNotFoundException e) {
+        // If no active calendar, try to get the first calendar by name
+        Set<String> calendarNames = calendarManager.getCalendarRegistry().getCalendarNames();
+        if (!calendarNames.isEmpty()) {
+          String firstName = calendarNames.iterator().next();
+          try {
+            selectedCalendar = calendarManager.getCalendar(firstName);
+          } catch (CalendarNotFoundException ex) {
+            // Ignore, we'll return null
+          }
+        }
+      }
+    }
+
+    return selectedCalendar;
+  }
+
+  /**
    * Imports events from a CSV file.
    *
    * @param file the CSV file to import from
    * @return the number of events successfully imported
    */
   public int importFromCSV(File file) {
+    // Find the suitable calendar if none provided
     if (currentCalendar == null) {
-      notifyError("No calendar selected for import");
-      return 0;
+      currentCalendar = findSuitableCalendar();
+
+      if (currentCalendar == null) {
+        notifyError("No calendar selected for import");
+        return 0;
+      }
     }
 
     try {
-      System.out.println("[DEBUG] Starting CSV import from file: " + file.getAbsolutePath());
-
+      // Using CSV exporter to read events
       model.export.CSVExporter csvExporter = new model.export.CSVExporter();
-
-      System.out.println("[DEBUG] Reading events from CSV file");
       List<model.event.Event> importedEvents = csvExporter.importEvents(file);
-
-      System.out.println("[DEBUG] Successfully imported "
-              + importedEvents.size() + " events from CSV");
 
       int successCount = 0;
       for (model.event.Event event : importedEvents) {
         try {
-          System.out.println("[DEBUG] Adding event to calendar: " + event.getSubject());
           boolean added = currentCalendar.addEvent(event, true);
           if (added) {
             successCount++;
           }
         } catch (Exception e) {
-          System.err.println("[ERROR] Failed to add event '"
-                  + event.getSubject() + "': " + e.getMessage());
+          // Continue with other events even if one fails
         }
       }
 
-      System.out.println("[DEBUG] Import completed successfully. Added "
-              + successCount + " out of " + importedEvents.size() + " events");
-
       String message = "Successfully imported " + successCount + " events";
-      System.out.println("[DEBUG] Notifying listeners with success message: " + message);
       notifyImportSuccess(message);
 
-      System.out.println("[DEBUG] Requesting calendar refresh to display imported events");
+      // Update view if available
+      updateViewAfterImport();
       refresh();
 
       return successCount;
     } catch (Exception e) {
-      System.err.println("[ERROR] Import failed: " + e.getMessage());
-      e.printStackTrace();
       notifyError("Failed to import from CSV: " + e.getMessage());
       return 0;
     }
@@ -119,28 +195,26 @@ public class ExportImportViewModel implements IViewModel {
    * @param file the CSV file to export to
    */
   public void exportToCSV(File file) {
+    // Find the suitable calendar if none provided
     if (currentCalendar == null) {
-      notifyError("No calendar selected for export");
-      return;
+      currentCalendar = findSuitableCalendar();
+
+      if (currentCalendar == null) {
+        notifyError("No calendar selected for export");
+        return;
+      }
     }
 
     try {
-      System.out.println("[DEBUG] Starting CSV export to file: " + file.getAbsolutePath());
-
-      String calendarName = ((model.calendar.Calendar) currentCalendar).getName();
-      System.out.println("[DEBUG] Retrieving events from calendar: " + calendarName);
+      // Get events from calendar
       List<model.event.Event> events = currentCalendar.getAllEvents();
-      System.out.println("[DEBUG] Found " + events.size() + " events to export");
 
+      // Use CSV exporter to write events
       model.export.CSVExporter csvExporter = new model.export.CSVExporter();
-
       csvExporter.exportEvents(events, file);
 
-      System.out.println("[DEBUG] Export completed successfully");
       notifyExportSuccess();
     } catch (Exception e) {
-      System.err.println("[ERROR] Export failed: " + e.getMessage());
-      e.printStackTrace();
       notifyError("Failed to export to CSV: " + e.getMessage());
     }
   }
@@ -170,5 +244,15 @@ public class ExportImportViewModel implements IViewModel {
 
   public ICalendar getCurrentCalendar() {
     return currentCalendar;
+  }
+
+  /**
+   * Updates the view after importing events.
+   * If a view is connected, updates the calendar panel.
+   */
+  public void updateViewAfterImport() {
+    if (view != null && currentCalendar != null) {
+      view.getCalendarPanel().updateCalendar(currentCalendar);
+    }
   }
 } 
