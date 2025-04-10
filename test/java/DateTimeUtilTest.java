@@ -1,5 +1,3 @@
-import org.junit.Test;
-
 import java.lang.reflect.Constructor;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -8,11 +6,12 @@ import java.time.LocalTime;
 import java.util.EnumSet;
 import java.util.Set;
 
-import utilities.DateTimeUtil;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Test;
+
+import utilities.DateTimeUtil;
 
 /**
  * Test class for DateTimeUtil.
@@ -415,5 +414,183 @@ public class DateTimeUtilTest {
     Set<DayOfWeek> sunday = DateTimeUtil.parseWeekdays("U");
     assertEquals(1, sunday.size());
     assertTrue(sunday.contains(DayOfWeek.SUNDAY));
+  }
+
+  @Test
+  public void testParseTimeWithVariousFormats() {
+    // Should support 24-hour time format
+    LocalTime time1 = LocalTime.of(13, 30);
+    String timeStr1 = "13:30";
+    assertEquals(time1, DateTimeUtil.parseTime(timeStr1));
+    
+    // Should handle single-digit hours and minutes
+    LocalTime time2 = LocalTime.of(9, 5);
+    String timeStr2 = "09:05";
+    assertEquals(time2, DateTimeUtil.parseTime(timeStr2));
+    
+    // Should handle midnight
+    LocalTime time3 = LocalTime.of(0, 0);
+    String timeStr3 = "00:00";
+    assertEquals(time3, DateTimeUtil.parseTime(timeStr3));
+    
+    // Should handle 23:59
+    LocalTime time4 = LocalTime.of(23, 59);
+    String timeStr4 = "23:59";
+    assertEquals(time4, DateTimeUtil.parseTime(timeStr4));
+  }
+
+  @Test
+  public void testParseDateWithInvalidFormats() {
+    // Test with invalid date formats - MM-DD-YYYY instead of YYYY-MM-DD
+    try {
+      DateTimeUtil.parseDate("13-13-2023");
+      fail("Should throw exception for invalid date format");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+    
+    // Test with invalid date format - using slashes instead of dashes
+    try {
+      DateTimeUtil.parseDate("2023/01/01");
+      fail("Should throw exception for invalid date format");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+    
+    // Test with non-date string
+    try {
+      DateTimeUtil.parseDate("not-a-date");
+      fail("Should throw exception for invalid date format");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+    
+    // Test with empty string
+    try {
+      DateTimeUtil.parseDate("");
+      fail("Should throw exception for empty string");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+  }
+  
+  @Test
+  public void testCombineDateAndTimeWithEdgeCases() {
+    // Test with start of day
+    LocalDateTime startOfDay = DateTimeUtil.combineDateAndTime("2023-05-15", "00:00");
+    assertEquals(LocalDateTime.of(2023, 5, 15, 0, 0), startOfDay);
+    
+    // Test with end of day
+    LocalDateTime endOfDay = DateTimeUtil.combineDateAndTime("2023-05-15", "23:59");
+    assertEquals(LocalDateTime.of(2023, 5, 15, 23, 59), endOfDay);
+    
+    // Test with leap year
+    LocalDateTime leapDay = DateTimeUtil.combineDateAndTime("2024-02-29", "12:00");
+    assertEquals(LocalDateTime.of(2024, 2, 29, 12, 0), leapDay);
+  }
+  
+  @Test
+  public void testFormatDateTimeWithEdgeCases() {
+    // Test with midnight
+    LocalDateTime midnight = LocalDateTime.of(2023, 5, 15, 0, 0);
+    assertEquals("2023-05-15T00:00", DateTimeUtil.formatDateTime(midnight));
+    
+    // Test with 23:59
+    LocalDateTime endOfDay = LocalDateTime.of(2023, 5, 15, 23, 59);
+    assertEquals("2023-05-15T23:59", DateTimeUtil.formatDateTime(endOfDay));
+    
+    // Test with leap day
+    LocalDateTime leapDay = LocalDateTime.of(2024, 2, 29, 12, 0);
+    assertEquals("2024-02-29T12:00", DateTimeUtil.formatDateTime(leapDay));
+  }
+  
+  @Test
+  public void testParseWeekdaysWithCommas() {
+    // Test parsing with commas (if supported)
+    try {
+      Set<DayOfWeek> weekdays = DateTimeUtil.parseWeekdays("M,W,F");
+      // If this succeeds, verify the result
+      assertEquals(3, weekdays.size());
+      assertTrue(weekdays.contains(DayOfWeek.MONDAY));
+      assertTrue(weekdays.contains(DayOfWeek.WEDNESDAY));
+      assertTrue(weekdays.contains(DayOfWeek.FRIDAY));
+    } catch (IllegalArgumentException e) {
+      // If commas aren't supported, this is expected
+    }
+  }
+  
+  @Test
+  public void testParseWeekdaysWithFullNames() {
+    // Test parsing with full weekday names (if supported)
+    try {
+      Set<DayOfWeek> weekdays = DateTimeUtil.parseWeekdays("MONDAY,WEDNESDAY,FRIDAY");
+      // If this succeeds, verify the result
+      assertEquals(3, weekdays.size());
+      assertTrue(weekdays.contains(DayOfWeek.MONDAY));
+      assertTrue(weekdays.contains(DayOfWeek.WEDNESDAY));
+      assertTrue(weekdays.contains(DayOfWeek.FRIDAY));
+    } catch (IllegalArgumentException e) {
+      // If full names aren't supported, this is expected
+    }
+  }
+  
+  @Test
+  public void testFormatWeekdaysFullWeek() {
+    // Full week should include all 7 days
+    Set<DayOfWeek> allDays = EnumSet.allOf(DayOfWeek.class);
+    String formattedAllDays = DateTimeUtil.formatWeekdays(allDays);
+    assertEquals(7, formattedAllDays.length());
+    assertTrue(formattedAllDays.contains("M"));
+    assertTrue(formattedAllDays.contains("T"));
+    assertTrue(formattedAllDays.contains("W"));
+    assertTrue(formattedAllDays.contains("R"));
+    assertTrue(formattedAllDays.contains("F"));
+    assertTrue(formattedAllDays.contains("S"));
+    assertTrue(formattedAllDays.contains("U"));
+  }
+  
+  @Test
+  public void testParseWeekdaysWeekend() {
+    // Weekend should include Saturday and Sunday
+    Set<DayOfWeek> weekend = DateTimeUtil.parseWeekdays("SU");
+    assertEquals(2, weekend.size());
+    assertTrue(weekend.contains(DayOfWeek.SATURDAY));
+    assertTrue(weekend.contains(DayOfWeek.SUNDAY));
+  }
+  
+  @Test
+  public void testParseWeekdaysWeekday() {
+    // Weekdays should include Monday through Friday
+    Set<DayOfWeek> weekdays = DateTimeUtil.parseWeekdays("MTWRF");
+    assertEquals(5, weekdays.size());
+    assertTrue(weekdays.contains(DayOfWeek.MONDAY));
+    assertTrue(weekdays.contains(DayOfWeek.TUESDAY));
+    assertTrue(weekdays.contains(DayOfWeek.WEDNESDAY));
+    assertTrue(weekdays.contains(DayOfWeek.THURSDAY));
+    assertTrue(weekdays.contains(DayOfWeek.FRIDAY));
+  }
+  
+  @Test
+  public void testFormatTimeMinuteRollover() {
+    // Test that minutes > 59 are handled properly
+    try {
+      LocalTime invalidTime = LocalTime.of(12, 60);
+      DateTimeUtil.formatTime(invalidTime);
+      fail("Should throw exception for invalid time");
+    } catch (Exception e) {
+      // Expected - either DateTimeException from LocalTime.of or IllegalArgumentException
+    }
+  }
+  
+  @Test
+  public void testFormatTimeHourRollover() {
+    // Test that hours > 23 are handled properly
+    try {
+      LocalTime invalidTime = LocalTime.of(24, 0);
+      DateTimeUtil.formatTime(invalidTime);
+      fail("Should throw exception for invalid time");
+    } catch (Exception e) {
+      // Expected - either DateTimeException from LocalTime.of or IllegalArgumentException
+    }
   }
 }

@@ -1,12 +1,18 @@
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
 
 import controller.command.ICommand;
 import controller.command.event.CommandFactory;
@@ -17,12 +23,6 @@ import model.event.RecurringEvent;
 import model.exceptions.ConflictingEventException;
 import model.export.IDataExporter;
 import view.ICalendarView;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test file for Command Parser.
@@ -951,5 +951,122 @@ public class CommandParserTest {
             () -> parser.parseCommand("create"));
     assertTrue("Error message should indicate invalid format",
             exception.getMessage().contains("Invalid command format"));
+  }
+
+  @Test
+  public void testParseWithEmptyQuotedArgument() throws Exception {
+    String command = "create event \"\" from 2023-01-01T10:00 to 2023-01-01T11:00";
+    CommandParser.CommandWithArgs result = parser.parseCommand(command);
+    
+    assertNotNull("Command parsing should succeed", result);
+    assertTrue("Command should be a create command", result.getCommand() instanceof MockCreateCommand);
+  }
+
+  @Test
+  public void testParseWithMixedQuotesAndFlags() throws Exception {
+    String command = "create event \"Event Name\" from 2023-01-01T10:00 to 2023-01-01T11:00 desc \"Description with spaces\" at \"Some Location\"";
+    CommandParser.CommandWithArgs result = parser.parseCommand(command);
+    
+    assertNotNull("Command parsing should succeed", result);
+    String[] args = result.getArgs();
+    assertTrue("Args should contain the event name", Arrays.asList(args).contains("Event Name"));
+    assertTrue("Args should contain the description", Arrays.asList(args).contains("Description with spaces"));
+    assertTrue("Args should contain the location", Arrays.asList(args).contains("Some Location"));
+  }
+  
+  @Test
+  public void testParseWithConsecutiveSpaces() throws Exception {
+    String command = "create   event    \"Event Name\"   from   2023-01-01T10:00   to   2023-01-01T11:00";
+    CommandParser.CommandWithArgs result = parser.parseCommand(command);
+    
+    assertNotNull("Command parsing should succeed", result);
+    String[] args = result.getArgs();
+    assertTrue("Args should contain the event name", Arrays.asList(args).contains("Event Name"));
+  }
+  
+  @Test
+  public void testParseWithLeadingAndTrailingSpaces() throws Exception {
+    String command = "   create event \"Event Name\" from 2023-01-01T10:00 to 2023-01-01T11:00   ";
+    CommandParser.CommandWithArgs result = parser.parseCommand(command);
+    
+    assertNotNull("Command parsing should succeed", result);
+    String[] args = result.getArgs();
+    assertTrue("Args should contain the event name", Arrays.asList(args).contains("Event Name"));
+  }
+  
+  @Test
+  public void testParseWithQuotedSpecialCharacters() throws Exception {
+    String command = "create event \"Event!@#$%^&*()_+\" from 2023-01-01T10:00 to 2023-01-01T11:00";
+    CommandParser.CommandWithArgs result = parser.parseCommand(command);
+    
+    assertNotNull("Command parsing should succeed", result);
+    String[] args = result.getArgs();
+    assertTrue("Args should contain the event name with special chars", 
+        Arrays.asList(args).contains("Event!@#$%^&*()_+"));
+  }
+  
+  @Test
+  public void testParseWithEscapeCharactersInQuotes() throws Exception {
+    String command = "create event \"Line 1\\nLine 2\\tTabbed\" from 2023-01-01T10:00 to 2023-01-01T11:00";
+    CommandParser.CommandWithArgs result = parser.parseCommand(command);
+    
+    assertNotNull("Command parsing should succeed", result);
+    String[] args = result.getArgs();
+    assertTrue("Args should contain the event name with escape characters", 
+        Arrays.asList(args).contains("Line 1\\nLine 2\\tTabbed"));
+  }
+  
+  @Test
+  public void testExecuteCommand() throws Exception {
+    // Create a command that we can verify execution
+    class TestCommand implements controller.command.ICommand {
+        private boolean executed = false;
+        @Override
+        public String execute(String[] args) {
+            executed = true;
+            return "Success";
+        }
+        @Override
+        public String getName() {
+            return "test";
+        }
+        
+        public boolean wasExecuted() {
+            return executed;
+        }
+    }
+    
+    TestCommand testCommand = new TestCommand();
+    CommandParser.CommandWithArgs commandWithArgs = new CommandParser.CommandWithArgs(testCommand, new String[]{"arg1", "arg2"});
+    
+    String result = commandWithArgs.execute();
+    
+    assertEquals("Success", result);
+    assertTrue("Command should have been executed", testCommand.wasExecuted());
+  }
+  
+  @Test
+  public void testGetCommandAndArgs() {
+    // Create a test command
+    controller.command.ICommand testCommand = new controller.command.ICommand() {
+      @Override
+      public String execute(String[] args) {
+        return "test execution result";
+      }
+      
+      @Override
+      public String getName() {
+        return "test";
+      }
+    };
+    String[] testArgs = new String[]{"arg1", "arg2"};
+    
+    CommandParser.CommandWithArgs commandWithArgs = new CommandParser.CommandWithArgs(testCommand, testArgs);
+    
+    // Test getCommand()
+    assertTrue("getCommand() should return the command object", commandWithArgs.getCommand() == testCommand);
+    
+    // Test getArgs()
+    assertTrue("getArgs() should return the arguments array", Arrays.equals(testArgs, commandWithArgs.getArgs()));
   }
 }
