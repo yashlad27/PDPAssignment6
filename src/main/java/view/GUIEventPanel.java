@@ -257,7 +257,7 @@ public class GUIEventPanel extends JPanel {
     descriptionArea.setWrapStyleWord(true);
 
     String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday",
-            "Friday", "Saturday", "Sunday"};
+                         "Friday", "Saturday", "Sunday"};
     for (String weekday : weekdays) {
       JCheckBox checkbox = new JCheckBox(weekday);
       weekdayCheckboxes.add(checkbox);

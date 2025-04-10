@@ -199,6 +199,9 @@ public class EventValidationService implements IEventValidator {
         case 'U':
           days.add(DayOfWeek.SUNDAY);
           break;
+        default:
+          System.out.println("Warning: Ignoring unknown weekday character: " + c);
+          break;
       }
     }
 

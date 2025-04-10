@@ -769,7 +769,7 @@ public class GUICalendarPanel extends JPanel {
 
   /**
    * Creates a panel to display a single event with edit, copy, and print buttons.
-   * <p> Creates an event panel for displaying an event.
+   * Creates an event panel for displaying an event.
    *
    * @param event the event to display
    * @return a panel containing the event details
@@ -910,17 +910,13 @@ public class GUICalendarPanel extends JPanel {
     if (targetEvent != null && listener != null) {
       System.out.println("[DEBUG] Selected event: "
               + targetEvent.getSubject() + " with ID: " + targetEvent.getId());
-
-      switch (action) {
-        case "edit":
-          System.out.println("[DEBUG] Sending edit event to listener: " + targetEvent.getSubject());
-          listener.onEditEvent(targetEvent);
-          break;
-        case "print":
-          System.out.println("[DEBUG] Sending print event to listener: "
-                  + targetEvent.getSubject());
-          listener.onPrintEvent(targetEvent);
-          break;
+      if ("edit".equals(action)) {
+        System.out.println("[DEBUG] Sending edit event to listener: " + targetEvent.getSubject());
+        listener.onEditEvent(targetEvent);
+      } else if ("print".equals(action)) {
+        System.out.println("[DEBUG] Sending print event to listener: "
+                + targetEvent.getSubject());
+        listener.onPrintEvent(targetEvent);
       }
     } else {
       System.out.println("[ERROR] No event selected or listener not set");
@@ -1128,7 +1124,9 @@ public class GUICalendarPanel extends JPanel {
    * @param events the list of events on that date
    */
   public void updateDateEvents(LocalDate date, List<Event> events) {
-    if (date == null) return;
+    if (date == null) {
+      return;
+    }
 
     eventsByDate.put(date, new ArrayList<>(events));
 
@@ -1167,7 +1165,9 @@ public class GUICalendarPanel extends JPanel {
    * @param eventCount the number of events on that date
    */
   public void updateDateStatus(LocalDate date, boolean isBusy, int eventCount) {
-    if (date == null) return;
+    if (date == null) {
+      return;
+    }
 
     // When checking if a date is busy, use the local date (not UTC)
     TimeZoneHandler timezoneHandler = new TimeZoneHandler();
@@ -1221,7 +1221,9 @@ public class GUICalendarPanel extends JPanel {
    * @param endDate   the end date of the range
    */
   public void setSelectedDateRange(LocalDate startDate, LocalDate endDate) {
-    if (startDate == null || endDate == null) return;
+    if (startDate == null || endDate == null) {
+      return;
+    }
 
     for (JButton button : dateButtons.values()) {
       button.setBackground(Color.WHITE);
@@ -1238,6 +1240,11 @@ public class GUICalendarPanel extends JPanel {
     this.selectedDate = startDate;
   }
 
+  /**
+   * Updates the displayed calendar name in the UI.
+   * This method sets the text of the calendar name label to show which
+   * calendar is currently active in the view.
+   */
   public void updateCalendarName(String calendarName) {
     if (calendarNameLabel != null) {
       calendarNameLabel.setText(calendarName);

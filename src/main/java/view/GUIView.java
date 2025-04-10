@@ -954,6 +954,13 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView, Calendar
     displayMessage("Recurring event updated successfully");
   }
 
+  /**
+   * Handles the successful import of calendar events.
+   * This method displays a success message, shows a popup notification,
+   * and refreshes the calendar view to display the newly imported events.
+   * It updates the calendar panel with all events from the current calendar
+   * and forces a complete refresh of the UI.
+   */
   public void onImportSuccess(String message) {
     System.out.println("[DEBUG] GUIView.onImportSuccess called with message: " + message);
     displayMessage(message);

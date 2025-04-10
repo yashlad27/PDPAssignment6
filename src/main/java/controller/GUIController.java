@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 
 import controller.command.event.ExportCalendarCommand;
 import controller.command.event.ImportCalendarCommand;
@@ -744,25 +744,22 @@ public class GUIController {
           System.out.println("[DEBUG-RECURRING] Repeat days: " + lastAdded.getRepeatDays());
           System.out.println("[DEBUG-RECURRING] All-day: " + lastAdded.isAllDay());
 
-          // Log recurring event constraints (occurrences or end date)
           if (lastAdded.getOccurrences() > 0) {
-            System.out.println("[DEBUG-RECURRING] Occurrences limit: " + lastAdded.getOccurrences());
+            System.out.println("[DEBUG-RECURRING] Occurrences limit: "
+                    + lastAdded.getOccurrences());
           } else if (lastAdded.getEndDate() != null) {
             System.out.println("[DEBUG-RECURRING] End date: " + lastAdded.getEndDate());
           }
           System.out.println("[DEBUG-RECURRING] Recurring ID: " + lastAdded.getRecurringId());
 
-          // Get and log occurrences for different time periods
           LocalDate today = LocalDate.now();
 
-          // Current week occurrences
           LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
           LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
           List<Event> weeklyOccurrences = lastAdded.getOccurrencesBetween(startOfWeek, endOfWeek);
           System.out.println("[DEBUG-RECURRING] Generated " + weeklyOccurrences.size()
                   + " occurrences for current week");
 
-          // Current month occurrences
           LocalDate firstOfMonth = today.withDayOfMonth(1);
           LocalDate lastOfMonth = today.withDayOfMonth(today.lengthOfMonth());
           List<Event> monthlyOccurrences = lastAdded.getOccurrencesBetween(firstOfMonth,
@@ -770,7 +767,6 @@ public class GUIController {
           System.out.println("[DEBUG-RECURRING] Generated " + monthlyOccurrences.size()
                   + " occurrences for current month");
 
-          // Log first 5 occurrences with detailed info
           System.out.println("[DEBUG-RECURRING] Sample occurrences:");
           List<Event> allOccurrences = lastAdded.getAllOccurrences();
           int occurrencesToShow = Math.min(5, allOccurrences.size());
@@ -962,6 +958,66 @@ public class GUIController {
   }
 
   /**
+   * Handles the updating of an event after it has been edited.
+   *
+   * @param event the updated event
+   */
+  public void onEventUpdated(Event event) {
+    System.out.println("[DEBUG] Event updated: " + event.getSubject());
+
+    if (currentCalendar == null) {
+      view.displayError("Please select a calendar first");
+      return;
+    }
+
+    try {
+      String subject = event.getSubject();
+      LocalDateTime startDateTime = event.getStartDateTime();
+      LocalDateTime endDateTime = event.getEndDateTime();
+      String description = event.getDescription();
+      String location = event.getLocation();
+      boolean isPublic = event.isPublic();
+
+      currentCalendar.findEvent(subject, startDateTime);
+
+      boolean updated = true;
+      if (endDateTime != null) {
+        String endTimeStr = endDateTime.toLocalTime().toString();
+        updated = currentCalendar.editSingleEvent(subject, startDateTime,
+                "endTime", endTimeStr) && updated;
+      }
+
+      if (description != null) {
+        updated = currentCalendar.editSingleEvent(subject, startDateTime,
+                "description", description) && updated;
+      }
+
+      if (location != null) {
+        updated = currentCalendar.editSingleEvent(subject, startDateTime,
+                "location", location) && updated;
+      }
+
+      updated = currentCalendar.editSingleEvent(subject, startDateTime,
+              "isPublic", String.valueOf(isPublic)) && updated;
+
+      if (updated) {
+        view.showInfoMessage("Event updated successfully: " + event.getSubject());
+        view.refreshView();
+      } else {
+        view.showErrorMessage("Failed to update event due to conflicts");
+      }
+    } catch (EventNotFoundException e) {
+      view.showErrorMessage("Original event not found: " + e.getMessage());
+    } catch (InvalidEventException e) {
+      view.showErrorMessage("Invalid event data: " + e.getMessage());
+    } catch (ConflictingEventException e) {
+      view.showErrorMessage("Event conflicts with existing events: " + e.getMessage());
+    } catch (Exception e) {
+      view.showErrorMessage("Error updating event: " + e.getMessage());
+    }
+  }
+
+  /**
    * Handles copying an event.
    *
    * @param event               the event to copy
@@ -1147,65 +1203,15 @@ public class GUIController {
   }
 
   /**
-   * Handles the updating of an event after it has been edited.
+   * Executes a calendar command with the given arguments.
+   * This method processes commands like "create" and "edit" to manage calendar events.
+   * It handles both single events and recurring events with various parameters.
    *
-   * @param event the updated event
+   * @param command the command to execute (e.g., "create", "edit")
+   * @param args the arguments for the command, including event details such as subject,
+   *             date, time, location, and other properties
+   * @return a String message indicating the result of command execution (success or error message)
    */
-  public void onEventUpdated(Event event) {
-    System.out.println("[DEBUG] Event updated: " + event.getSubject());
-
-    if (currentCalendar == null) {
-      view.displayError("Please select a calendar first");
-      return;
-    }
-
-    try {
-      String subject = event.getSubject();
-      LocalDateTime startDateTime = event.getStartDateTime();
-      LocalDateTime endDateTime = event.getEndDateTime();
-      String description = event.getDescription();
-      String location = event.getLocation();
-      boolean isPublic = event.isPublic();
-
-      currentCalendar.findEvent(subject, startDateTime);
-
-      boolean updated = true;
-      if (endDateTime != null) {
-        String endTimeStr = endDateTime.toLocalTime().toString();
-        updated = currentCalendar.editSingleEvent(subject, startDateTime,
-                "endTime", endTimeStr) && updated;
-      }
-
-      if (description != null) {
-        updated = currentCalendar.editSingleEvent(subject, startDateTime,
-                "description", description) && updated;
-      }
-
-      if (location != null) {
-        updated = currentCalendar.editSingleEvent(subject, startDateTime,
-                "location", location) && updated;
-      }
-
-      updated = currentCalendar.editSingleEvent(subject, startDateTime,
-              "isPublic", String.valueOf(isPublic)) && updated;
-
-      if (updated) {
-        view.showInfoMessage("Event updated successfully: " + event.getSubject());
-        view.refreshView();
-      } else {
-        view.showErrorMessage("Failed to update event due to conflicts");
-      }
-    } catch (EventNotFoundException e) {
-      view.showErrorMessage("Original event not found: " + e.getMessage());
-    } catch (InvalidEventException e) {
-      view.showErrorMessage("Invalid event data: " + e.getMessage());
-    } catch (ConflictingEventException e) {
-      view.showErrorMessage("Event conflicts with existing events: " + e.getMessage());
-    } catch (Exception e) {
-      view.showErrorMessage("Error updating event: " + e.getMessage());
-    }
-  }
-
   public String executeCommand(String command, String[] args) {
     System.out.println("[DEBUG] Executing command: " + command
             + " with args: " + String.join(", ", args));

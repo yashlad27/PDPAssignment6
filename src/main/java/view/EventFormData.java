@@ -129,7 +129,7 @@ public class EventFormData {
   }
 
   /**
-   * Alias for getUntilDate() to match method name used in controller
+   * Alias for getUntilDate() to match method name used in controller.
    *
    * @return the end date for recurring events
    */

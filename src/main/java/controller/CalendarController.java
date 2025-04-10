@@ -23,11 +23,11 @@ import view.ICalendarView;
 /**
  * Controller class that manages calendar operations and user interactions.
  *
- * <p> This class serves as the main controller in the MVC architecture, handling
+ * <p>This class serves as the main controller in the MVC architecture, handling
  * Command processing and execution, Calendar management operations, Event management operations and
  * Interactive and headless mode operations
  *
- * <p> The controller supports two modes of operation:
+ * <p>The controller supports two modes of operation:
  * 1. Interactive Mode: Processes commands entered by users in real-time 2. Headless Mode: Processes
  * commands from a file without user interaction
  *

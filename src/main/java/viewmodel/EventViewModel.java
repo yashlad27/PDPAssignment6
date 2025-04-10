@@ -331,7 +331,8 @@ public class EventViewModel implements IViewModel {
    * @param endDate   the end date of the range
    * @return formatted HTML content
    */
-  public String formatEventsListForRange(List<Event> events, LocalDate startDate, LocalDate endDate) {
+  public String formatEventsListForRange(List<Event> events, LocalDate startDate,
+                                         LocalDate endDate) {
     StringBuilder html = new StringBuilder();
     html.append("<html><body style='font-family: Arial, sans-serif;'>");
 

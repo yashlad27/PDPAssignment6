@@ -448,8 +448,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "Copied " + successCount + " out of " + eventsToCopy.size() + " events to calendar '"
               + targetCalendarName + "'.";
     } else {
-      return "Successfully copied all " + successCount + " events to calendar '" + targetCalendarName
-              + "'.";
+      return "Successfully copied all " + successCount + " events to calendar '"
+              + targetCalendarName + "'.";
     }
   }
 }
