@@ -92,12 +92,17 @@ public class CalendarCommandFactory implements ICommandFactory {
       if (property.equals("timezone")) {
         calendarManager.editCalendarTimezone(calendarName, value);
         return "Timezone updated to " + value + " for calendar '" + calendarName + "'";
+      } else if (property.equals("name")) {
+        calendarManager.editCalendarName(calendarName, value);
+        return "Calendar name updated from '" + calendarName + "' to '" + value + "'";
       } else {
         return "Error: Invalid property '" + property + "' for calendar edit";
       }
     } catch (CalendarNotFoundException e) {
       return e.getMessage();
     } catch (InvalidTimezoneException e) {
+      return e.getMessage();
+    } catch (IllegalArgumentException e) {
       return e.getMessage();
     }
   }

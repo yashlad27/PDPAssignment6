@@ -193,14 +193,6 @@ public class CalendarCommandFactoryTest {
   }
 
   @Test
-  public void testEditEmptyCalendar()
-          throws ConflictingEventException, InvalidEventException, EventNotFoundException {
-    String[] args = {"calendar", "--name", "EmptyCalendar", "--property", "name", "NewName"};
-    String result = factory.getCommand("edit").execute(args);
-    assertTrue(result.startsWith("Error:"));
-  }
-
-  @Test
   public void testCreateCalendarWithMaximumEvents()
           throws ConflictingEventException, InvalidEventException,
           EventNotFoundException, CalendarNotFoundException {

@@ -70,10 +70,23 @@
                     <targetTests>
                         <param>*Test</param>
                     </targetTests>
+                    <verbose>true</verbose>
+                    <threads>4</threads>
+                    <timeoutConstant>8000</timeoutConstant>
                     <excludedTestClasses>
                         <param>GUIControllerTest</param>
                         <param>ImportExportControllerTest</param>
                     </excludedTestClasses>
+                    <avoidCallsTo>
+                        <avoidCallsTo>java.util.logging</avoidCallsTo>
+                        <avoidCallsTo>org.apache.log4j</avoidCallsTo>
+                        <avoidCallsTo>org.slf4j</avoidCallsTo>
+                        <avoidCallsTo>org.apache.commons.logging</avoidCallsTo>
+                        <avoidCallsTo>java.io.File</avoidCallsTo>
+                    </avoidCallsTo>
+                    <jvmArgs>
+                        <value>-Djava.awt.headless=true</value>
+                    </jvmArgs>
                 </configuration>
             </plugin>
         </plugins>

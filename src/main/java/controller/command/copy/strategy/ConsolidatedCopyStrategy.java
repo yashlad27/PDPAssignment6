@@ -3,6 +3,8 @@ package controller.command.copy.strategy;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import model.calendar.Calendar;
@@ -149,7 +151,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
    */
   private String executeSingleEventCopy(String[] args) throws CalendarNotFoundException,
           EventNotFoundException, ConflictingEventException, InvalidEventException {
-    if (args.length < 7) {
+    if (args.length < 9) {
       throw new InvalidEventException("Insufficient arguments for copy event command");
     }
 
@@ -173,9 +175,15 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
     }
 
     String targetCalendar = args[6];
+    
+    if (!args[7].equals("to")) {
+      throw new InvalidEventException("Expected 'to' keyword after target calendar");
+    }
+    
+    String targetDateTime = args[8];
 
     try {
-      return copySingleEvent(eventName, sourceDateTime, targetCalendar, null);
+      return copySingleEvent(eventName, sourceDateTime, targetCalendar, targetDateTime);
     } catch (Exception e) {
       throw new InvalidEventException("Error copying events: " + e.getMessage());
     }
@@ -273,6 +281,8 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
   private String copySingleEvent(String eventName, String dateTimeStr, String targetCalendarName,
                                  String targetDateTimeStr) throws Exception {
     LocalDateTime sourceDateTime = DateTimeUtil.parseDateTime(dateTimeStr);
+    LocalDateTime targetDateTime = targetDateTimeStr != null ? 
+                                  DateTimeUtil.parseDateTime(targetDateTimeStr) : null;
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
@@ -280,6 +290,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
     }
 
     ICalendar sourceCalendar = calendarManager.getActiveCalendar();
+    String sourceTimezone = ((Calendar) sourceCalendar).getTimeZone().getID();
 
     Event sourceEvent = sourceCalendar.findEvent(eventName, sourceDateTime);
     if (sourceEvent == null) {
@@ -289,15 +300,29 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
     ICalendar targetCalendar = calendarManager.getCalendar(targetCalendarName);
     String targetTimezone = ((Calendar) targetCalendar).getTimeZone().getID();
 
-    LocalDateTime startInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getStartDateTime(),
-            targetTimezone);
-    LocalDateTime endInTargetTz = timezoneHandler.convertFromUTC(sourceEvent.getEndDateTime(),
-            targetTimezone);
+    // Calculate duration of the original event
+    Duration eventDuration = Duration.between(
+            sourceEvent.getStartDateTime(),
+            sourceEvent.getEndDateTime());
+    
+    // Use the target datetime if provided, otherwise just do timezone conversion
+    LocalDateTime newStartDateTime;
+    LocalDateTime newEndDateTime;
+    
+    if (targetDateTime != null) {
+      // Create a new event at the target time, preserving the duration
+      newStartDateTime = targetDateTime;
+      newEndDateTime = newStartDateTime.plus(eventDuration);
+    } else {
+      // Just preserve the same local time in the source event
+      newStartDateTime = sourceEvent.getStartDateTime();
+      newEndDateTime = sourceEvent.getEndDateTime();
+    }
 
     Event newEvent = new Event(
             sourceEvent.getSubject(),
-            startInTargetTz,
-            endInTargetTz,
+            newStartDateTime,
+            newEndDateTime,
             sourceEvent.getDescription(),
             sourceEvent.getLocation(),
             sourceEvent.isPublic()
@@ -323,6 +348,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
   private String copyDayEvents(String dateStr, String targetCalendarName, String targetDateStr)
           throws Exception {
     LocalDate sourceDate = DateTimeUtil.parseDate(dateStr);
+    LocalDate targetDate = DateTimeUtil.parseDate(targetDateStr); 
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
@@ -336,23 +362,36 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "No events found on " + sourceDate + " to copy.";
     }
 
+    String sourceTimezone = ((Calendar) sourceCalendar).getTimeZone().getID();
     String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName))
             .getTimeZone().getID();
 
+    // Calculate the difference in days between source and target dates
+    long daysDifference = ChronoUnit.DAYS.between(sourceDate, targetDate);
+
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
-      LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
-      long durationMinutes = Duration.between(
+      // Calculate the duration of the event
+      Duration eventDuration = Duration.between(
               sourceEvent.getStartDateTime(),
               sourceEvent.getEndDateTime()
-      ).toMinutes();
+      );
 
-      LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
+      // Get the local time components from the source event
+      int hour = sourceEvent.getStartDateTime().getHour();
+      int minute = sourceEvent.getStartDateTime().getMinute();
+      
+      // Create new datetime in the target date with the same local time
+      LocalDateTime newStartDateTime = LocalDateTime.of(
+              targetDate, 
+              LocalTime.of(hour, minute)
+      );
+      LocalDateTime newEndDateTime = newStartDateTime.plus(eventDuration);
 
       Event newEvent = new Event(
               sourceEvent.getSubject(),
-              targetDateTime,
-              targetDateTime.plusMinutes(durationMinutes),
+              newStartDateTime,
+              newEndDateTime,
               sourceEvent.getDescription(),
               sourceEvent.getLocation(),
               sourceEvent.isPublic()
@@ -392,6 +431,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
                                  String targetStartDateStr) throws Exception {
     LocalDate sourceStartDate = DateTimeUtil.parseDate(startDateStr);
     LocalDate sourceEndDate = DateTimeUtil.parseDate(endDateStr);
+    LocalDate targetStartDate = DateTimeUtil.parseDate(targetStartDateStr);
 
     if (!calendarManager.hasCalendar(targetCalendarName)) {
       throw new CalendarNotFoundException(
@@ -405,23 +445,45 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       return "No events found between " + sourceStartDate + " and " + sourceEndDate + " to copy.";
     }
 
+    String sourceTimezone = ((Calendar) sourceCalendar).getTimeZone().getID();
     String targetTimezone = ((Calendar) calendarManager.getCalendar(targetCalendarName))
             .getTimeZone().getID();
+            
+    // Calculate the difference in days between source start and target start
+    long daysDifference = ChronoUnit.DAYS.between(sourceStartDate, targetStartDate);
 
     int successCount = 0;
     for (Event sourceEvent : eventsToCopy) {
-      LocalDateTime sourceEventUTC = sourceEvent.getStartDateTime();
-      long durationMinutes = Duration.between(
+      // Calculate the duration of the event
+      Duration eventDuration = Duration.between(
               sourceEvent.getStartDateTime(),
               sourceEvent.getEndDateTime()
-      ).toMinutes();
+      );
 
-      LocalDateTime targetDateTime = timezoneHandler.convertFromUTC(sourceEventUTC, targetTimezone);
+      // Calculate how many days from source start date this event is
+      long eventDaysFromStart = ChronoUnit.DAYS.between(
+              sourceStartDate,
+              sourceEvent.getStartDateTime().toLocalDate()
+      );
+      
+      // Calculate the target date for this event
+      LocalDate eventTargetDate = targetStartDate.plusDays(eventDaysFromStart);
+      
+      // Get the local time components from the source event
+      int hour = sourceEvent.getStartDateTime().getHour();
+      int minute = sourceEvent.getStartDateTime().getMinute();
+      
+      // Create new datetime in the target date with the same local time
+      LocalDateTime newStartDateTime = LocalDateTime.of(
+              eventTargetDate, 
+              LocalTime.of(hour, minute)
+      );
+      LocalDateTime newEndDateTime = newStartDateTime.plus(eventDuration);
 
       Event newEvent = new Event(
               sourceEvent.getSubject(),
-              targetDateTime,
-              targetDateTime.plusMinutes(durationMinutes),
+              newStartDateTime,
+              newEndDateTime,
               sourceEvent.getDescription(),
               sourceEvent.getLocation(),
               sourceEvent.isPublic()
@@ -430,7 +492,7 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       try {
         calendarManager.executeOnCalendar(targetCalendarName, calendar -> {
           try {
-            calendar.addEvent(newEvent, false);
+            boolean added = calendar.addEvent(newEvent, false);
             return true;
           } catch (ConflictingEventException e) {
             return false;
