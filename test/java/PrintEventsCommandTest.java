@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -592,5 +593,247 @@ public class PrintEventsCommandTest {
     
     // The test now just checks that execution doesn't fail
     assertNotNull(result);
+  }
+
+  @Test
+  public void testExecuteWithNullArguments() {
+    try {
+      command.execute(null);
+      Assert.fail("Expected IllegalArgumentException to be thrown");
+    } catch (IllegalArgumentException e) {
+      assertEquals("Arguments array cannot be null", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testExecutePrintOnDateWithHighPrecisionDateTime() {
+    // Regular date format for on_date - the implementation might not handle ISO datetime properly
+    String[] args = {"on_date", "2023-04-10"};
+    LocalDate expectedDate = LocalDate.parse("2023-04-10");
+    
+    // Create a mock event for the test date
+    Event earlyMorningEvent = new MockEvent(
+            "Breakfast Meeting",
+            false,
+            LocalDateTime.of(2023, 4, 10, 7, 0),
+            LocalDateTime.of(2023, 4, 10, 8, 0),
+            "Cafe",
+            true
+    );
+    
+    // Set up the calendar with our event
+    List<Event> events = Arrays.asList(earlyMorningEvent);
+    calendar.setEventsOnDateResult(events);
+    
+    // Execute the command
+    String result = command.execute(args);
+    
+    // Verify the result
+    assertNotNull("Result should not be null", result);
+    System.out.println("RESULT: " + result);
+    assertTrue("Result should contain 'Events on'", result.contains("Events on"));
+    assertTrue("Result should contain the date", result.contains("2023-04-10"));
+    assertTrue("Result should contain the event name", result.contains("Breakfast Meeting"));
+  }
+
+  @Test
+  public void testPrintEventsWithEmptyDateTimeRange() {
+    String[] args = {"from_range", "2023-04-10T09:00", "2023-04-10T17:00"};
+    calendar.setEventsInRangeResult(new ArrayList<>());
+    
+    String result = command.execute(args);
+    
+    assertTrue(result.startsWith("No events from"));
+    assertTrue(result.contains("2023-04-10 09:00"));
+    assertTrue(result.contains("2023-04-10 17:00"));
+  }
+
+  @Test
+  public void testPrintEventsWithOverlappingDateTimeRange() {
+    String[] args = {"from_range", "2023-04-10T09:00", "2023-04-10T17:00"};
+    
+    // Event that starts before the range but ends within it
+    Event overlapStartEvent = new MockEvent(
+            "Overlap Start Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 8, 0),
+            LocalDateTime.of(2023, 4, 10, 10, 0),
+            "Room 101",
+            true
+    );
+    
+    // Event that starts within the range but ends after it
+    Event overlapEndEvent = new MockEvent(
+            "Overlap End Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 16, 0),
+            LocalDateTime.of(2023, 4, 10, 18, 0),
+            "Room 102",
+            true
+    );
+    
+    // Event completely outside the range (before)
+    Event beforeEvent = new MockEvent(
+            "Before Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 7, 0),
+            LocalDateTime.of(2023, 4, 10, 8, 0),
+            "Room 103",
+            true
+    );
+    
+    // Event completely outside the range (after)
+    Event afterEvent = new MockEvent(
+            "After Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 18, 0),
+            LocalDateTime.of(2023, 4, 10, 19, 0),
+            "Room 104",
+            true
+    );
+    
+    List<Event> allEvents = Arrays.asList(overlapStartEvent, overlapEndEvent, beforeEvent, afterEvent);
+    calendar.setEventsInRangeResult(allEvents);
+    
+    String result = command.execute(args);
+    
+    assertTrue(result.contains("Overlap Start Event"));
+    assertTrue(result.contains("Overlap End Event"));
+    // These events should be filtered out
+    assertFalse(result.contains("Before Event"));
+    assertFalse(result.contains("After Event"));
+  }
+
+  @Test
+  public void testPrintEventsWithMultiDayDateTimeRange() {
+    String[] args = {"from_range", "2023-04-10T20:00", "2023-04-12T10:00"};
+    
+    Event dayOneEvent = new MockEvent(
+            "Day One Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 21, 0),
+            LocalDateTime.of(2023, 4, 10, 22, 0),
+            "Room 201",
+            true
+    );
+    
+    Event dayTwoEvent = new MockEvent(
+            "Day Two Event",
+            false,
+            LocalDateTime.of(2023, 4, 11, 14, 0),
+            LocalDateTime.of(2023, 4, 11, 15, 0),
+            "Room 202",
+            true
+    );
+    
+    Event dayThreeEvent = new MockEvent(
+            "Day Three Event",
+            false,
+            LocalDateTime.of(2023, 4, 12, 9, 0),
+            LocalDateTime.of(2023, 4, 12, 10, 0),
+            "Room 203",
+            true
+    );
+    
+    List<Event> events = Arrays.asList(dayOneEvent, dayTwoEvent, dayThreeEvent);
+    calendar.setEventsInRangeResult(events);
+    
+    String result = command.execute(args);
+    
+    assertTrue(result.contains("Day One Event"));
+    assertTrue(result.contains("Day Two Event"));
+    assertTrue(result.contains("Day Three Event"));
+    assertTrue(result.contains("2023-04-10 20:00 to 2023-04-12 10:00"));
+  }
+
+  @Test
+  public void testMixedDateAndDateTimeRangeFormats() {
+    // Date-only for start, datetime for end
+    String[] args = {"from_range", "2023-04-10", "2023-04-10T17:00"};
+    
+    Event morningEvent = new MockEvent(
+            "Morning Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 9, 0),
+            LocalDateTime.of(2023, 4, 10, 10, 0),
+            "Room 301",
+            true
+    );
+    
+    List<Event> events = Arrays.asList(morningEvent);
+    calendar.setEventsInRangeResult(events);
+    
+    String result = command.execute(args);
+    
+    assertTrue(result.contains("Morning Event"));
+    // Should convert date-only to start of day
+    assertTrue(result.contains("2023-04-10 00:00"));
+  }
+
+  @Test
+  public void testPrintEventsOnDateWithEarlyNextDayEvents() {
+    String[] args = {"on_date", "2023-04-10"};
+    final LocalDate inputDate = LocalDate.parse("2023-04-10");
+    final LocalDate nextDay = inputDate.plusDays(1);
+    
+    // Regular event on requested date
+    Event regularEvent = new MockEvent(
+            "Regular Event",
+            false,
+            LocalDateTime.of(2023, 4, 10, 15, 0),
+            LocalDateTime.of(2023, 4, 10, 16, 0),
+            "Main Office",
+            true
+    );
+    
+    // Early morning event on next day (should be included)
+    Event earlyMorningNextDay = new MockEvent(
+            "Early Morning Event",
+            false,
+            LocalDateTime.of(2023, 4, 11, 5, 0),
+            LocalDateTime.of(2023, 4, 11, 6, 0),
+            "Breakfast Room",
+            true
+    );
+    
+    // Late morning event on next day (should NOT be included)
+    Event lateMorningNextDay = new MockEvent(
+            "Late Morning Event",
+            false,
+            LocalDateTime.of(2023, 4, 11, 10, 0),
+            LocalDateTime.of(2023, 4, 11, 11, 0),
+            "Conference Room",
+            true
+    );
+    
+    final List<Event> currentDayEvents = Arrays.asList(regularEvent);
+    calendar.setEventsOnDateResult(currentDayEvents);
+    
+    final List<Event> nextDayEvents = Arrays.asList(earlyMorningNextDay, lateMorningNextDay);
+    
+    // Create a custom mock calendar for this test
+    MockCalendar calendarWithNextDayEvents = new MockCalendar();
+    calendarWithNextDayEvents.setEventsOnDateResult(currentDayEvents);
+    
+    // Override getEventsOnDate method to provide different results based on date
+    MockCalendar spyCalendar = new MockCalendar() {
+        @Override
+        public List<Event> getEventsOnDate(LocalDate date) {
+            super.lastCheckedDate = date; // This is allowed in an anonymous subclass
+            if (date.equals(inputDate)) {
+                return currentDayEvents;
+            } else if (date.equals(nextDay)) {
+                return nextDayEvents;
+            }
+            return new ArrayList<>();
+        }
+    };
+    
+    PrintEventsCommand commandWithNextDayEvents = new PrintEventsCommand(spyCalendar);
+    String result = commandWithNextDayEvents.execute(args);
+    
+    assertTrue(result.contains("Regular Event"));
+    assertTrue(result.contains("Early Morning Event"));
+    assertFalse(result.contains("Late Morning Event"));
   }
 }
