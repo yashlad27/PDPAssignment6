@@ -1,17 +1,16 @@
-import org.junit.Before;
-import org.junit.Test;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.TimeZone;
 
-import model.calendar.timezone.TimezoneService;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+
+import model.calendar.timezone.TimezoneService;
 
 /**
  * Unit tests for the TimezoneService class that handles timezone conversions.
@@ -171,5 +170,96 @@ public class TimezoneServiceTest {
     LocalDateTime roundTripDateTime = timezoneService.convertTime(tokyoDateTime, "Asia/Tokyo", "America/New_York");
 
     assertEquals(originalDateTime, roundTripDateTime);
+  }
+
+  @Test
+  public void testConvertDateTimeAcrossDifferentTimezones() {
+    // Create timezone service with default timezone (America/New_York)
+    TimezoneService service = new TimezoneService();
+    
+    // Test converting from New York to Tokyo
+    LocalDateTime nyDateTime = LocalDateTime.of(2023, 4, 10, 20, 0); // 8 PM in New York
+    String nyTz = "America/New_York";
+    String tokyoTz = "Asia/Tokyo";
+    
+    LocalDateTime tokyoDateTime = service.convertTime(nyDateTime, nyTz, tokyoTz);
+    
+    // Tokyo is UTC+9, New York is UTC-4 or UTC-5 depending on DST
+    // The difference is 13 or 14 hours, so 8 PM in NY is 9 or 10 AM next day in Tokyo
+    assertTrue(tokyoDateTime.getDayOfMonth() == 11); // Should be next day
+    assertTrue(tokyoDateTime.getHour() >= 9); // Should be morning in Tokyo
+  }
+
+  @Test
+  public void testConvertDateTimeAroundMidnight() {
+    // Create timezone service
+    TimezoneService service = new TimezoneService();
+    
+    // Test event at 11:30 PM
+    LocalDateTime lateNight = LocalDateTime.of(2023, 4, 10, 23, 30);
+    String nyTz = "America/New_York";
+    String laTz = "America/Los_Angeles";
+    
+    LocalDateTime westCoastTime = service.convertTime(lateNight, nyTz, laTz);
+    
+    // West coast is 3 hours behind NY, so 11:30 PM in NY is 8:30 PM in LA
+    assertEquals(10, westCoastTime.getDayOfMonth());
+    assertEquals(20, westCoastTime.getHour());
+    assertEquals(30, westCoastTime.getMinute());
+  }
+
+  @Test
+  public void testConvertDateTimeFromDifferentTimezoneToLocal() {
+    TimezoneService service = new TimezoneService();
+    
+    // Set up a specific reference timezone
+    String londonTz = "Europe/London";
+    String nyTz = "America/New_York";
+    
+    // 3:00 PM in London
+    LocalDateTime londonTime = LocalDateTime.of(2023, 4, 10, 15, 0);
+    
+    // Convert to the service's local timezone (assumed to be America/New_York)
+    LocalDateTime localTime = service.convertTime(londonTime, londonTz, nyTz);
+    
+    // London is UTC+1 (during DST), NY is UTC-4 (during DST), so 5 hours difference
+    // 3 PM in London should be 10 AM in New York
+    assertEquals(10, localTime.getHour());
+  }
+
+  @Test
+  public void testTimezoneOffsetCalculation() {
+    TimezoneService service = new TimezoneService();
+    
+    // Test round-trip conversion to verify offset calculation is working correctly
+    String nyTz = "America/New_York";
+    String tokyoTz = "Asia/Tokyo";
+    
+    LocalDateTime original = LocalDateTime.of(2023, 4, 10, 12, 0); // Noon in NY
+    LocalDateTime converted = service.convertTime(original, nyTz, tokyoTz);
+    LocalDateTime roundTrip = service.convertTime(converted, tokyoTz, nyTz);
+    
+    // After round trip, time should be the same
+    assertEquals(original, roundTrip);
+    // Tokyo should be next day
+    assertTrue(converted.getDayOfMonth() > original.getDayOfMonth() || 
+           (original.getDayOfMonth() == 30 && converted.getDayOfMonth() == 1));
+  }
+
+  @Test
+  public void testDateBoundaryHandlingInDifferentTimezones() {
+    TimezoneService service = new TimezoneService();
+    
+    // 1:00 AM in New York
+    LocalDateTime earlyMorningNY = LocalDateTime.of(2023, 4, 10, 1, 0);
+    
+    // Convert to Tokyo time (should be afternoon on the same day in Tokyo)
+    String nyTz = "America/New_York";
+    String tokyoTz = "Asia/Tokyo";
+    LocalDateTime tokyoTime = service.convertTime(earlyMorningNY, nyTz, tokyoTz);
+    
+    // This should be same day in Tokyo, but later in the day
+    assertEquals(10, tokyoTime.getDayOfMonth());
+    assertTrue(tokyoTime.getHour() >= 14); // Should be afternoon in Tokyo
   }
 } 

@@ -11,10 +11,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.TimeZone;
 
 import model.event.Event;
+import utilities.TimeZoneHandler;
 
 /**
  * Implementation of IDataExporter that handles CSV format exports.
@@ -130,165 +132,164 @@ public class CSVExporter implements IDataExporter {
 
   @Override
   public String export(String filePath, List<Event> events) throws IOException {
-    System.out.println("[DEBUG] CSVExporter.export called for file: " + filePath);
-    System.out.println("[DEBUG] Number of events to export: " + (events != null
-            ? events.size() : 0));
-
-    if (events == null || events.isEmpty()) {
-      System.out.println("[WARNING] No events to export or events list is null");
+    if (filePath == null || filePath.trim().isEmpty()) {
+      throw new IllegalArgumentException("File path cannot be null or empty");
+    }
+    if (events == null) {
+      throw new IllegalArgumentException("Events list cannot be null");
     }
 
-    // Create parent directories if they don't exist
-    File exportFile = new File(filePath);
-    File parentDir = exportFile.getParentFile();
-    if (parentDir != null && !parentDir.exists()) {
-      System.out.println("[DEBUG] Creating parent directories: " + parentDir.getAbsolutePath());
-      boolean dirCreated = parentDir.mkdirs();
-      System.out.println("[DEBUG] Parent directories created: " + dirCreated);
-    }
+    File file = new File(filePath);
+    ensureDirectoryExists(file.getParentFile());
 
-    System.out.println("[DEBUG] Opening FileWriter for: " + filePath);
-    try (FileWriter writer = new FileWriter(filePath)) {
-      // Write header row
-      String header = "Subject,Start Date,Start Time,End Date,End Time,All Day," +
-              "Description,Location,Public\n";
-      System.out.println("[DEBUG] Writing CSV header: " + header.trim());
-      writer.write(header);
+    try (FileWriter writer = new FileWriter(file)) {
+      // Write header
+      writer.write(getHeaderLine());
+      writer.write("\n");
 
-      // Track how many events we've written
-      final int[] count = {0};
-
-      System.out.println("[DEBUG] Starting to write event data");
-      events.stream()
-              .map(event -> {
-                String formatted = formatEventForCSV(event);
-                System.out.println("[DEBUG] Formatted event " + (count[0] + 1) + ": " +
-                        event.getSubject() + " -> " + formatted.substring(0,
-                        Math.min(50, formatted.length())) +
-                        (formatted.length() > 50 ? "..." : ""));
-                count[0]++;
-                return formatted;
-              })
-              .forEach(line -> {
-                try {
-                  writer.write(line);
-                } catch (IOException e) {
-                  System.err.println("[ERROR] Failed to write event to CSV: " + e.getMessage());
-                  throw new RuntimeException("Failed to write event to CSV", e);
-                }
-              });
-
-      System.out.println("[DEBUG] Successfully wrote " + count[0] + " events to CSV file");
-    } catch (IOException e) {
-      System.err.println("[ERROR] Exception while exporting CSV: " + e.getMessage());
-      throw e;
-    }
-
-    // Verify the file was created and has content
-    File outputFile = new File(filePath);
-    if (outputFile.exists()) {
-      System.out.println("[DEBUG] CSV file created successfully: " + outputFile.getAbsolutePath());
-      System.out.println("[DEBUG] CSV file size: " + outputFile.length() + " bytes");
-    } else {
-      System.out.println("[WARNING] CSV file was not created");
+      // Write events
+      for (Event event : events) {
+        writer.write(formatEventAsCSV(event));
+        writer.write("\n");
+      }
     }
 
     return filePath;
   }
 
-  @Override
-  public String formatForDisplay(List<Event> events, boolean showDetails) {
+  /**
+   * Formats a list of events for display with proper timezone conversion.
+   *
+   * @param events        the list of events to format
+   * @param includeHeader whether to include a header row
+   * @param timezone      the timezone to display times in
+   * @return a formatted string representing the events
+   */
+  public String formatForDisplay(List<Event> events, boolean includeHeader, String timezone) {
     if (events == null || events.isEmpty()) {
       return "No events found.";
     }
 
-    return events.stream()
-            .map(event -> formatEventForDisplay(event, showDetails))
-            .collect(Collectors.joining("\n"));
-  }
+    StringBuilder builder = new StringBuilder();
+    TimeZoneHandler timezoneHandler = new TimeZoneHandler();
 
-  /**
-   * Formats a single event as a CSV row.
-   * This method generates a properly formatted CSV string for an event, with
-   * values properly escaped according to CSV standards.
-   *
-   * @param event the event to format as a CSV row
-   * @return a CSV-formatted string representing the event, ending with a newline
-   */
-  private String formatEventForCSV(Event event) {
-    return String.format("%s,%s,%s,%s,%s,%b,%s,%s,%b\n",
-            escapeCSV(event.getSubject()),
-            event.getStartDateTime().format(DATE_FORMATTER),
-            event.getStartDateTime().format(TIME_FORMATTER),
-            event.getEndDateTime().format(DATE_FORMATTER),
-            event.getEndDateTime().format(TIME_FORMATTER),
-            event.isAllDay(),
-            escapeCSV(event.getDescription()),
-            escapeCSV(event.getLocation()),
-            event.isPublic());
-  }
+    // Sort events by start time
+    events.sort(Comparator.comparing(Event::getStartDateTime));
 
-  /**
-   * Formats a single event for display in a human-readable format.
-   * This method generates a string representation of an event with basic information
-   * and optional details depending on the showDetails parameter.
-   *
-   * @param event       the event to format for display
-   * @param showDetails whether to include detailed information like description,location & privacy
-   * @return a formatted string representation of the event
-   */
-  private String formatEventForDisplay(Event event, boolean showDetails) {
-    StringBuilder display = new StringBuilder();
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-    display.append(event.getSubject());
-
-    if (event.isAllDay()) {
-      display.append(" (All Day)");
-    } else {
-      display.append(" from ")
-              .append(event.getStartDateTime().format(TIME_FORMATTER))
-              .append(" to ")
-              .append(event.getEndDateTime().format(TIME_FORMATTER));
-    }
-
-    if (showDetails) {
-      String description = event.getDescription();
-      if (description != null && !description.trim().isEmpty()) {
-        display.append("\n  Description: ").append(description);
-      }
-      String location = event.getLocation();
-      if (location != null && !location.trim().isEmpty()) {
-        display.append("\n  Location: ").append(location);
+    for (Event event : events) {
+      // Convert from UTC to the calendar's timezone for display
+      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), timezone);
+      LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), timezone);
+      
+      String startTime = localStartTime.format(timeFormatter);
+      String endTime = localEndTime.format(timeFormatter);
+      
+      builder.append(event.getSubject());
+      
+      // Handle all-day events differently
+      if (event.isAllDay()) {
+        builder.append(" (All Day)");
       } else {
-        display.append("\n  Location: N/A");
+        builder.append(" from ").append(startTime)
+               .append(" to ").append(endTime);
       }
-      if (!event.isPublic()) {
-        display.append("\n  Private");
+      builder.append("\n");
+      
+      // Add location if present
+      if (includeHeader || event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
+        builder.append("  Location: ");
+        if (event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
+          builder.append(event.getLocation());
+        } else {
+          builder.append("N/A");
+        }
+        builder.append("\n");
       }
     }
 
-    return display.toString();
+    return builder.toString();
   }
 
   /**
-   * Escapes a string value for CSV format.
-   * This method handles special characters in CSV:
-   * - If the value contains commas, double quotes, or newlines, it wraps the value in quotes
-   * - Any existing double quotes are escaped by doubling them
-   * - Null values are converted to empty strings
+   * Format events for display, using the default timezone.
    *
-   * @param value the string value to escape for CSV format
-   * @return the properly escaped CSV value
+   * @param events        the list of events to format
+   * @param includeHeader whether to include a header row
+   * @return a formatted string representing the events
    */
-  private String escapeCSV(String value) {
-    if (value == null) {
+  public String formatForDisplay(List<Event> events, boolean includeHeader) {
+    // Use system default timezone as fallback
+    return formatForDisplay(events, includeHeader, TimeZone.getDefault().getID());
+  }
+
+  private String getHeaderLine() {
+    return String.join(",", "Subject", "Start Date", "Start Time", "End Date", "End Time",
+            "Description", "Location", "Is Public");
+  }
+
+  private String formatEventAsCSV(Event event) {
+    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+    String startDate = event.getStartDateTime().format(dateFormatter);
+    String startTime = event.getStartDateTime().format(timeFormatter);
+
+    String endDate = event.getEndDateTime().format(dateFormatter);
+    String endTime = event.getEndDateTime().format(timeFormatter);
+
+    String description = event.getDescription() != null ? escapeCSV(event.getDescription()) : "";
+    String location = event.getLocation() != null ? escapeCSV(event.getLocation()) : "";
+
+    return String.join(",",
+            escapeCSV(event.getSubject()),
+            startDate,
+            startTime,
+            endDate,
+            endTime,
+            description,
+            location,
+            String.valueOf(event.isPublic()));
+  }
+
+  private String escapeCSV(String field) {
+    if (field == null) {
       return "";
     }
+    if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
+      return "\"" + field.replace("\"", "\"\"") + "\"";
+    }
+    return field;
+  }
 
-    if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-      return "\"" + value.replace("\"", "\"\"") + "\"";
+  private String formatEventForDisplay(Event event, boolean showDetails) {
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(event.getSubject())
+            .append(" from ")
+            .append(event.getStartDateTime().format(timeFormatter))
+            .append(" to ")
+            .append(event.getEndDateTime().format(timeFormatter));
+
+    if (showDetails) {
+      builder.append("\n  Location: ");
+      if (event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
+        builder.append(event.getLocation());
+      } else {
+        builder.append("N/A");
+      }
     }
 
-    return value;
+    return builder.toString();
+  }
+
+  private void ensureDirectoryExists(File directory) throws IOException {
+    if (directory != null && !directory.exists()) {
+      if (!directory.mkdirs()) {
+        throw new IOException("Failed to create directory: " + directory.getAbsolutePath());
+      }
+    }
   }
 }

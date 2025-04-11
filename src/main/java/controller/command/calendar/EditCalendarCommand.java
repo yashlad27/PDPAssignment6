@@ -49,12 +49,17 @@ public class EditCalendarCommand implements ICommand {
       if ("timezone".equals(property)) {
         calendarManager.editCalendarTimezone(name, value);
         return "Calendar timezone updated: " + name;
+      } else if ("name".equals(property)) {
+        calendarManager.editCalendarName(name, value);
+        return "Calendar name updated from '" + name + "' to '" + value + "'";
       } else {
         return "Error: Unsupported property: " + property;
       }
     } catch (CalendarNotFoundException e) {
       return "Error: " + e.getMessage();
     } catch (InvalidTimezoneException e) {
+      return "Error: " + e.getMessage();
+    } catch (IllegalArgumentException e) {
       return "Error: " + e.getMessage();
     }
   }
