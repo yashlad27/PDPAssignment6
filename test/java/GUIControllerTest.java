@@ -835,7 +835,6 @@ public class GUIControllerTest {
    * Stub implementation of GUIExportImportPanel for testing
    */
   private class StubExportImportPanel extends GUIExportImportPanel {
-    private ExportImportListener listener;
 
     public StubExportImportPanel() {
       super();
@@ -843,7 +842,6 @@ public class GUIControllerTest {
 
     @Override
     public void addExportImportListener(ExportImportListener listener) {
-      this.listener = listener;
     }
 
     @Override
