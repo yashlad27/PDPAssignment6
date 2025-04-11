@@ -468,38 +468,77 @@ public class Calendar implements ICalendar {
 
     Map<UUID, Event> eventsOnDateById = new HashMap<>();
 
-    List<Event> regularEvents = getFilteredEvents(event -> {
-      if (event.getStartDateTime() != null) {
-        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
-
-        if (event.getEndDateTime() != null) {
-          LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
-          return !date.isBefore(eventStartDate) && !date.isAfter(eventEndDate);
-        } else {
-          return eventStartDate.equals(date);
+    // Get events for a wider date range to catch timezone-affected events
+    // We need to look at the day before and after to catch events that might be
+    // on a different day in UTC
+    LocalDate dayBefore = date.minusDays(1);
+    LocalDate dayAfter = date.plusDays(1);
+    
+    // First get all events in the expanded date range
+    List<Event> allEventsInRange = getEventsInRange(dayBefore, dayAfter);
+    
+    // Filter events based on both local date and UTC date
+    LocalDate localDate = date;  // Target date in local timezone
+    
+    for (Event event : allEventsInRange) {
+        // For events happening at day boundaries, we need to be lenient in our filtering
+        if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
+            LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
+            LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
+            
+            // Event is related to our date if:
+            // 1. The event starts or ends on our target date (classic case)
+            if (eventStartDate.equals(localDate) || eventEndDate.equals(localDate)) {
+                eventsOnDateById.put(event.getId(), event);
+            }
+            // 2. The event spans across our target date (less common)
+            else if (eventStartDate.isBefore(localDate) && eventEndDate.isAfter(localDate)) {
+                eventsOnDateById.put(event.getId(), event);
+            }
+            // 3. Special case: when an event starts VERY late (e.g., 8pm-11pm), it might be stored 
+            // as midnight-3am the next day in UTC. So events at the "start" of the next day
+            // might actually belong to our target date.
+            else if (eventStartDate.equals(localDate.plusDays(1)) && 
+                    event.getStartDateTime().getHour() < 6) { // Early hours of next day
+                eventsOnDateById.put(event.getId(), event);
+            }
+            // 4. Special case: when an event ends VERY early (e.g., 11pm-3am), it might 
+            // end on our target date. So events that end early on our target date might
+            // actually be from the previous day.
+            else if (eventEndDate.equals(localDate) && 
+                    event.getEndDateTime().getHour() < 6) { // Early hours of target day
+                eventsOnDateById.put(event.getId(), event);
+            }
+            // 5. Special case for events that start exactly at midnight
+            else if (eventStartDate.equals(localDate) && 
+                    event.getStartDateTime().getHour() == 0 && 
+                    event.getStartDateTime().getMinute() == 0) {
+                // Always include events that start exactly at midnight of the target date
+                eventsOnDateById.put(event.getId(), event);
+            }
+            // 6. Also check the day before for events crossing midnight
+            else if (eventStartDate.equals(localDate.minusDays(1)) && 
+                     eventEndDate.equals(localDate) ||
+                     eventEndDate.isAfter(localDate)) {
+                // For events that start the day before and cross midnight
+                if (event.getStartDateTime().getHour() >= 23 || 
+                    event.getEndDateTime().getHour() <= 1) {
+                    eventsOnDateById.put(event.getId(), event);
+                }
+            }
+        } else if (event.getDate() != null && event.getDate().equals(localDate)) {
+            eventsOnDateById.put(event.getId(), event);
         }
-      } else if (event.getDate() != null) {
-        return event.getDate().equals(date);
-      }
-      return false;
-    });
-
-    for (Event event : regularEvents) {
-      eventsOnDateById.put(event.getId(), event);
     }
+    
+    // Handle recurring events
     for (RecurringEvent recurringEvent : this.recurringEvents) {
-      System.out.println("[DEBUG] Checking recurring event for date " + date + ": "
-              + recurringEvent.getSubject());
-
       List<Event> occurrences = recurringEvent.getOccurrencesBetween(date, date);
-      System.out.println("[DEBUG] Found " + occurrences.size()
-              + " occurrences of recurring event "
-              + recurringEvent.getSubject() + " on " + date);
-
       for (Event occurrence : occurrences) {
         eventsOnDateById.put(occurrence.getId(), occurrence);
       }
     }
+    
     return new ArrayList<>(eventsOnDateById.values());
   }
 
@@ -522,10 +561,21 @@ public class Calendar implements ICalendar {
 
     Map<UUID, Event> eventsInRangeById = new HashMap<>();
 
+    // Use a more comprehensive filter that checks for any overlap with the date range
     EventFilter dateRangeFilter = event -> {
-      if (event.getStartDateTime() != null) {
-        LocalDate eventDate = event.getStartDateTime().toLocalDate();
-        return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
+      if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
+        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
+        LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
+        
+        // Event overlaps with range if:
+        // 1. Starts within the range, or
+        // 2. Ends within the range, or
+        // 3. Completely spans the range (starts before and ends after)
+        boolean startsInRange = !eventStartDate.isBefore(startDate) && !eventStartDate.isAfter(endDate);
+        boolean endsInRange = !eventEndDate.isBefore(startDate) && !eventEndDate.isAfter(endDate);
+        boolean spansRange = eventStartDate.isBefore(startDate) && eventEndDate.isAfter(endDate);
+        
+        return startsInRange || endsInRange || spansRange;
       }
       return false;
     };
@@ -536,11 +586,11 @@ public class Calendar implements ICalendar {
       eventsInRangeById.put(event.getId(), event);
     }
 
+    // Process recurring events day by day
     LocalDate currentDate = startDate;
     while (!currentDate.isAfter(endDate)) {
       for (RecurringEvent recurringEvent : this.recurringEvents) {
         List<Event> occurrences = recurringEvent.getOccurrencesBetween(currentDate, currentDate);
-
         for (Event occurrence : occurrences) {
           eventsInRangeById.put(occurrence.getId(), occurrence);
         }
@@ -550,7 +600,6 @@ public class Calendar implements ICalendar {
 
     return new ArrayList<>(eventsInRangeById.values());
   }
-
 
   /**
    * Gets the name of this calendar.

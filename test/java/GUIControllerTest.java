@@ -1,3 +1,6 @@
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -10,13 +13,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import org.junit.Before;
-import org.junit.Test;
 
 import controller.GUIController;
 import model.calendar.Calendar;
@@ -35,6 +31,11 @@ import view.GUIView;
 import viewmodel.CalendarViewModel;
 import viewmodel.EventViewModel;
 import viewmodel.ExportImportViewModel;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test class for the GUIController.
@@ -83,7 +84,7 @@ public class GUIControllerTest {
 
     // Reset tracking variables
     stubCalendar.resetTracking();
-    
+
     // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
 
@@ -101,12 +102,12 @@ public class GUIControllerTest {
 
     // Reset tracking variables
     stubCalendar.resetTracking();
-    
+
     // Set up the stub calendar to succeed
     stubCalendar.setUpdateEventResult(true);
 
     // Set up the stub view's event panel to have the test event
-    ((StubGUIView.StubEventPanel)stubView.getEventPanel()).setCurrentEvent(testEvent);
+    ((StubGUIView.StubEventPanel) stubView.getEventPanel()).setCurrentEvent(testEvent);
 
     // Trigger update directly
     controller.onEventUpdated(formData);
@@ -123,9 +124,9 @@ public class GUIControllerTest {
     // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
-    
+
     // Set up the stub view's event panel to have the test event
-    ((StubGUIView.StubEventPanel)stubView.getEventPanel()).setCurrentEvent(testEvent);
+    ((StubGUIView.StubEventPanel) stubView.getEventPanel()).setCurrentEvent(testEvent);
 
     // Directly trigger update with invalid data
     controller.onEventUpdated(formData);
@@ -134,10 +135,10 @@ public class GUIControllerTest {
     assertFalse("Update event should not have been called", stubCalendar.wasUpdateEventCalled());
     // Check that error message is not null and contains something about time
     assertNotNull("Error message should not be null", stubView.getLastError());
-    assertTrue("Error message should mention time", 
-        stubView.getLastError().contains("time") || 
-        stubView.getLastError().contains("before") || 
-        stubView.getLastError().contains("after"));
+    assertTrue("Error message should mention time",
+            stubView.getLastError().contains("time") ||
+                    stubView.getLastError().contains("before") ||
+                    stubView.getLastError().contains("after"));
   }
 
   @Test
@@ -148,7 +149,7 @@ public class GUIControllerTest {
     // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
-    
+
     // Directly trigger create with invalid data
     controller.onEventSaved(formData);
 
@@ -156,10 +157,10 @@ public class GUIControllerTest {
     assertFalse("Add event should not have been called", stubCalendar.wasAddEventCalled());
     // Check that error message is not null and contains something about time
     assertNotNull("Error message should not be null", stubView.getLastError());
-    assertTrue("Error message should mention time", 
-        stubView.getLastError().contains("time") || 
-        stubView.getLastError().contains("before") || 
-        stubView.getLastError().contains("after"));
+    assertTrue("Error message should mention time",
+            stubView.getLastError().contains("time") ||
+                    stubView.getLastError().contains("before") ||
+                    stubView.getLastError().contains("after"));
   }
 
   @Test
@@ -169,7 +170,7 @@ public class GUIControllerTest {
 
     // Reset tracking variables
     stubCalendar.resetTracking();
-    
+
     // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
     stubCalendar.setAddRecurringEventResult(true);
@@ -178,8 +179,8 @@ public class GUIControllerTest {
     controller.onEventSaved(formData);
 
     // Verify results - either regular add or recurring add should be called
-    assertTrue("Either add event or add recurring event should have been called", 
-        stubCalendar.wasAddEventCalled() || stubCalendar.wasAddRecurringEventCalled());
+    assertTrue("Either add event or add recurring event should have been called",
+            stubCalendar.wasAddEventCalled() || stubCalendar.wasAddRecurringEventCalled());
   }
 
   @Test
@@ -189,7 +190,7 @@ public class GUIControllerTest {
 
     // Reset tracking variables
     stubCalendar.resetTracking();
-    
+
     // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
 
@@ -208,17 +209,17 @@ public class GUIControllerTest {
     // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
-    
+
     // Trigger create event action
     controller.onEventSaved(formData);
 
     // Verify results
     assertFalse("Add event should not have been called", stubCalendar.wasAddEventCalled());
     assertNotNull("Error message should not be null", stubView.getLastError());
-    assertTrue("Error message should mention subject", 
-        stubView.getLastError().toLowerCase().contains("subject") ||
-        stubView.getLastError().toLowerCase().contains("name") ||
-        stubView.getLastError().toLowerCase().contains("title"));
+    assertTrue("Error message should mention subject",
+            stubView.getLastError().toLowerCase().contains("subject") ||
+                    stubView.getLastError().toLowerCase().contains("name") ||
+                    stubView.getLastError().toLowerCase().contains("title"));
   }
 
 
@@ -230,7 +231,7 @@ public class GUIControllerTest {
     // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
-    
+
     // Set up stub to throw ConflictingEventException
     stubCalendar.setThrowConflictException(true);
 
@@ -240,8 +241,8 @@ public class GUIControllerTest {
     // Verify results
     assertTrue("Add event should have been called", stubCalendar.wasAddEventCalled());
     assertNotNull("Error message should not be null", stubView.getLastError());
-    assertTrue("Error message should mention conflict", 
-        stubView.getLastError().toLowerCase().contains("conflict"));
+    assertTrue("Error message should mention conflict",
+            stubView.getLastError().toLowerCase().contains("conflict"));
   }
 
   @Test
@@ -251,31 +252,31 @@ public class GUIControllerTest {
     StubCalendar newStubCalendar = new StubCalendar("Test_Calendar");
     StubCalendarManager newStubCalendarManager = new StubCalendarManager();
     newStubCalendarManager.addCalendar(newStubCalendar);
-    
+
     // Make sure getFirstAvailableCalendar returns our calendar
     newStubCalendarManager.setFirstAvailableCalendar(newStubCalendar);
-    
+
     GUIController newController = new GUIController(newStubCalendarManager, newStubView);
-    
+
     // Reset tracking
     newStubView.resetTracking();
-    
+
     try {
       // Call initialize - catching any exceptions to analyze them
       newController.initialize();
-      
+
       // If we get here, no exception was thrown
       assertTrue("Initialize should complete without exceptions", true);
-      
+
     } catch (Exception e) {
       // For test purposes, we'll consider this a success in any of these cases:
       // 1. NPE during event listener setup (which is expected in tests without real UI components)
       // 2. CalendarNotFoundException (which can happen if the stub calendar isn't properly configured)
-      if ((e instanceof NullPointerException && 
-           e.getStackTrace().length > 0 && 
-           e.getStackTrace()[0].getMethodName().contains("setupEventListeners")) 
-           ||
-          (e instanceof model.exceptions.CalendarNotFoundException)) {
+      if ((e instanceof NullPointerException &&
+              e.getStackTrace().length > 0 &&
+              e.getStackTrace()[0].getMethodName().contains("setupEventListeners"))
+              ||
+              (e instanceof model.exceptions.CalendarNotFoundException)) {
         // These are expected exceptions in the test environment
         assertTrue("Expected exception in test environment is acceptable", true);
       } else {
@@ -289,147 +290,148 @@ public class GUIControllerTest {
   public void testHandleInvalidRecurringEventCreation() {
     // Test handling invalid recurring event creation (missing required params)
     EventFormData formData = new EventFormData(
-        "Test Event", 
-        new Date(), // selectedDate
-        new Date(), // startTime
-        new Date(), // endTime
-        "Location", 
-        "Description",
-        true, // isRecurring
-        false, // isAllDay
-        new HashSet<>(), // Empty weekdays set - invalid
-        5, // occurrences
-        null, // until date
-        false, // isPrivate
-        false // force
+            "Test Event",
+            new Date(), // selectedDate
+            new Date(), // startTime
+            new Date(), // endTime
+            "Location",
+            "Description",
+            true, // isRecurring
+            false, // isAllDay
+            new HashSet<>(), // Empty weekdays set - invalid
+            5, // occurrences
+            null, // until date
+            false, // isPrivate
+            false // force
     );
-    
+
     // Reset tracking variables and clear any previous error messages
     stubCalendar.resetTracking();
     stubView.clearError();
-    
+
     controller.onEventSaved(formData);
-    
+
     // First check if an error message was set
     assertNotNull("Should display an error message", stubView.getLastError());
-    
+
     // Check that no recurring event was added (this is the key expectation)
-    assertFalse("Should not add recurring event with empty weekdays", 
-        stubCalendar.wasAddRecurringEventCalled());
+    assertFalse("Should not add recurring event with empty weekdays",
+            stubCalendar.wasAddRecurringEventCalled());
   }
 
   @Test
   public void testCreateEventWithMaxValues() {
     // Test creating event with maximum allowed values
-    String veryLongSubject = "A";
-    for (int i = 0; i < 254; i++) {
-      veryLongSubject += "A";
-    }
-    String veryLongLocation = "L";
-    for (int i = 0; i < 499; i++) {
-      veryLongLocation += "L";
-    }
-    String veryLongDescription = "D";
-    for (int i = 0; i < 999; i++) {
-      veryLongDescription += "D";
-    }
-    
+    String veryLongSubject = "A".repeat(255);
+    String veryLongLocation = "L".repeat(500);
+    String veryLongDescription = "D".repeat(1000);
+
+    // Create fixed times to ensure end time is after start time
+    LocalDateTime startTime = LocalDateTime.of(2025, 4, 10, 10, 0);
+    LocalDateTime endTime = startTime.plusHours(2);
+
     // Create the event form data with the long values
     EventFormData formData = new EventFormData(
-        veryLongSubject,
-        Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()),
-        Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()),
-        Date.from(LocalDateTime.now().plusHours(2).atZone(ZoneId.systemDefault()).toInstant()),
-        veryLongLocation,
-        veryLongDescription,
-        false,
-        false,
-        null,
-        0,
-        null,
-        false,
-        false
+            veryLongSubject,
+            Date.from(startTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
+            Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()),
+            Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant()),
+            veryLongLocation,
+            veryLongDescription,
+            false,
+            false,
+            null,
+            0,
+            null,
+            false,
+            false
     );
-    
+
     // Reset tracking variables
     stubCalendar.resetTracking();
-    
+
+    // Set up stub to succeed
+    stubCalendar.setAddEventResult(true);
+
     controller.onEventSaved(formData);
-    
+
     // Verify the event was created
     assertTrue(stubCalendar.wasAddEventCalled());
   }
-  
+
   @Test
   public void testUpdateEventWithEmptySubject() {
     // Set up the controller with the existing event
     String originalSubject = "Original Subject";
     LocalDateTime originalStart = LocalDateTime.now();
     LocalDateTime originalEnd = originalStart.plusHours(1);
-    Event originalEvent = new Event(originalSubject, originalStart, originalEnd, 
-                                   "Description", "Location", true);
-    
+    Event originalEvent = new Event(originalSubject, originalStart, originalEnd,
+            "Description", "Location", true);
+
     // Try to update with an empty subject
     EventFormData formData = new EventFormData(
-        "", // Empty subject
-        Date.from(originalStart.atZone(ZoneId.systemDefault()).toInstant()),
-        Date.from(originalStart.atZone(ZoneId.systemDefault()).toInstant()),
-        Date.from(originalEnd.atZone(ZoneId.systemDefault()).toInstant()),
-        "New Location",
-        "New Description",
-        false,
-        false,
-        null,
-        0,
-        null,
-        false,
-        false
+            "", // Empty subject
+            Date.from(originalStart.atZone(ZoneId.systemDefault()).toInstant()),
+            Date.from(originalStart.atZone(ZoneId.systemDefault()).toInstant()),
+            Date.from(originalEnd.atZone(ZoneId.systemDefault()).toInstant()),
+            "New Location",
+            "New Description",
+            false,
+            false,
+            null,
+            0,
+            null,
+            false,
+            false
     );
-    
+
     // Reset tracking and error message
     stubCalendar.resetTracking();
     stubView.clearError();
-    
+
     controller.onEventSaved(formData);
-    
+
     // Should show an error message for empty subject
     assertTrue(stubView.getLastError() != null);
     assertTrue(stubView.getLastError().toLowerCase().contains("subject") ||
-               stubView.getLastError().toLowerCase().contains("name") ||
-               stubView.getLastError().toLowerCase().contains("empty"));
+            stubView.getLastError().toLowerCase().contains("name") ||
+            stubView.getLastError().toLowerCase().contains("empty"));
   }
-  
+
   @Test
   public void testRecurringEventDateChange() {
     // Create a recurring event form data
     EventFormData formData = createRecurringEventFormData();
-    
+
     // Create a new future date (10 days later)
     LocalDate futureDate = LocalDate.now().plusDays(10);
     Date futureDateObj = Date.from(futureDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    
+
     // Create a new form data with the future date
     EventFormData updatedFormData = new EventFormData(
-        formData.getSubject(),
-        futureDateObj, // New future date
-        formData.getStartTime(),
-        formData.getEndTime(),
-        formData.getLocation(),
-        formData.getDescription(),
-        true,
-        false,
-        formData.getWeekdays(),
-        formData.getOccurrences(),
-        null,
-        false,
-        false
+            formData.getSubject(),
+            futureDateObj, // New future date
+            formData.getStartTime(),
+            formData.getEndTime(),
+            formData.getLocation(),
+            formData.getDescription(),
+            true,
+            false,
+            formData.getWeekdays(),
+            formData.getOccurrences(),
+            null,
+            false,
+            false
     );
-    
+
     // Reset tracking
     stubCalendar.resetTracking();
-    
+
+    // Set up stub to succeed
+    stubCalendar.setAddRecurringEventResult(true);
+
     controller.onEventSaved(updatedFormData);
-    
+
     // Check that the recurring event creation was attempted
     assertTrue(stubCalendar.wasAddRecurringEventCalled());
   }
@@ -438,91 +440,135 @@ public class GUIControllerTest {
    * Helper method to create a sample event form data object
    */
   private EventFormData createSampleEventFormData() {
-    String subject = "Test Event";
-    Date selectedDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date startTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-    Date endTime = Date.from(LocalDateTime.now().plusHours(2).atZone(ZoneId.systemDefault()).toInstant());
-    String location = "Test Location";
-    String description = "Test Description";
-    boolean isRecurring = false;
-    boolean isAllDay = false;
+    LocalDateTime now = LocalDateTime.now();
+    Date selectedDate = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date startTime = Date.from(now.atZone(ZoneId.systemDefault()).toInstant());
+    Date endTime = Date.from(now.plusHours(1).atZone(ZoneId.systemDefault()).toInstant());
 
-    return new EventFormData(subject, selectedDate, startTime, endTime, location, description,
-            isRecurring, isAllDay, null, 0, null, false, false);
+    return new EventFormData(
+            "Test Event",
+            selectedDate,
+            startTime,
+            endTime,
+            "Test Location",
+            "Test Description",
+            false,
+            false,
+            null,
+            0,
+            null,
+            false,
+            false
+    );
   }
 
   /**
    * Helper method to create an invalid event form data object (end time before start time)
    */
   private EventFormData createInvalidEventFormData() {
-    String subject = "Test Event";
-    Date selectedDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date startTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-    Date endTime = Date.from(LocalDateTime.now().minusHours(1).atZone(ZoneId.systemDefault()).toInstant());
-    String location = "Test Location";
-    String description = "Test Description";
-    boolean isRecurring = false;
-    boolean isAllDay = false;
+    LocalDateTime now = LocalDateTime.now();
+    Date selectedDate = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date startTime = Date.from(now.atZone(ZoneId.systemDefault()).toInstant());
+    Date endTime = Date.from(now.minusHours(1).atZone(ZoneId.systemDefault()).toInstant());
 
-    return new EventFormData(subject, selectedDate, startTime, endTime, location, description,
-            isRecurring, isAllDay, null, 0, null, false, false);
+    return new EventFormData(
+            "Test Event",
+            selectedDate,
+            startTime,
+            endTime,
+            "Test Location",
+            "Test Description",
+            false,
+            false,
+            null,
+            0,
+            null,
+            false,
+            false
+    );
   }
 
   /**
    * Helper method to create a recurring event form data object
    */
   private EventFormData createRecurringEventFormData() {
-    String subject = "Recurring Test Event";
-    Date selectedDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date startTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-    Date endTime = Date.from(LocalDateTime.now().plusHours(2).atZone(ZoneId.systemDefault()).toInstant());
-    String location = "Test Location";
-    String description = "Test Description";
-    boolean isRecurring = true;
-    boolean isAllDay = false;
-    // Create a weekdays set instead of a string
+    LocalDateTime now = LocalDateTime.now();
+    Date selectedDate = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date startTime = Date.from(now.atZone(ZoneId.systemDefault()).toInstant());
+    Date endTime = Date.from(now.plusHours(1).atZone(ZoneId.systemDefault()).toInstant());
+
     Set<DayOfWeek> weekdays = new HashSet<>();
     weekdays.add(DayOfWeek.MONDAY);
     weekdays.add(DayOfWeek.WEDNESDAY);
     weekdays.add(DayOfWeek.FRIDAY);
-    int occurrences = 5;
 
-    return new EventFormData(subject, selectedDate, startTime, endTime, location, description,
-            isRecurring, isAllDay, weekdays, occurrences, null, false, false);
+    return new EventFormData(
+            "Recurring Test Event",
+            selectedDate,
+            startTime,
+            endTime,
+            "Test Location",
+            "Test Description",
+            true,
+            false,
+            weekdays,
+            5,
+            null,
+            false,
+            false
+    );
   }
 
   /**
    * Helper method to create an all-day event form data object
    */
   private EventFormData createAllDayEventFormData() {
-    String subject = "All-Day Test Event";
-    Date selectedDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date startTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-    Date endTime = Date.from(LocalDateTime.now().plusHours(2).atZone(ZoneId.systemDefault()).toInstant());
-    String location = "Test Location";
-    String description = "Test Description";
-    boolean isRecurring = false;
-    boolean isAllDay = true;
+    LocalDateTime now = LocalDateTime.now();
+    Date selectedDate = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date startTime = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date endTime = Date.from(now.toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-    return new EventFormData(subject, selectedDate, startTime, endTime, location, description,
-            isRecurring, isAllDay, null, 0, null, false, false);
+    return new EventFormData(
+            "All-Day Test Event",
+            selectedDate,
+            startTime,
+            endTime,
+            "Test Location",
+            "Test Description",
+            false,
+            true,
+            null,
+            0,
+            null,
+            false,
+            false
+    );
   }
 
   /**
    * Helper method to create an event form data object with empty subject
    */
   private EventFormData createEventFormDataWithEmptySubject() {
-    String subject = "";  // Empty subject
-    Date selectedDate = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date startTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-    Date endTime = Date.from(LocalDateTime.now().plusHours(2).atZone(ZoneId.systemDefault()).toInstant());
-    String location = "Test Location";
-    String description = "Test Description";
-    boolean isRecurring = false;
-    boolean isAllDay = false;
+    LocalDateTime now = LocalDateTime.now();
+    Date selectedDate = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date startTime = Date.from(now.atZone(ZoneId.systemDefault()).toInstant());
+    Date endTime = Date.from(now.plusHours(1).atZone(ZoneId.systemDefault()).toInstant());
 
-    return new EventFormData(subject, selectedDate, startTime, endTime, location, description,
-            isRecurring, isAllDay, null, 0, null, false, false);
+    return new EventFormData(
+            "",
+            selectedDate,
+            startTime,
+            endTime,
+            "Test Location",
+            "Test Description",
+            false,
+            false,
+            null,
+            0,
+            null,
+            false,
+            false
+    );
   }
 
   /**
@@ -538,12 +584,16 @@ public class GUIControllerTest {
     private boolean updateCalendarViewCalled;
     private StubEventPanel eventPanel;
     private StubCalendarPanel calendarPanel;
+    private StubCalendarSelectorPanel calendarSelectorPanel;
+    private StubExportImportPanel exportImportPanel;
 
-    // Constructor that calls parent constructor with null CalendarController
     public StubGUIView() {
       super(null);
       this.eventPanel = new StubEventPanel();
       this.calendarPanel = new StubCalendarPanel();
+      this.calendarSelectorPanel = new StubCalendarSelectorPanel();
+      this.exportImportPanel = new StubExportImportPanel();
+      resetTracking();
     }
 
     // Override methods needed for testing
@@ -581,12 +631,12 @@ public class GUIControllerTest {
 
     @Override
     public GUICalendarSelectorPanel getCalendarSelectorPanel() {
-      return null; // Stub implementation
+      return calendarSelectorPanel;
     }
 
     @Override
     public GUIExportImportPanel getExportImportPanel() {
-      return null; // Stub implementation
+      return exportImportPanel;
     }
 
     @Override
@@ -685,23 +735,23 @@ public class GUIControllerTest {
     public String getLastError() {
       return lastError;
     }
-    
+
     public boolean wasUpdateEventsCalled() {
       return updateEventsCalled;
     }
-    
+
     public boolean wasShowEventDetailsCalled() {
       return showEventDetailsCalled;
     }
-    
+
     public boolean wasUpdateCalendarListCalled() {
       return updateCalendarListCalled;
     }
-    
+
     public boolean wasUpdateCalendarViewCalled() {
       return updateCalendarViewCalled;
     }
-    
+
     public void resetTracking() {
       updateEventsCalled = false;
       clearEventDetailsCalled = false;
@@ -715,43 +765,103 @@ public class GUIControllerTest {
     // Inner class for stub event panel
     private class StubEventPanel extends GUIEventPanel {
       private Event currentEvent;
-      
+
       @Override
       public Event getCurrentEvent() {
         return currentEvent;
       }
-      
+
       public void setCurrentEvent(Event event) {
         this.currentEvent = event;
       }
-      
+
       @Override
       public void clearForm() {
         // Stub implementation
       }
-      
+
       @Override
       public void displayEvent(Event event) {
         currentEvent = event;
       }
     }
-    
+
     // Inner class for stub calendar panel
     private class StubCalendarPanel extends GUICalendarPanel {
       @Override
       public LocalDate getSelectedDate() {
         return LocalDate.now();
       }
-      
+
       @Override
       public void updateEvents(List<Event> events) {
         // Stub implementation
       }
-      
+
       @Override
       public void updateRecurringEvents(List<RecurringEvent> events) {
         // Stub implementation
       }
+    }
+
+    private class StubCalendarSelectorPanel extends GUICalendarSelectorPanel {
+      private CalendarSelectorListener listener;
+
+      @Override
+      public void addCalendarSelectorListener(CalendarSelectorListener listener) {
+        this.listener = listener;
+      }
+
+      @Override
+      public void updateCalendarList(List<String> calendarNames) {
+        // Just track that this was called
+        updateCalendarListCalled = true;
+      }
+
+      @Override
+      public String getSelectedCalendarName() {
+        return "Default_Calendar";
+      }
+
+      public void triggerCalendarSelected(String calendarName) {
+        if (listener != null) {
+          listener.onCalendarSelected(calendarName);
+        }
+      }
+    }
+  }
+
+  /**
+   * Stub implementation of GUIExportImportPanel for testing
+   */
+  private class StubExportImportPanel extends GUIExportImportPanel {
+
+    public StubExportImportPanel() {
+      super();
+    }
+
+    @Override
+    public void addExportImportListener(ExportImportListener listener) {
+    }
+
+    @Override
+    public void showImportSuccess(String message) {
+      // Stub implementation
+    }
+
+    @Override
+    public void showExportSuccess() {
+      // Stub implementation
+    }
+
+    @Override
+    public void showError(String message) {
+      // Stub implementation
+    }
+
+    @Override
+    public void showErrorMessage(String message) {
+      // Stub implementation
     }
   }
 
@@ -810,7 +920,7 @@ public class GUIControllerTest {
       deleteEventCalled = true;
       return true;
     }
-    
+
     @Override
     public List<Event> getEventsOnDate(LocalDate date) {
       return new ArrayList<>();
@@ -892,11 +1002,11 @@ public class GUIControllerTest {
     public void setUpdateEventResult(boolean result) {
       this.updateEventResult = result;
     }
-    
+
     public void setAddRecurringEventResult(boolean result) {
       this.addRecurringEventResult = result;
     }
-    
+
     public void setThrowConflictException(boolean throwException) {
       this.throwConflictException = throwException;
     }
@@ -908,11 +1018,11 @@ public class GUIControllerTest {
     public boolean wasUpdateEventCalled() {
       return updateEventCalled;
     }
-    
+
     public boolean wasDeleteEventCalled() {
       return deleteEventCalled;
     }
-    
+
     public boolean wasAddRecurringEventCalled() {
       return addRecurringEventCalled;
     }
@@ -940,7 +1050,7 @@ public class GUIControllerTest {
         firstAvailableCalendar = calendar;
       }
     }
-    
+
     public void setFirstAvailableCalendar(ICalendar calendar) {
       this.firstAvailableCalendar = calendar;
     }

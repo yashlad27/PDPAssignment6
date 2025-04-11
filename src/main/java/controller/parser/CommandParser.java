@@ -111,8 +111,8 @@ public class CommandParser {
             this::parsePrintEventsDateCommand);
 
     registerPattern("print_events_range",
-            Pattern.compile("print events from (\\d{4}-\\d{2}-\\d{2}) "
-                    + "to (\\d{4}-\\d{2}-\\d{2})"),
+            Pattern.compile("print events from (\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2})?) "
+                    + "to (\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2})?)"),
             this::parsePrintEventsRangeCommand);
 
     // Edit calendar pattern
