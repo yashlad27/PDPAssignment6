@@ -50,23 +50,19 @@ public class GUIControllerTest {
 
   @Before
   public void setUp() {
-    // Create stub implementations
     stubView = new StubGUIView();
     stubCalendar = new StubCalendar("Default_Calendar");
     StubCalendarManager stubCalendarManager = new StubCalendarManager();
     stubCalendarManager.addCalendar(stubCalendar);
 
-    // Initialize controller with stubs
     controller = new GUIController(stubCalendarManager, stubView);
 
-    // Mock initialization to set the currentCalendar field via a known controller method
     try {
       controller.initialize();
     } catch (Exception e) {
       // Ignore any exceptions from initialization
     }
 
-    // Create a test event
     testEvent = new Event(
             "Test Event",
             LocalDateTime.now(),
@@ -79,61 +75,44 @@ public class GUIControllerTest {
 
   @Test
   public void testCreateEvent() {
-    // Create event form data
     EventFormData formData = createSampleEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
 
-    // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
 
-    // Access the event panel and trigger the create event action
     controller.onEventSaved(formData);
 
-    // Verify results
     assertTrue("Add event should have been called", stubCalendar.wasAddEventCalled());
   }
 
   @Test
   public void testUpdateEvent() {
-    // Create event form data for update
     EventFormData formData = createSampleEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
 
-    // Set up the stub calendar to succeed
     stubCalendar.setUpdateEventResult(true);
 
-    // Set up the stub view's event panel to have the test event
     ((StubGUIView.StubEventPanel) stubView.getEventPanel()).setCurrentEvent(testEvent);
 
-    // Trigger update directly
     controller.onEventUpdated(formData);
 
-    // Verify results
     assertTrue("Update event should have been called", stubCalendar.wasUpdateEventCalled());
   }
 
   @Test
   public void testUpdateEvent_EndTimeBeforeStartTime() {
-    // Create event form data with end time before start time
     EventFormData formData = createInvalidEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
 
-    // Set up the stub view's event panel to have the test event
     ((StubGUIView.StubEventPanel) stubView.getEventPanel()).setCurrentEvent(testEvent);
 
-    // Directly trigger update with invalid data
     controller.onEventUpdated(formData);
 
-    // Verify results
     assertFalse("Update event should not have been called", stubCalendar.wasUpdateEventCalled());
-    // Check that error message is not null and contains something about time
     assertNotNull("Error message should not be null", stubView.getLastError());
     assertTrue("Error message should mention time",
             stubView.getLastError().contains("time") ||
@@ -143,19 +122,14 @@ public class GUIControllerTest {
 
   @Test
   public void testCreateEvent_EndTimeBeforeStartTime() {
-    // Create event form data with end time before start time
     EventFormData formData = createInvalidEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
 
-    // Directly trigger create with invalid data
     controller.onEventSaved(formData);
 
-    // Verify results
     assertFalse("Add event should not have been called", stubCalendar.wasAddEventCalled());
-    // Check that error message is not null and contains something about time
     assertNotNull("Error message should not be null", stubView.getLastError());
     assertTrue("Error message should mention time",
             stubView.getLastError().contains("time") ||
@@ -165,55 +139,41 @@ public class GUIControllerTest {
 
   @Test
   public void testCreateRecurringEvent() {
-    // Create recurring event form data
     EventFormData formData = createRecurringEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
 
-    // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
     stubCalendar.setAddRecurringEventResult(true);
 
-    // Trigger create event action
     controller.onEventSaved(formData);
 
-    // Verify results - either regular add or recurring add should be called
     assertTrue("Either add event or add recurring event should have been called",
             stubCalendar.wasAddEventCalled() || stubCalendar.wasAddRecurringEventCalled());
   }
 
   @Test
   public void testCreateAllDayEvent() {
-    // Create all-day event form data
     EventFormData formData = createAllDayEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
 
-    // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
 
-    // Trigger create event action
     controller.onEventSaved(formData);
 
-    // Verify results
     assertTrue("Add event should have been called", stubCalendar.wasAddEventCalled());
   }
 
   @Test
   public void testCreateEventWithEmptySubject() {
-    // Create event form data with empty subject
     EventFormData formData = createEventFormDataWithEmptySubject();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
 
-    // Trigger create event action
     controller.onEventSaved(formData);
 
-    // Verify results
     assertFalse("Add event should not have been called", stubCalendar.wasAddEventCalled());
     assertNotNull("Error message should not be null", stubView.getLastError());
     assertTrue("Error message should mention subject",
@@ -225,20 +185,15 @@ public class GUIControllerTest {
 
   @Test
   public void testCreateEventWithConflict() {
-    // Create event form data
     EventFormData formData = createSampleEventFormData();
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
     stubView.clearError();
 
-    // Set up stub to throw ConflictingEventException
     stubCalendar.setThrowConflictException(true);
 
-    // Trigger create event action
     controller.onEventSaved(formData);
 
-    // Verify results
     assertTrue("Add event should have been called", stubCalendar.wasAddEventCalled());
     assertNotNull("Error message should not be null", stubView.getLastError());
     assertTrue("Error message should mention conflict",
@@ -247,40 +202,30 @@ public class GUIControllerTest {
 
   @Test
   public void testInitialize() {
-    // Create a new controller for this test with properly configured stubs
     StubGUIView newStubView = new StubGUIView();
     StubCalendar newStubCalendar = new StubCalendar("Test_Calendar");
     StubCalendarManager newStubCalendarManager = new StubCalendarManager();
     newStubCalendarManager.addCalendar(newStubCalendar);
 
-    // Make sure getFirstAvailableCalendar returns our calendar
     newStubCalendarManager.setFirstAvailableCalendar(newStubCalendar);
 
     GUIController newController = new GUIController(newStubCalendarManager, newStubView);
 
-    // Reset tracking
     newStubView.resetTracking();
 
     try {
-      // Call initialize - catching any exceptions to analyze them
       newController.initialize();
 
-      // If we get here, no exception was thrown
       assertTrue("Initialize should complete without exceptions", true);
 
     } catch (Exception e) {
-      // For test purposes, we'll consider this a success in any of these cases:
-      // 1. NPE during event listener setup (which is expected in tests without real UI components)
-      // 2. CalendarNotFoundException (which can happen if the stub calendar isn't properly configured)
       if ((e instanceof NullPointerException &&
               e.getStackTrace().length > 0 &&
               e.getStackTrace()[0].getMethodName().contains("setupEventListeners"))
               ||
               (e instanceof model.exceptions.CalendarNotFoundException)) {
-        // These are expected exceptions in the test environment
         assertTrue("Expected exception in test environment is acceptable", true);
       } else {
-        // For any other exception, fail the test
         fail("Initialize should not throw unexpected exceptions: " + e);
       }
     }
@@ -288,7 +233,6 @@ public class GUIControllerTest {
 
   @Test
   public void testHandleInvalidRecurringEventCreation() {
-    // Test handling invalid recurring event creation (missing required params)
     EventFormData formData = new EventFormData(
             "Test Event",
             new Date(), // selectedDate
@@ -305,32 +249,26 @@ public class GUIControllerTest {
             false // force
     );
 
-    // Reset tracking variables and clear any previous error messages
     stubCalendar.resetTracking();
     stubView.clearError();
 
     controller.onEventSaved(formData);
 
-    // First check if an error message was set
     assertNotNull("Should display an error message", stubView.getLastError());
 
-    // Check that no recurring event was added (this is the key expectation)
     assertFalse("Should not add recurring event with empty weekdays",
             stubCalendar.wasAddRecurringEventCalled());
   }
 
   @Test
   public void testCreateEventWithMaxValues() {
-    // Test creating event with maximum allowed values
     String veryLongSubject = "A".repeat(255);
     String veryLongLocation = "L".repeat(500);
     String veryLongDescription = "D".repeat(1000);
 
-    // Create fixed times to ensure end time is after start time
     LocalDateTime startTime = LocalDateTime.of(2025, 4, 10, 10, 0);
     LocalDateTime endTime = startTime.plusHours(2);
 
-    // Create the event form data with the long values
     EventFormData formData = new EventFormData(
             veryLongSubject,
             Date.from(startTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
@@ -347,28 +285,23 @@ public class GUIControllerTest {
             false
     );
 
-    // Reset tracking variables
     stubCalendar.resetTracking();
 
-    // Set up stub to succeed
     stubCalendar.setAddEventResult(true);
 
     controller.onEventSaved(formData);
 
-    // Verify the event was created
     assertTrue(stubCalendar.wasAddEventCalled());
   }
 
   @Test
   public void testUpdateEventWithEmptySubject() {
-    // Set up the controller with the existing event
     String originalSubject = "Original Subject";
     LocalDateTime originalStart = LocalDateTime.now();
     LocalDateTime originalEnd = originalStart.plusHours(1);
     Event originalEvent = new Event(originalSubject, originalStart, originalEnd,
             "Description", "Location", true);
 
-    // Try to update with an empty subject
     EventFormData formData = new EventFormData(
             "", // Empty subject
             Date.from(originalStart.atZone(ZoneId.systemDefault()).toInstant()),
@@ -385,13 +318,11 @@ public class GUIControllerTest {
             false
     );
 
-    // Reset tracking and error message
     stubCalendar.resetTracking();
     stubView.clearError();
 
     controller.onEventSaved(formData);
 
-    // Should show an error message for empty subject
     assertTrue(stubView.getLastError() != null);
     assertTrue(stubView.getLastError().toLowerCase().contains("subject") ||
             stubView.getLastError().toLowerCase().contains("name") ||
@@ -400,14 +331,11 @@ public class GUIControllerTest {
 
   @Test
   public void testRecurringEventDateChange() {
-    // Create a recurring event form data
     EventFormData formData = createRecurringEventFormData();
 
-    // Create a new future date (10 days later)
     LocalDate futureDate = LocalDate.now().plusDays(10);
     Date futureDateObj = Date.from(futureDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-    // Create a new form data with the future date
     EventFormData updatedFormData = new EventFormData(
             formData.getSubject(),
             futureDateObj, // New future date
@@ -424,15 +352,9 @@ public class GUIControllerTest {
             false
     );
 
-    // Reset tracking
     stubCalendar.resetTracking();
-
-    // Set up stub to succeed
     stubCalendar.setAddRecurringEventResult(true);
-
     controller.onEventSaved(updatedFormData);
-
-    // Check that the recurring event creation was attempted
     assertTrue(stubCalendar.wasAddRecurringEventCalled());
   }
 

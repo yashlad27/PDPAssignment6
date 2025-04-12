@@ -502,4 +502,61 @@ public class CopyEventCommandTest {
     assertTrue("Error message should contain 'Expected 'on' keyword'",
             result.contains("Expected 'on' keyword"));
   }
+
+  @Test
+  public void testCopyEventsBetweenDatesWithMissingArguments() throws Exception {
+    // Attempt: "copy events between 2024-03-15" but missing "and", "--target", etc.
+    String result = copyCommand.execute(new String[]{
+            "copy", "events", "between", "2024-03-15"
+    });
+
+    assertTrue(
+            "Should complain about insufficient arguments",
+            result.contains("Insufficient arguments")
+    );
+  }
+
+  @Test
+  public void testCopyEventsBetweenDatesWithInvalidFormat() throws Exception {
+    // Attempt an invalid format for range copying
+    String result = copyCommand.execute(new String[]{
+            "copy", "events", "between", "not-a-date", "and", "2024-03-16",
+            "--target", "target", "to", "another-invalid-date"
+    });
+
+    assertTrue(
+            "Should mention invalid date/time format or parse failure",
+            result.contains("Invalid date format")
+                    || result.contains("Invalid date time format")
+                    || result.contains("Error copying events")
+    );
+  }
+
+  @Test
+  public void testCopyEventsOnDateWithMissingArguments() throws Exception {
+    // Attempt: "copy events on 2024-03-15" but missing "--target" etc.
+    String result = copyCommand.execute(new String[]{
+            "copy", "events", "on", "2024-03-15"
+    });
+
+    assertTrue(
+            "Should return an 'Insufficient arguments' or similar error",
+            result.contains("Insufficient arguments") || result.contains("Invalid command format")
+    );
+  }
+
+  @Test
+  public void testCopyEventsOnDateWithInvalidFormat() throws Exception {
+    // Attempt an invalid day event format
+    String result = copyCommand.execute(new String[]{
+            "copy", "events", "on", "invalid-date", "--target", "target", "to", "2024-03-16"
+    });
+
+    assertTrue(
+            "Should mention invalid date/time format or parse failure",
+            result.contains("Invalid date format")
+                    || result.contains("Invalid date time format")
+                    || result.contains("Error copying events")
+    );
+  }
 }

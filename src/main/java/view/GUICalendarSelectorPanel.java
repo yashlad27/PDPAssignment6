@@ -48,6 +48,7 @@ public class GUICalendarSelectorPanel extends JPanel {
   private final DefaultListModel<String> calendarListModel;
   private final JButton addCalendarButton;
   private final JButton useCalendarButton;
+  private final JButton editCalendarButton;
 
   /**
    * Interface for calendar selection events.
@@ -71,6 +72,17 @@ public class GUICalendarSelectorPanel extends JPanel {
      * @param timezone The timezone of the new calendar
      */
     default void onCalendarCreated(String name, String timezone) {
+      // Default implementation does nothing
+    }
+
+    /**
+     * Called when a calendar is edited.
+     *
+     * @param oldName    The old name of the calendar
+     * @param newName    The new name of the calendar
+     * @param newTimezone The new timezone of the calendar
+     */
+    default void onCalendarEdited(String oldName, String newName, String newTimezone) {
       // Default implementation does nothing
     }
   }
@@ -163,37 +175,56 @@ public class GUICalendarSelectorPanel extends JPanel {
     titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
+    // Create main content panel that will hold both calendar list and buttons
+    JPanel contentPanel = new JPanel(new BorderLayout());
+    contentPanel.setOpaque(false);
+
+    // Calendar list panel
+    JPanel calendarListPanel = new JPanel(new BorderLayout());
+    calendarListPanel.setOpaque(false);
+    calendarListPanel.setBorder(BorderFactory.createTitledBorder("Calendars"));
+
     // Calendar list
     calendarListModel = new DefaultListModel<>();
     calendarList = new JList<>(calendarListModel);
     calendarList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     calendarList.setVisibleRowCount(5);
-    calendarList.setBorder(BorderFactory.createTitledBorder("Calendars"));
-
-    // Add Calendar button
-    addCalendarButton = new JButton("Add Calendar");
-    useCalendarButton = new JButton("Use");
-    ButtonStyler.applyPrimaryStyle(useCalendarButton);
-
-    // Set preferred size for buttons to ensure they fit
-    addCalendarButton.setPreferredSize(new Dimension(120, 25));
-    useCalendarButton.setPreferredSize(new Dimension(80, 25));
-
-    // Create a panel for buttons with horizontal layout
-    JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 5, 0));
-    buttonPanel.setOpaque(false);
-    buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    buttonPanel.add(addCalendarButton);
-    buttonPanel.add(useCalendarButton);
 
     // Scroll pane for calendar list
     JScrollPane scrollPane = new JScrollPane(calendarList);
     scrollPane.setBorder(null);
-    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setPreferredSize(new Dimension(200, 150)); // Set a fixed preferred size
+    calendarListPanel.add(scrollPane, BorderLayout.CENTER);
 
+    // Buttons
+    addCalendarButton = new JButton("Add Calendar");
+    useCalendarButton = new JButton("Use");
+    editCalendarButton = new JButton("Edit");
+    ButtonStyler.applyPrimaryStyle(useCalendarButton);
+
+    // Set preferred size for buttons
+    Dimension buttonSize = new Dimension(100, 30);
+    addCalendarButton.setPreferredSize(buttonSize);
+    useCalendarButton.setPreferredSize(new Dimension(80, 30));
+    editCalendarButton.setPreferredSize(new Dimension(80, 30));
+
+    // Create a panel for buttons with horizontal layout
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    buttonPanel.setOpaque(false);
+    buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 5));
+    buttonPanel.add(addCalendarButton);
+    buttonPanel.add(editCalendarButton);
+    buttonPanel.add(useCalendarButton);
+
+    // Add components to content panel
+    contentPanel.add(calendarListPanel, BorderLayout.CENTER);
+    contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+    // Add components to main panel
     add(titleLabel, BorderLayout.NORTH);
-    add(scrollPane, BorderLayout.CENTER);
-    add(buttonPanel, BorderLayout.SOUTH);
+    add(contentPanel, BorderLayout.CENTER);
 
     calendarItems = new ArrayList<>();
 
@@ -207,17 +238,16 @@ public class GUICalendarSelectorPanel extends JPanel {
    * @param calendars the list of calendars
    */
   public void setCalendars(List<ICalendar> calendars) {
-    calendarList.removeAll();
+    calendarListModel.clear(); // Clear the list model first
     calendarItems.clear();
 
     for (ICalendar calendar : calendars) {
+      calendarListModel.addElement(calendar.toString()); // Add calendar names to the list model
       CalendarItem item = new CalendarItem(calendar);
       if (calendar.equals(selectedCalendar)) {
         item.setSelected(true);
       }
       calendarItems.add(item);
-      calendarList.add(item);
-      calendarList.add(Box.createVerticalStrut(5));
     }
 
     revalidate();
@@ -299,6 +329,33 @@ public class GUICalendarSelectorPanel extends JPanel {
     revalidate();
     repaint();
   }
+  
+  /**
+   * Refreshes the calendar list to reflect current calendar data.
+   * Should be called after calendar creation or editing operations.
+   */
+  public void refreshCalendarList() {
+    System.out.println("[DEBUG] Refreshing calendar list");
+    if (listener == null) {
+      System.out.println("[WARNING] Cannot refresh calendar list: no listener");
+      return;
+    }
+    
+    // Get fresh calendar list through the listener mechanism
+    // This triggers a full calendar list reload from the controller
+    try {
+      // This is implemented in a listener-agnostic way
+      // The listener (e.g., GUIController) will handle the UI update
+      SwingUtilities.invokeLater(() -> {
+        // Force a UI update in a separate UI thread
+        revalidate();
+        repaint();
+      });
+    } catch (Exception e) {
+      System.err.println("[ERROR] Error refreshing calendar list: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
 
   private void setupLayout() {
     // Implementation of setupLayout method
@@ -310,6 +367,16 @@ public class GUICalendarSelectorPanel extends JPanel {
         int index = calendarList.getSelectedIndex();
         if (index >= 0) {
           String calendarName = calendarListModel.getElementAt(index);
+          System.out.println("[DEBUG] Calendar list selection changed: " + calendarName);
+          
+          // Get the selected calendar item if it exists in calendarItems
+          for (CalendarItem item : calendarItems) {
+            if (item.getCalendar().getName().equals(calendarName)) {
+              selectedCalendar = item.getCalendar();
+              break;
+            }
+          }
+          
           if (listener != null) {
             listener.onCalendarSelected(calendarName);
           }
@@ -359,6 +426,11 @@ public class GUICalendarSelectorPanel extends JPanel {
                 "No Calendar Selected",
                 JOptionPane.WARNING_MESSAGE);
       }
+    });
+
+    editCalendarButton.addActionListener(e -> {
+      System.out.println("[DEBUG] Edit Calendar button clicked");
+      showEditCalendarDialog();
     });
   }
 
@@ -448,6 +520,149 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     dialog.add(formPanel, BorderLayout.CENTER);
     dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+    dialog.pack();
+    dialog.setLocationRelativeTo(this);
+    dialog.setVisible(true);
+  }
+
+  private void showEditCalendarDialog() {
+    // First check if we have a calendar selected in the list view
+    int selectedIndex = calendarList.getSelectedIndex();
+    String selectedCalendarName;
+    
+    if (selectedIndex >= 0) {
+      // We have a selection in the list, use that
+      selectedCalendarName = calendarListModel.getElementAt(selectedIndex);
+      System.out.println("[DEBUG] Edit button: using list selection: " + selectedCalendarName);
+      
+      // Make sure this selection is also reflected in the calendarList selection
+      if (calendarList.getSelectedIndex() != selectedIndex) {
+        calendarList.setSelectedIndex(selectedIndex);
+      }
+    } else if (selectedCalendar != null) {
+      // Fall back to the stored selectedCalendar if available
+      selectedCalendarName = selectedCalendar.getName();
+      System.out.println("[DEBUG] Edit button: using stored selection: " + selectedCalendarName);
+      
+      // Try to select this calendar in the list for visual feedback
+      for (int i = 0; i < calendarListModel.getSize(); i++) {
+        if (calendarListModel.getElementAt(i).equals(selectedCalendarName)) {
+          calendarList.setSelectedIndex(i);
+          break;
+        }
+      }
+    } else {
+      // As a last resort, try to get the first calendar in the list
+      if (calendarListModel.getSize() > 0) {
+        selectedCalendarName = calendarListModel.getElementAt(0);
+        calendarList.setSelectedIndex(0);
+        System.out.println("[DEBUG] Edit button: using first calendar in list: " + selectedCalendarName);
+      } else {
+        selectedCalendarName = null;
+      }
+    }
+    
+    if (selectedCalendarName == null) {
+      JOptionPane.showMessageDialog(this,
+              "Please select a calendar to edit.",
+              "No Calendar Selected",
+              JOptionPane.WARNING_MESSAGE);
+      return;
+    }
+
+    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+            "Edit Calendar", true);
+    dialog.setLayout(new GridBagLayout());
+    dialog.setResizable(false);
+
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    // Name field
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    dialog.add(new JLabel("Calendar Name:"), gbc);
+
+    JTextField nameField = new JTextField(selectedCalendarName, 20);
+    gbc.gridx = 1;
+    dialog.add(nameField, gbc);
+
+    // No timezone field - removed to simplify the UI
+
+    // Buttons panel
+    JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    JButton saveButton = new JButton("Save");
+    JButton cancelButton = new JButton("Cancel");
+    
+    // Apply button styling
+    ButtonStyler.applyPrimaryStyle(saveButton);
+    ButtonStyler.applySecondaryStyle(cancelButton);
+
+    saveButton.addActionListener(e -> {
+      String newName = nameField.getText().trim();
+      // No longer get timezone from UI as we're not changing it
+
+      if (newName.isEmpty()) {
+        JOptionPane.showMessageDialog(dialog,
+                "Calendar name cannot be empty.",
+                "Invalid Input",
+                JOptionPane.ERROR_MESSAGE);
+        return;
+      }
+
+      System.out.println("[DEBUG] Saving calendar edit: oldName=" + selectedCalendarName 
+          + ", newName=" + newName);
+      
+      if (listener != null) {
+        try {
+          // Keep existing timezone by passing null or the current timezone
+          String currentTimezone = null;
+          // Pass the existing timezone (not changing it)
+          if (getSelectedCalendar() != null) {
+            currentTimezone = getSelectedCalendar().getTimeZone().getID();
+          }
+          
+          listener.onCalendarEdited(selectedCalendarName, newName, currentTimezone);
+          
+          // After edit completes successfully, refresh the calendar list
+          refreshCalendarList();
+          
+          // Try to select the renamed calendar in the list
+          SwingUtilities.invokeLater(() -> {
+            for (int i = 0; i < calendarListModel.getSize(); i++) {
+              if (calendarListModel.getElementAt(i).equals(newName)) {
+                calendarList.setSelectedIndex(i);
+                System.out.println("[DEBUG] Selected edited calendar in list: " + newName);
+                break;
+              }
+            }
+          });
+          
+        } catch (Exception ex) {
+          System.err.println("[ERROR] Failed to edit calendar: " + ex.getMessage());
+          ex.printStackTrace();
+          JOptionPane.showMessageDialog(dialog,
+                  "Error updating calendar: " + ex.getMessage(),
+                  "Edit Failed",
+                  JOptionPane.ERROR_MESSAGE);
+          return;
+        }
+      }
+      dialog.dispose();
+    });
+
+    cancelButton.addActionListener(e -> dialog.dispose());
+
+    buttonsPanel.add(saveButton);
+    buttonsPanel.add(cancelButton);
+
+    // Since we removed the timezone field, adjust the button panel position
+    gbc.gridx = 0;
+    gbc.gridy = 1; // Changed from 2 to 1 since we removed timezone field
+    gbc.gridwidth = 2;
+    dialog.add(buttonsPanel, gbc);
 
     dialog.pack();
     dialog.setLocationRelativeTo(this);
