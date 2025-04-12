@@ -1,0 +1,49 @@
+create calendar
+create calendar --name "Test Calendar"
+create calendar --timezone Europe/London
+create calendar --name Invalid/Name --timezone Europe/London
+create calendar --name "Test Calendar" --timezone InvalidTimezone
+
+use calendar
+use calendar --name NonExistentCalendar
+
+create event
+create event "Missing Parameters"
+create event "Invalid Date Format" from 2024-25-40T10:00 to 2024-03-25T11:00 desc "Description" at "Location"
+create event "End Before Start" from 2024-03-25T11:00 to 2024-03-25T10:00 desc "Description" at "Location"
+create event "Invalid Repeats Format" from 2024-03-25T10:00 to 2024-03-25T11:00 repeats XYZ for 10 times desc "Description" at "Location"
+
+copy event
+copy event "Non-existent Event" on 2024-03-25T10:00 --target Personal to 2024-05-01T10:00
+copy events on 2024-03-28 --target NonExistentCalendar to 2024-05-05
+copy events between 2024-03-30 and 2024-03-25 --target Personal to 2024-05-01
+
+edit event
+edit event subject from 2024-03-26T18:00 with "Missing Event Name"
+edit event subject "Non-existent Event" from 2024-03-26T18:00 with "New Name"
+edit event location "Gym" from 2024-03-99T18:00 with "New Location" 
+edit event start "Book Club" from 2024-03-24T19:00 with "Not a date time"
+edit event end "Movie Night" from 2024-03-30T20:00 with "2024-03-30T19:00"
+
+edit calendar
+edit calendar --property timezone "Europe/Paris"
+edit calendar --name NonExistentCalendar --property timezone "Europe/Paris"
+edit calendar --name Personal --property nonexistentproperty "Value"
+edit calendar --name Personal --property timezone "Invalid/Timezone"
+
+print events
+print events on InvalidDate
+print events from 2024-03-25 to InvalidDate
+print events from 2024-03-30 to 2024-03-25
+
+show status
+show status on InvalidDateTime
+show status on 2024-03-26
+show status at 2024-03-26T14:30
+
+export cal
+export cal nonexistent_dir/file.csv
+
+unknown command
+random text
+exit argument1 argument2

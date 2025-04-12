@@ -1,0 +1,83 @@
+create calendar --name Personal --timezone Europe/London
+create calendar --name Work --timezone America/New_York
+create calendar --name Travel --timezone Asia/Tokyo
+create calendar --name Family --timezone Europe/Paris
+create calendar --name Health --timezone America/Los_Angeles
+
+use calendar --name Work
+create event "Team Meeting" from 2024-03-25T10:00 to 2024-03-25T11:00 desc "Weekly team sync" at "Conference Room A"
+create event "Project Deadline" from 2024-03-28T09:00 to 2024-03-28T17:00 desc "Final deliverable due" at "Office"
+create event "Client Presentation" from 2024-03-26T14:00 to 2024-03-26T15:30 desc "Q2 Results" at "Board Room"
+create event "Training Session" from 2024-03-27T13:00 to 2024-03-27T16:00 desc "New Tool Training" at "Training Room"
+create event "Team Building" from 2024-03-29T09:00 to 2024-03-29T17:00 desc "Annual Event" at "Resort"
+
+use calendar --name Personal
+create event "Gym" from 2024-03-26T18:00 to 2024-03-26T19:30 desc "Workout session" at "Fitness Center"
+create event "Book Club" from 2024-03-24T19:00 to 2024-03-24T21:00 desc "Monthly Meeting" at "Library"
+create event "Movie Night" from 2024-03-30T20:00 to 2024-03-30T23:00 desc "New Release" at "Cinema"
+create event "Dinner with Friends" from 2024-03-27T19:00 to 2024-03-27T21:00 desc "Catch up" at "Italian Restaurant"
+
+use calendar --name Travel
+create event "Flight to Paris" from 2024-04-15T08:00 to 2024-04-15T10:30 desc "Flight AA123" at "Airport"
+create event "Hotel Check-in" from 2024-04-15T14:00 to 2024-04-15T15:00 desc "Reservation #12345" at "Hotel Paris"
+create event "Museum Visit" from 2024-04-16T10:00 to 2024-04-16T13:00 desc "Louvre Museum" at "Paris"
+
+use calendar --name Family
+create event "Family Dinner" from 2024-03-25T18:00 to 2024-03-25T20:00 desc "Monthly Gathering" at "Home"
+create event "Parent-Teacher Meeting" from 2024-03-26T15:00 to 2024-03-26T16:00 desc "School Meeting" at "School"
+
+use calendar --name Health
+create event "Dental Checkup" from 2024-03-27T11:00 to 2024-03-27T12:00 desc "Regular Checkup" at "Dental Clinic"
+create event "Nutritionist" from 2024-03-30T13:00 to 2024-03-30T14:00 desc "Diet Plan Review" at "Clinic"
+
+use calendar --name Work
+print events on 2024-03-25
+print events from 2024-03-25 to 2024-03-29
+show status on 2024-03-26T14:30
+
+use calendar --name Work
+copy event "Team Meeting" on 2024-03-25T10:00 --target Personal to 2024-05-01T10:00
+copy event "Project Deadline" on 2024-03-28T09:00 --target Personal to 2024-05-03T09:00
+
+use calendar --name Work
+copy event "Training Session" on 2024-03-27T13:00 --target Travel to 2024-05-15T13:00
+
+use calendar --name Personal
+edit event subject "Gym" from 2024-03-26T18:00 with "Weightlifting Session"
+edit event location "Dinner with Friends" from 2024-03-27T19:00 with "Mexican Restaurant"
+edit event description "Book Club" from 2024-03-24T19:00 with "Discussion of new bestseller"
+
+use calendar --name Travel
+edit event subject "Museum Visit" from 2024-04-16T10:00 with "Louvre Museum Tour"
+edit event description "Flight to Paris" from 2024-04-15T08:00 with "Flight AA123 - Business Class"
+
+edit calendar --name Personal --property timezone "Europe/Paris"
+edit calendar --name Work --property timezone "America/Chicago"
+
+use calendar --name Personal
+print events on 2024-05-01
+print events from 2024-05-01 to 2024-05-07
+show status on 2024-03-26T18:30
+
+use calendar --name Travel
+print events from 2024-04-15 to 2024-04-20
+show status on 2024-04-16T11:30
+
+use calendar --name Family
+print events on 2024-03-25
+print events from 2024-03-25 to 2024-03-31
+
+use calendar --name Health
+print events on 2024-03-27
+print events from 2024-03-27 to 2024-03-31
+
+export cal work_events.csv
+export cal personal_events.csv
+export cal travel_events.csv
+export cal family_events.csv
+export cal health_events.csv
+
+use calendar --name Work
+print events on 2024-03-25
+show status on 2024-03-26T14:30
+exit
