@@ -25,30 +25,10 @@ public class EventViewModel implements IViewModel {
   private final CalendarController controller;
   private Event selectedEvent;
   private RecurringEvent selectedRecurringEvent;
-  private final List<EventViewModelListener> listeners;
+  private final List<IEventViewModelListener> listeners;
   private Map<LocalDate, List<Event>> eventsByDate = new HashMap<>();
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
-  /**
-   * Interface for listeners that want to be notified of changes in the EventViewModel.
-   */
-  public interface EventViewModelListener {
-    void onEventSelected(Event event);
-
-    void onRecurringEventSelected(RecurringEvent event);
-
-    void onEventCreated(Event event);
-
-    void onRecurringEventCreated(RecurringEvent event);
-
-    void onEventUpdated(Event event);
-
-    void onRecurringEventUpdated(RecurringEvent event);
-
-    void onEventsUpdated(List<Event> events);
-
-    void onError(String error);
-  }
 
   /**
    * Constructs a new EventViewModel.
@@ -72,7 +52,6 @@ public class EventViewModel implements IViewModel {
 
   @Override
   public void refresh() {
-    // Refresh the event state if needed
     try {
       if (controller.getCurrentCalendar() != null) {
         updateEvents(controller.getCurrentCalendar().getAllEvents());
@@ -151,19 +130,19 @@ public class EventViewModel implements IViewModel {
   }
 
   private void notifyEventCreated(Event event) {
-    for (EventViewModelListener listener : listeners) {
+    for (IEventViewModelListener listener : listeners) {
       listener.onEventCreated(event);
     }
   }
 
   private void notifyEventUpdated(Event event) {
-    for (EventViewModelListener listener : listeners) {
+    for (IEventViewModelListener listener : listeners) {
       listener.onEventUpdated(event);
     }
   }
 
   private void notifyEventsUpdated(List<Event> events) {
-    for (EventViewModelListener listener : listeners) {
+    for (IEventViewModelListener listener : listeners) {
       listener.onEventsUpdated(events);
     }
   }
@@ -174,18 +153,9 @@ public class EventViewModel implements IViewModel {
    * @param error the error message
    */
   public void notifyError(String error) {
-    for (EventViewModelListener listener : listeners) {
+    for (IEventViewModelListener listener : listeners) {
       listener.onError(error);
     }
-  }
-
-  /**
-   * Adds a listener to be notified of events.
-   *
-   * @param listener the listener to add
-   */
-  public void addListener(EventViewModelListener listener) {
-    listeners.add(listener);
   }
 
   /**
@@ -195,14 +165,12 @@ public class EventViewModel implements IViewModel {
    * @param events the events to update with
    */
   public void updateEvents(List<Event> events) {
-    // Track which dates are being updated in this operation
     Set<LocalDate> datesToUpdate = new HashSet<>();
     for (Event event : events) {
       LocalDate eventDate = event.getStartDateTime().toLocalDate();
       datesToUpdate.add(eventDate);
     }
 
-    // Clear events only for dates that we're updating
     if (!eventsByDate.isEmpty()) {
       for (LocalDate date : datesToUpdate) {
         eventsByDate.put(date, new ArrayList<>());
@@ -211,15 +179,11 @@ public class EventViewModel implements IViewModel {
       eventsByDate.clear();
     }
 
-    // Add each event to its corresponding date in the map
     for (Event event : events) {
-      // Ensure we're using the correct date from the event
       LocalDate eventDate = event.getStartDateTime().toLocalDate();
 
-      // Get or create the list for this date
       List<Event> dateEvents = eventsByDate.computeIfAbsent(eventDate, k -> new ArrayList<>());
 
-      // Avoid duplicate events
       if (!containsEventWithSameId(dateEvents, event)) {
         dateEvents.add(event);
       }
@@ -265,16 +229,6 @@ public class EventViewModel implements IViewModel {
    */
   private boolean isSameDay(LocalDateTime dt1, LocalDateTime dt2) {
     return dt1.toLocalDate().equals(dt2.toLocalDate());
-  }
-
-  /**
-   * Gets events for a specific date.
-   *
-   * @param date the date to get events for
-   * @return the list of events for the date
-   */
-  public List<Event> getEventsForDate(LocalDate date) {
-    return eventsByDate.getOrDefault(date, new ArrayList<>());
   }
 
   /**

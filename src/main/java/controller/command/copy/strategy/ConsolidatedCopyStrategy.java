@@ -27,7 +27,6 @@ import utilities.TimeZoneHandler;
 public class ConsolidatedCopyStrategy implements CopyStrategy {
 
   private final CalendarManager calendarManager;
-  private final TimeZoneHandler timezoneHandler;
   private final CopyType copyType;
 
   /**
@@ -56,7 +55,6 @@ public class ConsolidatedCopyStrategy implements CopyStrategy {
       throw new IllegalArgumentException("TimeZoneHandler cannot be null");
     }
     this.calendarManager = calendarManager;
-    this.timezoneHandler = timezoneHandler;
     this.copyType = copyType;
   }
 

@@ -212,9 +212,7 @@ public class CalendarController {
     try {
       ICalendar activeCalendar = calendarManager.getActiveCalendar();
       if (this.commandFactory instanceof CommandFactory) {
-        // Create a new CommandFactory with the active calendar
         this.commandFactory = new CommandFactory(activeCalendar, view);
-        // Create a new parser with the updated factory
         this.parser = new CommandParser(this.commandFactory);
       }
     } catch (CalendarNotFoundException e) {
@@ -372,7 +370,8 @@ public class CalendarController {
 
   private boolean validateCommands(List<String> commands) {
     if (commands.isEmpty()) {
-      view.displayError("Error: Command file is empty. At least one command (exit) is required.");
+      view.displayError("Error: Command file is empty. "
+              + "At least one command (exit) is required.");
       return false;
     }
 
@@ -601,29 +600,4 @@ public class CalendarController {
     return new ArrayList<>();
   }
 
-  /**
-   * Checks the status of a specific date (busy or free).
-   * This method is specifically designed for the GUI interaction.
-   *
-   * @param date The date to check
-   * @return true if the date has events (busy), false otherwise (free)
-   */
-  public boolean isDateBusy(LocalDate date) {
-    if (date == null) {
-      return false;
-    }
-
-    try {
-      ICalendar activeCalendar = calendarManager.getActiveCalendar();
-      if (activeCalendar != null) {
-        // Check if there are any events on this date
-        List<Event> events = activeCalendar.getEventsOnDate(date);
-        return !events.isEmpty();
-      }
-    } catch (Exception e) {
-      view.displayError("Error checking date status: " + e.getMessage());
-    }
-
-    return false;
-  }
 }

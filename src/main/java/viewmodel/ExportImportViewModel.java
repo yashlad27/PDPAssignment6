@@ -7,7 +7,9 @@ import java.util.Set;
 
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
+import model.event.Event;
 import model.exceptions.CalendarNotFoundException;
+import model.export.CSVExporter;
 import view.IGUIView;
 
 /**
@@ -17,20 +19,10 @@ import view.IGUIView;
  */
 public class ExportImportViewModel implements IViewModel {
   private ICalendar currentCalendar;
-  private final List<ExportImportViewModelListener> listeners;
+  private final List<IExportImportViewModelListener> listeners;
   private CalendarManager calendarManager;
   private IGUIView view;
 
-  /**
-   * Interface for listeners that want to be notified of changes in the ExportImportViewModel.
-   */
-  public interface ExportImportViewModelListener {
-    void onImportSuccess(String message);
-
-    void onExportSuccess();
-
-    void onError(String error);
-  }
 
   /**
    * Constructs a new ExportImportViewModel.
@@ -108,24 +100,19 @@ public class ExportImportViewModel implements IViewModel {
       return currentCalendar;
     }
 
-    // Try to get the calendar from the selector panel if view is available
     ICalendar selectedCalendar = null;
     if (view != null && view.getCalendarSelectorPanel() != null) {
       selectedCalendar = view.getCalendarSelectorPanel().getSelectedCalendar();
     }
 
-    // If nothing selected, use the current calendar
     if (selectedCalendar == null) {
       selectedCalendar = currentCalendar;
     }
 
-    // If still null, try getting from calendar manager
     if (selectedCalendar == null) {
       try {
-        // Try to get the active calendar
         selectedCalendar = calendarManager.getActiveCalendar();
       } catch (CalendarNotFoundException e) {
-        // If no active calendar, try to get the first calendar by name
         Set<String> calendarNames = calendarManager.getCalendarRegistry().getCalendarNames();
         if (!calendarNames.isEmpty()) {
           String firstName = calendarNames.iterator().next();
@@ -148,7 +135,6 @@ public class ExportImportViewModel implements IViewModel {
    * @return the number of events successfully imported
    */
   public int importFromCSV(File file) {
-    // Find the suitable calendar if none provided
     if (currentCalendar == null) {
       currentCalendar = findSuitableCalendar();
 
@@ -159,12 +145,11 @@ public class ExportImportViewModel implements IViewModel {
     }
 
     try {
-      // Using CSV exporter to read events
-      model.export.CSVExporter csvExporter = new model.export.CSVExporter();
-      List<model.event.Event> importedEvents = csvExporter.importEvents(file);
+      CSVExporter csvExporter = new CSVExporter();
+      List<Event> importedEvents = csvExporter.importEvents(file);
 
       int successCount = 0;
-      for (model.event.Event event : importedEvents) {
+      for (Event event : importedEvents) {
         try {
           boolean added = currentCalendar.addEvent(event, true);
           if (added) {
@@ -178,7 +163,6 @@ public class ExportImportViewModel implements IViewModel {
       String message = "Successfully imported " + successCount + " events";
       notifyImportSuccess(message);
 
-      // Update view if available
       updateViewAfterImport();
       refresh();
 
@@ -195,7 +179,6 @@ public class ExportImportViewModel implements IViewModel {
    * @param file the CSV file to export to
    */
   public void exportToCSV(File file) {
-    // Find the suitable calendar if none provided
     if (currentCalendar == null) {
       currentCalendar = findSuitableCalendar();
 
@@ -206,10 +189,8 @@ public class ExportImportViewModel implements IViewModel {
     }
 
     try {
-      // Get events from calendar
       List<model.event.Event> events = currentCalendar.getAllEvents();
 
-      // Use CSV exporter to write events
       model.export.CSVExporter csvExporter = new model.export.CSVExporter();
       csvExporter.exportEvents(events, file);
 
@@ -220,13 +201,13 @@ public class ExportImportViewModel implements IViewModel {
   }
 
   private void notifyImportSuccess(String message) {
-    for (ExportImportViewModelListener listener : listeners) {
+    for (IExportImportViewModelListener listener : listeners) {
       listener.onImportSuccess(message);
     }
   }
 
   private void notifyExportSuccess() {
-    for (ExportImportViewModelListener listener : listeners) {
+    for (IExportImportViewModelListener listener : listeners) {
       listener.onExportSuccess();
     }
   }
@@ -237,7 +218,7 @@ public class ExportImportViewModel implements IViewModel {
    * @param error the error message
    */
   public void notifyError(String error) {
-    for (ExportImportViewModelListener listener : listeners) {
+    for (IExportImportViewModelListener listener : listeners) {
       listener.onError(error);
     }
   }

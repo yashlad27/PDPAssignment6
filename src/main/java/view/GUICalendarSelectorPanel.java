@@ -340,14 +340,8 @@ public class GUICalendarSelectorPanel extends JPanel {
       System.out.println("[WARNING] Cannot refresh calendar list: no listener");
       return;
     }
-    
-    // Get fresh calendar list through the listener mechanism
-    // This triggers a full calendar list reload from the controller
     try {
-      // This is implemented in a listener-agnostic way
-      // The listener (e.g., GUIController) will handle the UI update
       SwingUtilities.invokeLater(() -> {
-        // Force a UI update in a separate UI thread
         revalidate();
         repaint();
       });
@@ -369,7 +363,6 @@ public class GUICalendarSelectorPanel extends JPanel {
           String calendarName = calendarListModel.getElementAt(index);
           System.out.println("[DEBUG] Calendar list selection changed: " + calendarName);
           
-          // Get the selected calendar item if it exists in calendarItems
           for (CalendarItem item : calendarItems) {
             if (item.getCalendar().getName().equals(calendarName)) {
               selectedCalendar = item.getCalendar();
@@ -439,7 +432,7 @@ public class GUICalendarSelectorPanel extends JPanel {
    */
   private void showAddCalendarDialog() {
     JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
-            "Add Calendar", true);
+            "Add", true);
     dialog.setLayout(new BorderLayout());
     dialog.setResizable(false);
 
@@ -527,25 +520,20 @@ public class GUICalendarSelectorPanel extends JPanel {
   }
 
   private void showEditCalendarDialog() {
-    // First check if we have a calendar selected in the list view
     int selectedIndex = calendarList.getSelectedIndex();
     String selectedCalendarName;
     
     if (selectedIndex >= 0) {
-      // We have a selection in the list, use that
       selectedCalendarName = calendarListModel.getElementAt(selectedIndex);
       System.out.println("[DEBUG] Edit button: using list selection: " + selectedCalendarName);
       
-      // Make sure this selection is also reflected in the calendarList selection
       if (calendarList.getSelectedIndex() != selectedIndex) {
         calendarList.setSelectedIndex(selectedIndex);
       }
     } else if (selectedCalendar != null) {
-      // Fall back to the stored selectedCalendar if available
       selectedCalendarName = selectedCalendar.getName();
       System.out.println("[DEBUG] Edit button: using stored selection: " + selectedCalendarName);
       
-      // Try to select this calendar in the list for visual feedback
       for (int i = 0; i < calendarListModel.getSize(); i++) {
         if (calendarListModel.getElementAt(i).equals(selectedCalendarName)) {
           calendarList.setSelectedIndex(i);
@@ -553,11 +541,11 @@ public class GUICalendarSelectorPanel extends JPanel {
         }
       }
     } else {
-      // As a last resort, try to get the first calendar in the list
       if (calendarListModel.getSize() > 0) {
         selectedCalendarName = calendarListModel.getElementAt(0);
         calendarList.setSelectedIndex(0);
-        System.out.println("[DEBUG] Edit button: using first calendar in list: " + selectedCalendarName);
+        System.out.println("[DEBUG] Edit button: using first calendar in list: "
+                + selectedCalendarName);
       } else {
         selectedCalendarName = null;
       }
@@ -580,7 +568,6 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.insets = new Insets(5, 5, 5, 5);
     gbc.fill = GridBagConstraints.HORIZONTAL;
 
-    // Name field
     gbc.gridx = 0;
     gbc.gridy = 0;
     dialog.add(new JLabel("Calendar Name:"), gbc);
@@ -589,20 +576,15 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.gridx = 1;
     dialog.add(nameField, gbc);
 
-    // No timezone field - removed to simplify the UI
-
-    // Buttons panel
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JButton saveButton = new JButton("Save");
     JButton cancelButton = new JButton("Cancel");
     
-    // Apply button styling
     ButtonStyler.applyPrimaryStyle(saveButton);
     ButtonStyler.applySecondaryStyle(cancelButton);
 
     saveButton.addActionListener(e -> {
       String newName = nameField.getText().trim();
-      // No longer get timezone from UI as we're not changing it
 
       if (newName.isEmpty()) {
         JOptionPane.showMessageDialog(dialog,
@@ -617,19 +599,15 @@ public class GUICalendarSelectorPanel extends JPanel {
       
       if (listener != null) {
         try {
-          // Keep existing timezone by passing null or the current timezone
           String currentTimezone = null;
-          // Pass the existing timezone (not changing it)
           if (getSelectedCalendar() != null) {
             currentTimezone = getSelectedCalendar().getTimeZone().getID();
           }
           
           listener.onCalendarEdited(selectedCalendarName, newName, currentTimezone);
           
-          // After edit completes successfully, refresh the calendar list
           refreshCalendarList();
           
-          // Try to select the renamed calendar in the list
           SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < calendarListModel.getSize(); i++) {
               if (calendarListModel.getElementAt(i).equals(newName)) {
@@ -658,9 +636,8 @@ public class GUICalendarSelectorPanel extends JPanel {
     buttonsPanel.add(saveButton);
     buttonsPanel.add(cancelButton);
 
-    // Since we removed the timezone field, adjust the button panel position
     gbc.gridx = 0;
-    gbc.gridy = 1; // Changed from 2 to 1 since we removed timezone field
+    gbc.gridy = 1;
     gbc.gridwidth = 2;
     dialog.add(buttonsPanel, gbc);
 
