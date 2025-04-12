@@ -18,7 +18,7 @@ import model.calendar.Calendar;
 import model.event.Event;
 import model.event.EventAction;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 
 /**
  * Comprehensive test class for the Event, RecurringEvent, and Calendar classes.

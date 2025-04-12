@@ -4,9 +4,9 @@ import controller.command.ICommand;
 import controller.command.copy.strategy.ConsolidatedCopyStrategy;
 import controller.command.copy.strategy.CopyStrategy;
 import model.calendar.CalendarManager;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.EventNotFoundException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 import utilities.TimeZoneHandler;
 
 /**

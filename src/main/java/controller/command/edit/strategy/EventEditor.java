@@ -1,9 +1,9 @@
 package controller.command.edit.strategy;
 
 import model.calendar.ICalendar;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.EventNotFoundException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
  * Strategy interface for different event editing methods.

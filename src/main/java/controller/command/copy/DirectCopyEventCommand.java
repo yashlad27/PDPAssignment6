@@ -3,7 +3,7 @@ package controller.command.copy;
 import controller.command.ICommand;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 
 /**
  * Command for directly copying an event to a target calendar.

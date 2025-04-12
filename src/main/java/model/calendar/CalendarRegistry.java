@@ -8,9 +8,9 @@ import java.util.function.Consumer;
 import model.calendar.iterator.ConsolidatedIterator;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.DuplicateCalendarException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.DuplicateCalendarException;
 
 /**
  * Manages registration and retrieval of calendars by name.

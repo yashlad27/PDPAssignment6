@@ -16,7 +16,7 @@ import controller.parser.CommandParser;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
 import view.GUIView;
 import view.ICalendarView;
 

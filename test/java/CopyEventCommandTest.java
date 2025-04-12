@@ -10,9 +10,9 @@ import controller.command.copy.CopyEventCommand;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.DuplicateCalendarException;
-import model.exceptions.InvalidTimezoneException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.DuplicateCalendarException;
+import model.exceptions.CalendarExceptions.InvalidTimezoneException;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
 

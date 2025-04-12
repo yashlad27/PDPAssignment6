@@ -2,11 +2,11 @@ package controller.command.calendar;
 
 import controller.command.ICommand;
 import model.calendar.CalendarManager;
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
-import model.exceptions.InvalidEventException;
-import model.exceptions.InvalidTimezoneException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.EventNotFoundException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.InvalidTimezoneException;
 import view.ICalendarView;
 
 /**

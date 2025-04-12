@@ -20,7 +20,7 @@ import model.calendar.iterator.ConsolidatedIterator;
 import model.event.Event;
 import model.event.EventPropertyUpdater;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 import model.export.IDataExporter;
 import utilities.DateTimeUtil;
 import utilities.TimeZoneHandler;

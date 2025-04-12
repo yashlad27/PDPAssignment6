@@ -11,7 +11,7 @@ import java.util.UUID;
 import controller.command.event.ShowStatusCommand;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 import model.export.IDataExporter;
 
 import static org.junit.Assert.assertEquals;

@@ -11,8 +11,8 @@ import controller.command.edit.EditEventCommand;
 import model.calendar.Calendar;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
  * Tests for the EditEventCommand class.

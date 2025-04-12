@@ -11,7 +11,7 @@ import controller.command.create.strategy.ConsolidatedEventCreator;
 import model.calendar.Calendar;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
  * Comprehensive test suite for the ConsolidatedEventCreator class.

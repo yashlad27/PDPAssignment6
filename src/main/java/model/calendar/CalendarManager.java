@@ -3,9 +3,9 @@ package model.calendar;
 import java.util.Set;
 
 import model.calendar.iterator.ConsolidatedIterator;
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.DuplicateCalendarException;
-import model.exceptions.InvalidTimezoneException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.DuplicateCalendarException;
+import model.exceptions.CalendarExceptions.InvalidTimezoneException;
 import utilities.CalendarNameValidator;
 import utilities.TimeZoneHandler;
 

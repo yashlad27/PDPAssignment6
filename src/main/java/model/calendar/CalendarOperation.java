@@ -1,9 +1,9 @@
 package model.calendar;
 
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.EventNotFoundException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
  * Functional interface for performing operations on calendars.

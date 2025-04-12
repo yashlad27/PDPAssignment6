@@ -25,7 +25,7 @@ import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
 import view.ICalendarView;
 
 /**

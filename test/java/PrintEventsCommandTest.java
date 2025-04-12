@@ -19,6 +19,7 @@ import org.junit.Test;
 import controller.command.event.PrintEventsCommand;
 import model.calendar.ICalendar;
 import model.event.Event;
+import model.exceptions.CalendarExceptions;
 
 /**
  * This test suite verifies the functionality of the PrintEventsCommand using a mock ICalendar.
@@ -171,7 +172,8 @@ public class PrintEventsCommandTest {
     }
 
     @Override
-    public boolean updateEvent(UUID eventId, Event updatedEvent) throws model.exceptions.ConflictingEventException {
+    public boolean updateEvent(UUID eventId, Event updatedEvent)
+            throws CalendarExceptions.ConflictingEventException {
       return false;
     }
   }

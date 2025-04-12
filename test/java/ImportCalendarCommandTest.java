@@ -12,7 +12,7 @@ import java.util.List;
 import controller.command.event.ImportCalendarCommand;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 import view.GUICalendarPanel;
 import view.IGUIView;
 import viewmodel.ExportImportViewModel;

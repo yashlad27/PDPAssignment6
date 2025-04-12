@@ -2,7 +2,7 @@ package controller.command.calendar;
 
 import controller.command.ICommand;
 import model.calendar.CalendarManager;
-import model.exceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
 import view.ICalendarView;
 
 /**

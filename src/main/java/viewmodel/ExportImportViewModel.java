@@ -8,7 +8,7 @@ import java.util.Set;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
 import model.export.CSVExporter;
 import view.IGUIView;
 

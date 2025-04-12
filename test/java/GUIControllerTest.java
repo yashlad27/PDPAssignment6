@@ -20,7 +20,8 @@ import model.calendar.CalendarRegistry;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 import view.CalendarViewFeatures;
 import view.EventFormData;
 import view.GUICalendarPanel;
@@ -223,7 +224,7 @@ public class GUIControllerTest {
               e.getStackTrace().length > 0 &&
               e.getStackTrace()[0].getMethodName().contains("setupEventListeners"))
               ||
-              (e instanceof model.exceptions.CalendarNotFoundException)) {
+              (e instanceof CalendarExceptions.CalendarNotFoundException)) {
         assertTrue("Expected exception in test environment is acceptable", true);
       } else {
         fail("Initialize should not throw unexpected exceptions: " + e);

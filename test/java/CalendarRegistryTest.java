@@ -5,8 +5,8 @@ import java.util.function.Consumer;
 
 import model.calendar.Calendar;
 import model.calendar.CalendarRegistry;
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.DuplicateCalendarException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.DuplicateCalendarException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

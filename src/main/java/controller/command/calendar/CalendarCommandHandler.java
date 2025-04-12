@@ -1,8 +1,8 @@
 package controller.command.calendar;
 
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.DuplicateCalendarException;
-import model.exceptions.InvalidTimezoneException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.DuplicateCalendarException;
+import model.exceptions.CalendarExceptions.InvalidTimezoneException;
 
 /**
  * Functional interface for handling calendar-specific commands.

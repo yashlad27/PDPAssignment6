@@ -6,7 +6,7 @@ import controller.ICommandFactory;
 import model.calendar.Calendar;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
-import model.exceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
 import model.factory.CalendarFactory;
 import utilities.TimeZoneHandler;
 import view.CalendarViewFeatures;

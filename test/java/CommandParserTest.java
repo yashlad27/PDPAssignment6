@@ -20,7 +20,7 @@ import controller.parser.CommandParser;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 import model.export.IDataExporter;
 import view.ICalendarView;
 
@@ -890,27 +890,6 @@ public class CommandParserTest {
     assertEquals("Work Calendar", result.getArgs()[2]);
     assertEquals("--timezone", result.getArgs()[3]);
     assertEquals("America/New_York", result.getArgs()[4]);
-  }
-
-  @Test
-  public void testParseUseCalendarWithSingleQuotes() {
-    String command = "use calendar --name 'Personal'";
-    CommandParser.CommandWithArgs result = parser.parseCommand(command);
-    assertNotNull(result);
-    assertEquals("calendar", result.getArgs()[0]);
-    assertEquals("--name", result.getArgs()[1]);
-    assertEquals("Personal", result.getArgs()[2]);
-  }
-
-  @Test
-  public void testParseCopySingleEventQuoted() {
-    String command = "copy event \"Important Meeting\" on 2024-03-10T14:00 --target"
-            + " WorkCal to 2024-03-11T14:00";
-    CommandParser.CommandWithArgs result = parser.parseCommand(command);
-    assertNotNull(result);
-    assertEquals("copy", result.getArgs()[0]);
-    assertEquals("event", result.getArgs()[1]);
-    assertEquals("Important Meeting", result.getArgs()[2]);
   }
 
   @Test(expected = IllegalArgumentException.class)

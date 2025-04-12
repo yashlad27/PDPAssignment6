@@ -1,9 +1,9 @@
 import org.junit.Test;
 
 import controller.command.calendar.CalendarCommandHandler;
-import model.exceptions.CalendarNotFoundException;
-import model.exceptions.DuplicateCalendarException;
-import model.exceptions.InvalidTimezoneException;
+import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarExceptions.DuplicateCalendarException;
+import model.exceptions.CalendarExceptions.InvalidTimezoneException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

@@ -9,9 +9,9 @@ import java.util.UUID;
 
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.EventNotFoundException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 import model.export.IDataExporter;
 
 /**

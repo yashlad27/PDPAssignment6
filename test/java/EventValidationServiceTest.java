@@ -12,7 +12,7 @@ import java.util.Set;
 import model.event.Event;
 import model.event.RecurringEvent;
 import model.event.validation.EventValidationService;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

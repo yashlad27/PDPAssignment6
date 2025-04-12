@@ -8,7 +8,7 @@ import java.util.Set;
 
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
  * Consolidated implementation that provides validation logic for events.

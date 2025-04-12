@@ -12,7 +12,7 @@ import controller.command.event.ExportCalendarCommand;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
 import model.export.IDataExporter;
 
 import static org.junit.Assert.assertEquals;

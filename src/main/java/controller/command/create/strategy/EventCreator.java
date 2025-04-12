@@ -2,8 +2,8 @@ package controller.command.create.strategy;
 
 import model.calendar.ICalendar;
 import model.event.Event;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.InvalidEventException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
  * Strategy interface for different event creation methods. Following the Strategy Pattern to

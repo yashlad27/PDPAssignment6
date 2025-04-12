@@ -13,8 +13,8 @@ import controller.command.copy.DirectCopyEventCommand;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
+import model.exceptions.CalendarExceptions.ConflictingEventException;
+import model.exceptions.CalendarExceptions.EventNotFoundException;
 import model.export.IDataExporter;
 
 import static org.junit.Assert.assertEquals;
