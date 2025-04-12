@@ -11,9 +11,6 @@ import java.util.stream.Collectors;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.event.RecurringEvent;
-import model.exceptions.ConflictingEventException;
-import model.exceptions.EventNotFoundException;
-import model.exceptions.InvalidEventException;
 
 /**
  * ViewModel for managing calendar-related operations and state.
@@ -60,7 +57,6 @@ public class CalendarViewModel implements IViewModel {
 
   @Override
   public void initialize() {
-    // Initialize with default calendar if needed
     this.currentMonth = YearMonth.now();
     this.selectedDate = LocalDate.now();
   }
@@ -76,37 +72,6 @@ public class CalendarViewModel implements IViewModel {
     notifyEventsUpdated();
     notifyRecurringEventsUpdated();
     notifyCalendarListUpdated();
-  }
-
-  /**
-   * Adds a listener to be notified of changes.
-   *
-   * @param listener the listener to add
-   */
-  public void addListener(CalendarViewModelListener listener) {
-    listeners.add(listener);
-  }
-
-  /**
-   * Removes a listener from notifications.
-   *
-   * @param listener the listener to remove
-   */
-  public void removeListener(CalendarViewModelListener listener) {
-    listeners.remove(listener);
-  }
-
-  /**
-   * Sets the current calendar.
-   *
-   * @param calendar the calendar to set
-   */
-  public void setCurrentCalendar(ICalendar calendar) throws ConflictingEventException,
-          InvalidEventException, EventNotFoundException {
-    this.currentCalendar = calendar;
-    // Get calendar name from toString
-    this.selectedCalendarName = calendar != null ? calendar.toString() : "None";
-    notifyCalendarChanged();
   }
 
   /**
@@ -162,16 +127,6 @@ public class CalendarViewModel implements IViewModel {
   }
 
   /**
-   * Sets the selected calendar name.
-   *
-   * @param calendarName the name of the calendar to select
-   */
-  public void setSelectedCalendarName(String calendarName) {
-    this.selectedCalendarName = calendarName;
-    notifyCalendarChanged();
-  }
-
-  /**
    * Gets the selected calendar name.
    *
    * @return the selected calendar name
@@ -205,15 +160,6 @@ public class CalendarViewModel implements IViewModel {
    */
   public List<RecurringEvent> getRecurringEvents() {
     return recurringEvents;
-  }
-
-  /**
-   * Gets the current month being displayed.
-   *
-   * @return the current month
-   */
-  public YearMonth getCurrentMonth() {
-    return currentMonth;
   }
 
   /**
@@ -277,51 +223,10 @@ public class CalendarViewModel implements IViewModel {
   }
 
   /**
-   * Navigates to a specific date in the calendar.
-   * Method moved from GUICalendarPanel to follow MVVM pattern.
-   *
-   * @param date the date to navigate to
-   */
-  public void navigateToDate(LocalDate date) {
-    this.selectedDate = date;
-    this.currentMonth = YearMonth.from(date);
-    notifyDateSelected();
-    notifyMonthChanged(currentMonth);
-  }
-
-  /**
-   * Navigates to a specific month in the calendar.
-   * Method moved from GUICalendarPanel to follow MVVM pattern.
-   *
-   * @param month the month to navigate to
-   */
-  public void navigateToMonth(YearMonth month) {
-    this.currentMonth = month;
-    notifyMonthChanged(month);
-  }
-
-  /**
-   * Navigates to the next month.
-   */
-  public void nextMonth() {
-    setCurrentMonth(currentMonth.plusMonths(1));
-  }
-
-  /**
    * Navigates to the previous month.
    */
   public void previousMonth() {
     setCurrentMonth(currentMonth.minusMonths(1));
-  }
-
-  /**
-   * Gets the first day of month index (0 = Sunday, 1 = Monday, etc.)
-   *
-   * @param month the month to check
-   * @return the day of week index (0-6)
-   */
-  public int getFirstDayOfMonthIndex(YearMonth month) {
-    return month.atDay(1).getDayOfWeek().getValue() % 7;
   }
 
   /**

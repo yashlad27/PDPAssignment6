@@ -13,8 +13,22 @@ import controller.ICommandFactory;
 import controller.command.ICommand;
 
 /**
- * Improved parser for command-line input with extensible command pattern support. Now accepts the
- * ICommandFactory interface rather than the concrete implementation.
+ * A robust command parser that handles the parsing and interpretation of user commands
+ * in the calendar application. This parser supports multiple command formats
+ * including calendar management, event creation/modification, and various utility operations.
+ * The parser uses regular expressions to match command patterns and delegates the command execution
+ * to appropriate command handlers through a command factory.
+ *
+ * <p>Supported command categories include:
+ * <ul>
+ *   <li>Calendar Management (create, edit, use)</li>
+ *   <li>Event Management (create, edit, copy)</li>
+ *   <li>Event Queries (print, show status)</li>
+ *   <li>System Commands (exit)</li>
+ * </ul></p>
+ *
+ * <p>The parser is designed to be extensible, allowing new command patterns to be registered
+ * at runtime through the {@link #registerPattern} method.</p>
  */
 public class CommandParser {
 
@@ -25,18 +39,33 @@ public class CommandParser {
   private static final Set<String> VALID_COMMANDS_SET = new HashSet<>(VALID_COMMANDS);
 
   /**
-   * Constructs a new CommandParser.
+   * Constructs a new CommandParser with the specified command factory.
+   * Initializes the command patterns and prepares the parser for use.
    *
-   * @param commandFactory the factory for creating commands (using the interface)
+   * @param commandFactory An implementation of ICommandFactory that creates command objects
+   * @throws IllegalArgumentException if commandFactory is null
    */
   public CommandParser(ICommandFactory commandFactory) {
+    if (commandFactory == null) {
+      throw new IllegalArgumentException("Command factory cannot be null");
+    }
     this.commandFactory = commandFactory;
     this.commandPatterns = new HashMap<>();
     initializePatterns();
   }
 
   /**
-   * Registers default command patterns.
+   * Initializes the default command patterns supported by the parser.
+   * This method sets up regular expressions for matching various command formats and
+   * associates them with their respective parsing functions.
+   *
+   * <p>Supported command patterns include:
+   * <ul>
+   *   <li>Calendar creation and modification</li>
+   *   <li>Event creation (single, recurring, all-day)</li>
+   *   <li>Event modification and copying</li>
+   *   <li>Event querying and status checks</li>
+   * </ul></p>
    */
   private void initializePatterns() {
     // Create calendar pattern
@@ -156,22 +185,28 @@ public class CommandParser {
   }
 
   /**
-   * Registers a new command pattern.
+   * Registers a new command pattern with the parser.
+   * This method allows extending the parser's capabilities by adding new command formats.
    *
-   * @param name    the name of the pattern
-   * @param pattern the regex pattern
-   * @param parser  the parser function for the pattern
+   * @param name    The unique identifier for this command pattern
+   * @param pattern The regular expression pattern that matches the command format
+   * @param parser  The function that parses the matched command into executable form
+   * @throws IllegalArgumentException if any parameter is null
    */
   public void registerPattern(String name, Pattern pattern, CommandPatternParser parser) {
+    if (name == null || pattern == null || parser == null) {
+      throw new IllegalArgumentException("Pattern registration parameters cannot be null");
+    }
     commandPatterns.put(name, new CommandPattern(pattern, parser));
   }
 
   /**
-   * Parses a command string and returns the appropriate Command object with arguments.
+   * Parses a command string into an executable command with its arguments.
+   * This method validates the command format and delegates to appropriate pattern parsers.
    *
-   * @param commandString the command string to parse
-   * @return a Command object that can execute the requested operation
-   * @throws IllegalArgumentException if the command is invalid or unsupported
+   * @param commandString The raw command string to parse
+   * @return A CommandWithArgs object containing the executable command and its arguments
+   * @throws IllegalArgumentException if the command is invalid, empty, or unsupported
    */
   public CommandWithArgs parseCommand(String commandString) {
     if (commandString == null || commandString.trim().isEmpty()) {
@@ -204,10 +239,11 @@ public class CommandParser {
   }
 
   /**
-   * Helper method to remove surrounding quotes (both single and double) from a string.
+   * Removes surrounding quotes (single or double) from a string value.
+   * This helper method ensures consistent handling of quoted parameters in commands.
    *
-   * @param value the string that might have quotes
-   * @return the string with quotes removed, or the original string if no quotes
+   * @param value The string that might have surrounding quotes
+   * @return The string with quotes removed, or the original string if no quotes present
    */
   private String removeQuotes(String value) {
     if (value == null) {
@@ -271,8 +307,8 @@ public class CommandParser {
     String location = matcher.group(7);
 
     String[] args = {"recurring", eventName, startTime, endTime, weekdays, occurrences,
-                     description != null ? description : "", location != null ? location : "",
-                     "true", "false"
+            description != null ? description : "", location != null ? location : "",
+            "true", "false"
     };
     return new CommandWithArgs(commandFactory.getCommand("create"), args);
   }
@@ -411,7 +447,7 @@ public class CommandParser {
     ICommand copyCommand = commandFactory.getCommand("copy");
 
     String[] args = {"copy", "events", "between", matcher.group(1), "and", matcher.group(2),
-                     "--target", matcher.group(3), "to", matcher.group(4)};
+            "--target", matcher.group(3), "to", matcher.group(4)};
     return new CommandWithArgs(copyCommand, args);
   }
 
@@ -472,48 +508,96 @@ public class CommandParser {
   }
 
   /**
-   * Helper class to hold a command and its arguments.
+   * Represents a command along with its arguments, providing a way to execute the command.
+   * This class encapsulates the relationship between a command and its parameters.
    */
   public static class CommandWithArgs {
 
     private final ICommand command;
     private final String[] args;
 
+    /**
+     * Creates a new command with its arguments.
+     *
+     * @param command The command to execute
+     * @param args    The arguments for the command
+     * @throws IllegalArgumentException if command is null
+     */
     public CommandWithArgs(ICommand command, String[] args) {
+      if (command == null) {
+        throw new IllegalArgumentException("Command cannot be null");
+      }
       this.command = command;
-      this.args = args;
+      this.args = args != null ? args : new String[0];
     }
 
+    /**
+     * Gets the command object.
+     *
+     * @return The command object
+     */
     public ICommand getCommand() {
       return command;
     }
 
+    /**
+     * Gets the command arguments.
+     *
+     * @return Array of command arguments
+     */
     public String[] getArgs() {
-      return args;
+      return args.clone(); // Return a copy to prevent modification
     }
 
+    /**
+     * Executes the command with its arguments.
+     *
+     * @return The result of command execution
+     * @throws Exception if command execution fails
+     */
     public String execute() throws Exception {
       return command.execute(args);
     }
   }
 
   /**
-   * Class that represents a command pattern with its regex and parser.
+   * Encapsulates a command pattern with its matching regex and parsing function.
+   * This class helps organize the relationship between command formats and their parsers.
    */
   private static class CommandPattern {
 
     private final Pattern pattern;
     private final CommandPatternParser parser;
 
+    /**
+     * Creates a new command pattern.
+     *
+     * @param pattern The regex pattern for matching commands
+     * @param parser  The function to parse matched commands
+     * @throws IllegalArgumentException if either parameter is null
+     */
     public CommandPattern(Pattern pattern, CommandPatternParser parser) {
+      if (pattern == null || parser == null) {
+        throw new IllegalArgumentException("Pattern and parser cannot be null");
+      }
       this.pattern = pattern;
       this.parser = parser;
     }
 
+    /**
+     * Gets the regex pattern.
+     *
+     * @return The command's regex pattern
+     */
     public Pattern getPattern() {
       return pattern;
     }
 
+    /**
+     * Gets the command parser.
+     *
+     * @return The command's parser function
+     */
     public CommandPatternParser getParser() {
       return parser;
     }

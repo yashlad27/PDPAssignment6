@@ -19,10 +19,4 @@ public interface INotificationDisplay {
    */
   void displayError(String errorMessage);
 
-  /**
-   * Displays a success message to the user.
-   *
-   * @param successMessage the success message to display to the user
-   */
-  void displaySuccess(String successMessage);
 } 

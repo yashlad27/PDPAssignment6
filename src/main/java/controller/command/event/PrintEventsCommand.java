@@ -75,12 +75,10 @@ public class PrintEventsCommand implements ICommand {
         String startStr = args[1];
         String endStr = args[2];
         
-        // Check if the inputs contain time components
         boolean hasTimeComponent = startStr.contains("T") || endStr.contains("T");
         
         if (hasTimeComponent) {
-          // Handle datetime range
-          LocalDateTime startDateTime = startStr.contains("T") ? 
+          LocalDateTime startDateTime = startStr.contains("T") ?
                   DateTimeUtil.parseDateTime(startStr) :
                   DateTimeUtil.parseDate(startStr).atStartOfDay();
                   
@@ -90,7 +88,6 @@ public class PrintEventsCommand implements ICommand {
           
           return printEventsInDateTimeRange(startDateTime, endDateTime);
         } else {
-          // Handle date-only range (existing functionality)
           LocalDate startDate = DateTimeUtil.parseDate(args[1]);
           LocalDate endDate = DateTimeUtil.parseDate(args[2]);
           return printEventsInRange(startDate, endDate);
@@ -104,13 +101,10 @@ public class PrintEventsCommand implements ICommand {
   }
 
   private String printEventsOnDate(LocalDate date) {
-    // Get events directly from the calendar
     List<Event> eventsOnDate = calendar.getEventsOnDate(date);
 
-    // Format the date in a more human-readable format
     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     
-    // Check for events that occur just after midnight (early hours of next day)
     LocalDate nextDay = date.plusDays(1);
     List<Event> earlyMorningEvents = calendar.getEventsOnDate(nextDay)
             .stream()
@@ -122,16 +116,13 @@ public class PrintEventsCommand implements ICommand {
             })
             .collect(Collectors.toList());
     
-    // Create a new mutable list and add all events to it
     List<Event> allEvents = new ArrayList<>(eventsOnDate);
-    // Add early morning events that belong logically to the current day
     allEvents.addAll(earlyMorningEvents);
     
     if (allEvents.isEmpty()) {
       return "No events on " + date.format(dateFormatter);
     }
 
-    // Get calendar's timezone for display
     TimeZone calendarTimeZone = calendar.getTimeZone();
     String timeZoneId = calendarTimeZone.getID();
 
@@ -143,10 +134,8 @@ public class PrintEventsCommand implements ICommand {
   }
 
   private String printEventsInRange(LocalDate startDate, LocalDate endDate) {
-    // Get events directly from the calendar for the requested range
     List<Event> eventsInRange = calendar.getEventsInRange(startDate, endDate);
     
-    // Format the dates in a more human-readable format
     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     
     if (eventsInRange.isEmpty()) {
@@ -154,7 +143,6 @@ public class PrintEventsCommand implements ICommand {
               + endDate.format(dateFormatter);
     }
 
-    // Get calendar's timezone for display
     TimeZone calendarTimeZone = calendar.getTimeZone();
     String timeZoneId = calendarTimeZone.getID();
 
@@ -167,24 +155,20 @@ public class PrintEventsCommand implements ICommand {
   }
 
   private String printEventsInDateTimeRange(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-    // Get events by date range first, then filter by time
     LocalDate startDate = startDateTime.toLocalDate();
     LocalDate endDate = endDateTime.toLocalDate();
     
     List<Event> allEvents = calendar.getEventsInRange(startDate, endDate);
     
-    // Filter the events to only include those within the specific time range
     List<Event> eventsInTimeRange = allEvents.stream()
         .filter(event -> {
             LocalDateTime eventStart = event.getStartDateTime();
             LocalDateTime eventEnd = event.getEndDateTime();
             
-            // Check if event overlaps with the time range
             return !(eventEnd.isBefore(startDateTime) || eventStart.isAfter(endDateTime));
         })
         .collect(Collectors.toList());
     
-    // Format the times in a more human-readable format
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     
     if (eventsInTimeRange.isEmpty()) {
@@ -192,7 +176,6 @@ public class PrintEventsCommand implements ICommand {
               + endDateTime.format(formatter);
     }
 
-    // Get calendar's timezone for display
     TimeZone calendarTimeZone = calendar.getTimeZone();
     String timeZoneId = calendarTimeZone.getID();
 

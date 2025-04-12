@@ -75,7 +75,6 @@ public class ImportCalendarCommand implements ICommand {
    */
   public String importFromFile(File file) {
     try {
-      // If view model is available, use it for importing
       if (viewModel != null) {
         viewModel.setCurrentCalendar(calendar);
         int successCount = viewModel.importFromCSV(file);
@@ -87,7 +86,6 @@ public class ImportCalendarCommand implements ICommand {
         return "Successfully imported " + successCount + " events";
       }
       
-      // Otherwise, fall back to direct importing
       List<Event> importedEvents = csvExporter.importEvents(file);
 
       if (importedEvents.isEmpty()) {
@@ -97,13 +95,11 @@ public class ImportCalendarCommand implements ICommand {
       int successCount = 0;
       for (Event event : importedEvents) {
         try {
-          // Add each event to the calendar
-          boolean added = calendar.addEvent(event, true); // Set autoDecline to true
+          boolean added = calendar.addEvent(event, true);
           if (added) {
             successCount++;
           }
         } catch (Exception e) {
-          // Log the error but continue processing
           System.err.println("Error adding event: " + e.getMessage());
         }
       }
@@ -112,7 +108,6 @@ public class ImportCalendarCommand implements ICommand {
         return "Failed to import any events";
       }
       
-      // Update view if available
       if (view != null) {
         view.getCalendarPanel().updateCalendar(calendar);
       }

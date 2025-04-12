@@ -44,6 +44,27 @@ The application can be run in three different modes:
    - Default commands file location: `src/resources/headlesscmd.txt`
    - You can specify your own commands file path
 
+### Running the Pre-built JAR
+A pre-built version of the application is available in the resources folder. You can run it using these commands:
+
+1. **GUI Mode** (Default):
+   ```bash
+   java -jar resources/PDPAssignment6-1.0-SNAPSHOT.jar
+   ```
+
+2. **Interactive Mode**:
+   ```bash
+   java -jar resources/PDPAssignment6-1.0-SNAPSHOT.jar --mode interactive
+   ```
+
+3. **Headless Mode**:
+   ```bash
+   java -jar resources/PDPAssignment6-1.0-SNAPSHOT.jar --mode headless resources/headlessCmd.txt
+   ```
+   - Default commands file is available at: `resources/headlessCmd.txt`
+
+Note: After building the application with Maven, use the commands in the "Running the Application" section above to run your newly built jar file from the target directory.
+
 ## Overview
 The Calendar Application is a feature-rich scheduling tool that allows you to:
 - Manage multiple calendars with different time zones

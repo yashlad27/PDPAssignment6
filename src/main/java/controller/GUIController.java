@@ -45,21 +45,54 @@ import viewmodel.ExportImportViewModel;
 
 /**
  * Controller class that handles GUI-specific logic and coordinates between the model and view.
+ * This class serves as the primary controller for the GUI version of the calendar application,
+ * managing interactions between the calendar model and the graphical user interface.
+ *
+ * <p>Key responsibilities include:
+ * <ul>
+ *   <li>Managing calendar selection and switching</li>
+ *   <li>Handling event creation, editing, and deletion</li>
+ *   <li>Coordinating view updates and refreshes</li>
+ *   <li>Processing user interactions and commands</li>
+ *   <li>Managing import/export operations</li>
+ * </ul>
+ *
+ * <p>The controller maintains state information about:
+ * <ul>
+ *   <li>The currently selected calendar</li>
+ *   <li>The calendar manager for accessing multiple calendars</li>
+ *   <li>The view interface for updating the GUI</li>
+ *   <li>Time zone handling for calendar operations</li>
+ * </ul>
  */
 public class GUIController {
+  /** The calendar manager responsible for managing multiple calendars */
   private final CalendarManager calendarManager;
+  
+  /** The view interface for updating the GUI */
   private final CalendarViewFeatures view;
+  
+  /** Handler for timezone conversions and management */
   private final TimeZoneHandler timezoneHandler;
+  
+  /** The currently active calendar */
   private ICalendar currentCalendar;
+  
+  /** The selected calendar for operations */
   private ICalendar selectedCalendar;
 
   /**
    * Constructs a new GUIController.
+   * Initializes the controller with necessary components for managing calendars and the GUI.
    *
-   * @param calendarManager the calendar manager
-   * @param view            the GUI view implementing CalendarViewFeatures
+   * @param calendarManager The calendar manager for handling multiple calendars
+   * @param view The GUI view implementing CalendarViewFeatures interface
+   * @throws IllegalArgumentException if either parameter is null
    */
   public GUIController(CalendarManager calendarManager, CalendarViewFeatures view) {
+    if (calendarManager == null || view == null) {
+      throw new IllegalArgumentException("Calendar manager and view cannot be null");
+    }
     this.calendarManager = calendarManager;
     this.view = view;
     this.timezoneHandler = new TimeZoneHandler();
@@ -67,7 +100,16 @@ public class GUIController {
   }
 
   /**
-   * Initializes the application.
+   * Initializes the application by setting up the default calendar and event listeners.
+   * This method performs the following tasks:
+   * <ul>
+   *   <li>Creates a default calendar if none exists</li>
+   *   <li>Sets up the initial calendar view</li>
+   *   <li>Initializes event listeners for user interactions</li>
+   *   <li>Updates the calendar display with existing events</li>
+   * </ul>
+   *
+   * @throws CalendarNotFoundException if no calendar can be initialized
    */
   public void initialize() throws CalendarNotFoundException {
     System.out.println("Initializing GUI controller...");
@@ -112,7 +154,14 @@ public class GUIController {
   }
 
   /**
-   * Sets up event listeners for the view components.
+   * Sets up event listeners for various GUI components.
+   * Configures listeners for:
+   * <ul>
+   *   <li>Calendar selection and creation</li>
+   *   <li>Date selection and event handling</li>
+   *   <li>Event creation and modification</li>
+   *   <li>Import/Export operations</li>
+   * </ul>
    */
   private void setupEventListeners() {
     // Calendar selection
@@ -469,8 +518,9 @@ public class GUIController {
 
   /**
    * Updates the busy/available status for a given date.
+   * Checks for events on the specified date and updates the calendar panel accordingly.
    *
-   * @param date the date to check
+   * @param date The date to check for events
    */
   private void updateStatus(LocalDate date) {
     if (currentCalendar == null) {
@@ -498,9 +548,10 @@ public class GUIController {
   }
 
   /**
-   * Updates the events for the specified date.
+   * Updates the events displayed for the specified date.
+   * Refreshes both the event list and calendar panel with current events.
    *
-   * @param date the date to update events for
+   * @param date The date to update events for
    */
   private void updateEvents(LocalDate date) {
     if (date == null) {
@@ -517,9 +568,10 @@ public class GUIController {
   }
 
   /**
-   * Lists events for the specified date.
+   * Lists all events for a specific date.
+   * Retrieves and displays events from the current calendar for the given date.
    *
-   * @param date the date to list events for
+   * @param date The date to list events for
    */
   private void listEvents(LocalDate date) {
     if (date == null) {
@@ -555,10 +607,11 @@ public class GUIController {
   }
 
   /**
-   * Shows events in the specified date range.
+   * Shows events within a specified date range.
+   * Retrieves and displays all events that fall within the start and end dates.
    *
-   * @param startDate the start date of the range
-   * @param endDate   the end date of the range
+   * @param startDate The start date of the range
+   * @param endDate The end date of the range
    */
   private void showRange(LocalDate startDate, LocalDate endDate) {
     try {
@@ -601,10 +654,10 @@ public class GUIController {
   }
 
   /**
-   * Gets all events on a specific date.
+   * Retrieves all events for a specific date from the current calendar.
    *
-   * @param date the date to get events for
-   * @return list of events on the date
+   * @param date The date to get events for
+   * @return List of events on the specified date
    */
   public List<Event> getEventsOnDate(LocalDate date) {
     if (currentCalendar == null) {
@@ -621,11 +674,11 @@ public class GUIController {
   }
 
   /**
-   * Gets all events in a date range.
+   * Retrieves all events within a date range from the current calendar.
    *
-   * @param startDate the start date
-   * @param endDate   the end date
-   * @return list of events in the range
+   * @param startDate The start date of the range
+   * @param endDate The end date of the range
+   * @return List of events within the specified range
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
     if (currentCalendar == null) {
@@ -642,9 +695,9 @@ public class GUIController {
   }
 
   /**
-   * Gets all events in the current calendar.
+   * Retrieves all events from the current calendar.
    *
-   * @return list of all events
+   * @return List of all events in the current calendar
    */
   public List<Event> getAllEvents() {
     if (currentCalendar == null) {
@@ -661,9 +714,9 @@ public class GUIController {
   }
 
   /**
-   * Gets all recurring events in the current calendar.
+   * Retrieves all recurring events from the current calendar.
    *
-   * @return list of all recurring events
+   * @return List of all recurring events in the current calendar
    */
   public List<RecurringEvent> getAllRecurringEvents() {
     if (currentCalendar == null) {
@@ -680,9 +733,10 @@ public class GUIController {
   }
 
   /**
-   * Handles the editing of an event.
+   * Handles the editing of an existing event.
+   * Displays the edit dialog and processes the user's modifications.
    *
-   * @param event the event to edit
+   * @param event The event to edit
    */
   public void editEvent(Event event) {
     System.out.println("[DEBUG] GUIController.editEvent called for: " + event.getSubject());
@@ -715,9 +769,10 @@ public class GUIController {
   }
 
   /**
-   * Handles a new event being saved from the event panel.
+   * Processes a new event being saved from the event panel.
+   * Validates and creates a new event based on the form data.
    *
-   * @param formData the form data collected from the event panel
+   * @param formData The form data containing event details
    */
   public void onEventSaved(EventFormData formData) {
     try {
@@ -834,9 +889,10 @@ public class GUIController {
   }
 
   /**
-   * Handles an event being updated from the event panel.
+   * Processes an event being updated from the event panel.
+   * Validates and updates an existing event with new details.
    *
-   * @param formData the form data collected from the event panel
+   * @param formData The form data containing updated event details
    */
   public void onEventUpdated(EventFormData formData) {
     try {
@@ -976,7 +1032,6 @@ public class GUIController {
             view.showEventDetails(updatedEvent);
           }
 
-          // Refresh all views
           view.refreshCalendarView();
           view.refreshEventView();
           view.refreshView();
@@ -996,9 +1051,10 @@ public class GUIController {
   }
 
   /**
-   * Handles the updating of an event after it has been edited.
+   * Updates an event after it has been edited.
+   * Applies changes to the event and refreshes the display.
    *
-   * @param event the updated event
+   * @param event The updated event
    */
   public void onEventUpdated(Event event) {
     System.out.println("[DEBUG] Event updated: " + event.getSubject());
@@ -1056,12 +1112,12 @@ public class GUIController {
   }
 
   /**
-   * Handles copying an event.
+   * Copies an event to a different calendar or time slot.
    *
-   * @param event               the event to copy
-   * @param targetCalendarName  the name of the target calendar
-   * @param targetStartDateTime the target start date/time
-   * @param targetEndDateTime   the target end date/time
+   * @param event The event to copy
+   * @param targetCalendarName The name of the target calendar
+   * @param targetStartDateTime The new start date/time
+   * @param targetEndDateTime The new end date/time
    * @return true if the copy was successful, false otherwise
    */
   public boolean copyEvent(Event event, String targetCalendarName,
@@ -1075,7 +1131,6 @@ public class GUIController {
     }
 
     try {
-      // Find the target calendar by name
       ICalendar targetCalendar = null;
       try {
         targetCalendar = calendarManager.getCalendar(targetCalendarName);
@@ -1118,9 +1173,10 @@ public class GUIController {
   }
 
   /**
-   * Handles printing an event.
+   * Prints the details of an event.
+   * Formats and displays comprehensive event information.
    *
-   * @param event the event to print
+   * @param event The event to print
    */
   public void printEvent(Event event) {
     System.out.println("[DEBUG] Printing event: " + event.getSubject());
@@ -1153,23 +1209,11 @@ public class GUIController {
   }
 
   /**
-   * Handles the closing of the application.
-   */
-  public void handleApplicationClose() {
-    try {
-      view.displayMessage("Saving changes...");
-      view.displayMessage("Application closed successfully");
-    } catch (Exception e) {
-      view.displayError("Error while closing application: " + e.getMessage());
-    }
-  }
-
-  /**
-   * Converts EventFormData to command arguments array.
+   * Converts form data to command arguments for processing.
    *
-   * @param formData    The form data to convert
+   * @param formData The form data to convert
    * @param commandType The type of command (create, edit, etc.)
-   * @return String array of command arguments
+   * @return Array of command arguments
    */
   private String[] convertFormDataToCommandArgs(EventFormData formData, String commandType) {
     if (formData == null) {
@@ -1242,13 +1286,11 @@ public class GUIController {
 
   /**
    * Executes a calendar command with the given arguments.
-   * This method processes commands like "create" and "edit" to manage calendar events.
-   * It handles both single events and recurring events with various parameters.
+   * Processes various calendar operations including event creation and modification.
    *
-   * @param command the command to execute (e.g., "create", "edit")
-   * @param args the arguments for the command, including event details such as subject,
-   *             date, time, location, and other properties
-   * @return a String message indicating the result of command execution (success or error message)
+   * @param command The command to execute
+   * @param args The arguments for the command
+   * @return Result message indicating success or failure
    */
   public String executeCommand(String command, String[] args) {
     System.out.println("[DEBUG] Executing command: " + command
@@ -1594,6 +1636,12 @@ public class GUIController {
     }
   }
 
+  /**
+   * Updates the event list for a specific date.
+   * Refreshes the calendar panel with updated event information.
+   *
+   * @param date The date to update events for
+   */
   private void updateEventList(LocalDate date) {
     if (date != null && currentCalendar != null) {
       java.util.List<Event> events = currentCalendar.getEventsOnDate(date);
@@ -1604,8 +1652,9 @@ public class GUIController {
 
   /**
    * Sets the selected date and updates all relevant views.
+   * Refreshes the event panel and calendar display for the new date.
    *
-   * @param date the date to set as selected
+   * @param date The date to set as selected
    */
   private void setSelectedDate(LocalDate date) {
     if (date == null) {
@@ -1619,6 +1668,10 @@ public class GUIController {
     updateStatus(date);
   }
 
+  /**
+   * Updates the calendar display with current information.
+   * Refreshes the view to reflect any changes in the selected calendar.
+   */
   private void updateCalendarDisplay() {
     if (selectedCalendar != null) {
       try {
