@@ -51,6 +51,7 @@ public class GUIController {
   private final CalendarViewFeatures view;
   private final TimeZoneHandler timezoneHandler;
   private ICalendar currentCalendar;
+  private ICalendar selectedCalendar;
 
   /**
    * Constructs a new GUIController.
@@ -233,6 +234,43 @@ public class GUIController {
                 } catch (Exception ex) {
                   System.out.println("[DEBUG] Calendar creation error: " + ex.getMessage());
                   view.showErrorMessage("Could not create calendar: " + ex.getMessage());
+                }
+              }
+
+              @Override
+              public void onCalendarEdited(String oldName, String newName, String newTimezone) {
+                try {
+                  System.out.println("[DEBUG] Editing calendar name from '" + oldName + "' to '" + newName + "'");
+                  
+                  // Only update the name if it changed
+                  if (!oldName.equals(newName)) {
+                    calendarManager.editCalendarName(oldName, newName);
+                    System.out.println("[DEBUG] Calendar name updated from '" + oldName + "' to '" + newName + "'");
+                  } else {
+                    System.out.println("[DEBUG] Calendar name unchanged, skipping update");
+                  }
+                  
+                  // Update the selected calendar and display
+                  selectedCalendar = calendarManager.getCalendar(newName);
+                  currentCalendar = selectedCalendar; // Also update current calendar
+                  
+                  // Update the UI
+                  view.setSelectedCalendar(newName);
+                  view.getCalendarPanel().updateCalendarName(newName);
+                  
+                  // Refresh the calendar list to show the updated name
+                  view.updateCalendarList(new ArrayList<>(calendarManager
+                          .getCalendarRegistry().getCalendarNames()));
+                  
+                  // Update the calendar display
+                  updateCalendarDisplay();
+                  view.refreshView(); // Force complete UI refresh
+                  
+                  view.displayMessage("Calendar name updated successfully");
+                } catch (Exception e) {
+                  System.err.println("[ERROR] Failed to update calendar: " + e.getMessage());
+                  e.printStackTrace();
+                  view.displayError("Failed to update calendar: " + e.getMessage());
                 }
               }
             });
@@ -1581,5 +1619,15 @@ public class GUIController {
     updateStatus(date);
   }
 
+  private void updateCalendarDisplay() {
+    if (selectedCalendar != null) {
+      try {
+        view.updateCalendarView(selectedCalendar);
+        view.refreshView();
+      } catch (Exception e) {
+        view.displayError("Failed to update calendar display: " + e.getMessage());
+      }
+    }
+  }
 }
  

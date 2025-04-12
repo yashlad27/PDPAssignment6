@@ -5,6 +5,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -918,7 +920,66 @@ public class Calendar implements ICalendar {
    *
    * @param timezone the new timezone for the calendar
    */
+  /**
+   * Sets the timezone of the calendar and updates all event times accordingly.
+   * When the timezone changes, all events are converted to maintain the same wall-clock time
+   * in the new timezone.
+   *
+   * @param timezone the new timezone for the calendar
+   */
   public void setTimezone(String timezone) {
-    this.timezone = TimeZone.getTimeZone(timezone);
+    TimeZone oldTimezone = this.timezone;
+    TimeZone newTimezone = TimeZone.getTimeZone(timezone);
+    
+    // Skip conversion if timezone isn't actually changing
+    if (oldTimezone.getID().equals(newTimezone.getID())) {
+      return;
+    }
+    
+    // Update all single events
+    for (Event event : events) {
+      LocalDateTime oldStart = event.getStartDateTime();
+      LocalDateTime oldEnd = event.getEndDateTime();
+      
+      // Convert from old timezone to new timezone
+      ZoneId oldZone = oldTimezone.toZoneId();
+      ZoneId newZone = newTimezone.toZoneId();
+      
+      // Convert keeping the same wall clock time
+      ZonedDateTime zonedStart = oldStart.atZone(oldZone);
+      ZonedDateTime zonedEnd = oldEnd.atZone(oldZone);
+      
+      LocalDateTime newStart = zonedStart.withZoneSameLocal(newZone).toLocalDateTime();
+      LocalDateTime newEnd = zonedEnd.withZoneSameLocal(newZone).toLocalDateTime();
+      
+      // Update the event
+      event.setStartDateTime(newStart);
+      event.setEndDateTime(newEnd);
+    }
+    
+    // Update all recurring events
+    for (RecurringEvent recurringEvent : recurringEvents) {
+      LocalDateTime oldStart = recurringEvent.getStartDateTime();
+      LocalDateTime oldEnd = recurringEvent.getEndDateTime();
+      
+      // Convert from old timezone to new timezone
+      ZoneId oldZone = oldTimezone.toZoneId();
+      ZoneId newZone = newTimezone.toZoneId();
+      
+      // Convert keeping the same wall clock time
+      ZonedDateTime zonedStart = oldStart.atZone(oldZone);
+      ZonedDateTime zonedEnd = oldEnd.atZone(oldZone);
+      
+      LocalDateTime newStart = zonedStart.withZoneSameLocal(newZone).toLocalDateTime();
+      LocalDateTime newEnd = zonedEnd.withZoneSameLocal(newZone).toLocalDateTime();
+      
+      // Update the recurring event
+      recurringEvent.setStartDateTime(newStart);
+      recurringEvent.setEndDateTime(newEnd);
+    }
+    
+    // Finally update the calendar's timezone
+    this.timezone = newTimezone;
+    System.out.println("Calendar timezone changed from " + oldTimezone.getID() + " to " + newTimezone.getID());
   }
 }

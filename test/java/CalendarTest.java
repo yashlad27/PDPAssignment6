@@ -641,7 +641,7 @@ public class CalendarTest {
 
   @Test
   public void testAddRecurringEventWithConflicts() throws ConflictingEventException {
-    // Add a normal event first
+    // Add a normal event firs
     LocalDateTime normalStart = LocalDateTime.of(2023, 1, 9, 10, 0); // Monday
     LocalDateTime normalEnd = normalStart.plusHours(1);
     Event normalEvent = new Event("Normal", normalStart, normalEnd, "Desc", "Loc", true);
