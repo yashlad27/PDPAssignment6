@@ -130,7 +130,7 @@ public class DateTimeUtil {
 
     return weekdays;
   }
-  
+
   /**
    * Combines a date string and time string into a LocalDateTime.
    *
@@ -186,7 +186,7 @@ public class DateTimeUtil {
     }
     return dateTime.format(DATE_TIME_FORMATTER);
   }
-  
+
   /**
    * Converts a set of DayOfWeek to a string of weekday characters.
    * Uses 'M' for Monday, 'T' for Tuesday, 'W' for Wednesday, 'R' for Thursday,

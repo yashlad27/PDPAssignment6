@@ -70,7 +70,7 @@ public class CalendarNameValidator {
   public static void removeAllCalendarNames() {
     existingNames.clear();
   }
-  
+
   /**
    * Checks if a calendar name already exists.
    *
@@ -85,7 +85,7 @@ public class CalendarNameValidator {
     String unquotedName = removeQuotes(trimmedName);
     return existingNames.contains(unquotedName);
   }
-  
+
   /**
    * Removes a calendar name from the existing names.
    *

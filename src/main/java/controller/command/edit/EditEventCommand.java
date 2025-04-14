@@ -70,9 +70,7 @@ public class EditEventCommand implements ICommand {
         } catch (EventNotFoundException | InvalidEventException | ConflictingEventException e) {
           return String.format("Failed to edit event: %s", e.getMessage());
         }
-      }
-
-      else {
+      } else {
         return "Error: Unknown edit type: " + editType;
       }
     } catch (IllegalArgumentException e) {

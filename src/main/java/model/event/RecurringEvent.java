@@ -414,7 +414,7 @@ public class RecurringEvent extends Event {
   public int getOccurrences() {
     return occurrences;
   }
-  
+
   /**
    * Gets the end date of the recurring event.
    *

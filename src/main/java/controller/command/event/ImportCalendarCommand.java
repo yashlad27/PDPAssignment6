@@ -8,8 +8,8 @@ import controller.command.ICommand;
 import model.calendar.ICalendar;
 import model.event.Event;
 import model.export.CSVExporter;
-import viewmodel.ExportImportViewModel;
 import view.IGUIView;
+import viewmodel.ExportImportViewModel;
 
 /**
  * Command for importing events to the calendar from a CSV file.
@@ -33,13 +33,13 @@ public class ImportCalendarCommand implements ICommand {
     this.calendar = calendar;
     this.csvExporter = new CSVExporter();
   }
-  
+
   /**
    * Constructs a new ImportCalendarCommand with a view model and view.
    *
-   * @param calendar the calendar model
+   * @param calendar  the calendar model
    * @param viewModel the export/import view model
-   * @param view the GUI view
+   * @param view      the GUI view
    */
   public ImportCalendarCommand(ICalendar calendar, ExportImportViewModel viewModel, IGUIView view) {
     if (calendar == null) {
@@ -63,13 +63,13 @@ public class ImportCalendarCommand implements ICommand {
     if (!file.exists()) {
       return "Error: File not found: " + filePath;
     }
-    
+
     return importFromFile(file);
   }
-  
+
   /**
    * Imports events from a file directly.
-   * 
+   *
    * @param file the file to import from
    * @return status message
    */
@@ -78,14 +78,14 @@ public class ImportCalendarCommand implements ICommand {
       if (viewModel != null) {
         viewModel.setCurrentCalendar(calendar);
         int successCount = viewModel.importFromCSV(file);
-        
+
         if (successCount == 0) {
           return "No events were imported";
         }
-        
+
         return "Successfully imported " + successCount + " events";
       }
-      
+
       List<Event> importedEvents = csvExporter.importEvents(file);
 
       if (importedEvents.isEmpty()) {
@@ -107,7 +107,7 @@ public class ImportCalendarCommand implements ICommand {
       if (successCount == 0) {
         return "Failed to import any events";
       }
-      
+
       if (view != null) {
         view.getCalendarPanel().updateCalendar(calendar);
       }

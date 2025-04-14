@@ -29,7 +29,7 @@ public interface IDataExporter {
    * @return a formatted string representation of the events
    */
   String formatForDisplay(List<Event> events, boolean showDetails);
-  
+
   /**
    * Formats events for display in a human-readable format using the specified timezone.
    *

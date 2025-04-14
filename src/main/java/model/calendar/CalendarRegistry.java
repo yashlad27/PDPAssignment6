@@ -177,13 +177,13 @@ public class CalendarRegistry {
 
   /**
    * Renames a calendar from oldName to newName.
-   * 
+   *
    * @param oldName the current name of the calendar
    * @param newName the new name for the calendar
-   * @throws CalendarNotFoundException if no calendar with oldName exists
+   * @throws CalendarNotFoundException  if no calendar with oldName exists
    * @throws DuplicateCalendarException if a calendar with newName already exists
    */
-  public void renameCalendar(String oldName, String newName) 
+  public void renameCalendar(String oldName, String newName)
           throws CalendarNotFoundException, DuplicateCalendarException {
     if (!calendars.containsKey(oldName)) {
       throw new CalendarNotFoundException("Calendar not found: " + oldName);
@@ -191,7 +191,7 @@ public class CalendarRegistry {
     if (calendars.containsKey(newName)) {
       throw new DuplicateCalendarException("Calendar already exists: " + newName);
     }
-    
+
     updateCalendarName(oldName, newName);
   }
 

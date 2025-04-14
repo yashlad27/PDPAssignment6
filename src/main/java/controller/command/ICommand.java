@@ -51,7 +51,7 @@ public interface ICommand {
    *                                   the calendar
    */
   String execute(String[] args) throws ConflictingEventException, InvalidEventException,
-      EventNotFoundException;
+          EventNotFoundException;
 
   /**
    * Gets the name of the command.
@@ -89,7 +89,7 @@ public interface ICommand {
     return new ICommand() {
       @Override
       public String execute(String[] args) throws ConflictingEventException,
-          InvalidEventException, EventNotFoundException {
+              InvalidEventException, EventNotFoundException {
         return executor.apply(args);
       }
 

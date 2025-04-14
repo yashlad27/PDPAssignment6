@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
 import controller.command.event.ExportCalendarCommand;
 import controller.command.event.ImportCalendarCommand;
@@ -66,19 +66,29 @@ import viewmodel.ExportImportViewModel;
  * </ul>
  */
 public class GUIController {
-  /** The calendar manager responsible for managing multiple calendars */
+  /**
+   * The calendar manager responsible for managing multiple calendars
+   */
   private final CalendarManager calendarManager;
-  
-  /** The view interface for updating the GUI */
+
+  /**
+   * The view interface for updating the GUI
+   */
   private final CalendarViewFeatures view;
-  
-  /** Handler for timezone conversions and management */
+
+  /**
+   * Handler for timezone conversions and management
+   */
   private final TimeZoneHandler timezoneHandler;
-  
-  /** The currently active calendar */
+
+  /**
+   * The currently active calendar
+   */
   private ICalendar currentCalendar;
-  
-  /** The selected calendar for operations */
+
+  /**
+   * The selected calendar for operations
+   */
   private ICalendar selectedCalendar;
 
   /**
@@ -86,7 +96,7 @@ public class GUIController {
    * Initializes the controller with necessary components for managing calendars and the GUI.
    *
    * @param calendarManager The calendar manager for handling multiple calendars
-   * @param view The GUI view implementing CalendarViewFeatures interface
+   * @param view            The GUI view implementing CalendarViewFeatures interface
    * @throws IllegalArgumentException if either parameter is null
    */
   public GUIController(CalendarManager calendarManager, CalendarViewFeatures view) {
@@ -290,7 +300,7 @@ public class GUIController {
               public void onCalendarEdited(String oldName, String newName, String newTimezone) {
                 try {
                   System.out.println("[DEBUG] Editing calendar name from '" + oldName + "' to '" + newName + "'");
-                  
+
                   // Only update the name if it changed
                   if (!oldName.equals(newName)) {
                     calendarManager.editCalendarName(oldName, newName);
@@ -298,23 +308,23 @@ public class GUIController {
                   } else {
                     System.out.println("[DEBUG] Calendar name unchanged, skipping update");
                   }
-                  
+
                   // Update the selected calendar and display
                   selectedCalendar = calendarManager.getCalendar(newName);
                   currentCalendar = selectedCalendar; // Also update current calendar
-                  
+
                   // Update the UI
                   view.setSelectedCalendar(newName);
                   view.getCalendarPanel().updateCalendarName(newName);
-                  
+
                   // Refresh the calendar list to show the updated name
                   view.updateCalendarList(new ArrayList<>(calendarManager
                           .getCalendarRegistry().getCalendarNames()));
-                  
+
                   // Update the calendar display
                   updateCalendarDisplay();
                   view.refreshView(); // Force complete UI refresh
-                  
+
                   view.displayMessage("Calendar name updated successfully");
                 } catch (Exception e) {
                   System.err.println("[ERROR] Failed to update calendar: " + e.getMessage());
@@ -611,7 +621,7 @@ public class GUIController {
    * Retrieves and displays all events that fall within the start and end dates.
    *
    * @param startDate The start date of the range
-   * @param endDate The end date of the range
+   * @param endDate   The end date of the range
    */
   private void showRange(LocalDate startDate, LocalDate endDate) {
     try {
@@ -677,7 +687,7 @@ public class GUIController {
    * Retrieves all events within a date range from the current calendar.
    *
    * @param startDate The start date of the range
-   * @param endDate The end date of the range
+   * @param endDate   The end date of the range
    * @return List of events within the specified range
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
@@ -1114,10 +1124,10 @@ public class GUIController {
   /**
    * Copies an event to a different calendar or time slot.
    *
-   * @param event The event to copy
-   * @param targetCalendarName The name of the target calendar
+   * @param event               The event to copy
+   * @param targetCalendarName  The name of the target calendar
    * @param targetStartDateTime The new start date/time
-   * @param targetEndDateTime The new end date/time
+   * @param targetEndDateTime   The new end date/time
    * @return true if the copy was successful, false otherwise
    */
   public boolean copyEvent(Event event, String targetCalendarName,
@@ -1211,7 +1221,7 @@ public class GUIController {
   /**
    * Converts form data to command arguments for processing.
    *
-   * @param formData The form data to convert
+   * @param formData    The form data to convert
    * @param commandType The type of command (create, edit, etc.)
    * @return Array of command arguments
    */
@@ -1289,7 +1299,7 @@ public class GUIController {
    * Processes various calendar operations including event creation and modification.
    *
    * @param command The command to execute
-   * @param args The arguments for the command
+   * @param args    The arguments for the command
    * @return Result message indicating success or failure
    */
   public String executeCommand(String command, String[] args) {

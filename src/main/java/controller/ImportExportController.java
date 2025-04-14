@@ -25,16 +25,16 @@ public class ImportExportController {
     this.view = view;
     this.currentCalendar = null;
   }
-  
+
   /**
    * Constructs a new ImportExportController with a specific calendar.
    *
    * @param calendar the calendar to use
-   * @param view the GUI view
+   * @param view     the GUI view
    */
   public ImportExportController(ICalendar calendar, GUIView view) {
-    System.out.println("[DEBUG] Creating ImportExportController with calendar: " + 
-        (calendar != null ? calendar.getName() : "null"));
+    System.out.println("[DEBUG] Creating ImportExportController with calendar: " +
+            (calendar != null ? calendar.getName() : "null"));
     this.view = view;
     this.currentCalendar = calendar;
   }
@@ -83,9 +83,9 @@ public class ImportExportController {
    * @param file the file to export to
    */
   public void onExport(File file) {
-    System.out.println("[DEBUG] ImportExportController.onExport called with file: " + 
-        (file != null ? file.getAbsolutePath() : "null"));
-    
+    System.out.println("[DEBUG] ImportExportController.onExport called with file: " +
+            (file != null ? file.getAbsolutePath() : "null"));
+
     if (file == null) {
       view.showErrorMessage("Invalid file selected");
       return;
@@ -106,18 +106,18 @@ public class ImportExportController {
 
       // Get events from the calendar
       List<Event> events = currentCalendar.getAllEvents();
-      System.out.println("[DEBUG] Retrieved " + events.size() + " events from calendar " + 
-          currentCalendar.getName() + " for export");
-      
+      System.out.println("[DEBUG] Retrieved " + events.size() + " events from calendar " +
+              currentCalendar.getName() + " for export");
+
       // Create the exporter and export the events
       CSVExporter exporter = new CSVExporter();
       File exportFile = new File(filePath);
       System.out.println("[DEBUG] Exporting events to file: " + exportFile.getAbsolutePath());
-      
+
       exporter.exportEvents(events, exportFile);
-      
-      String successMessage = "Exported " + events.size() + " events from " + 
-          currentCalendar.getName() + " to " + file.getName();
+
+      String successMessage = "Exported " + events.size() + " events from " +
+              currentCalendar.getName() + " to " + file.getName();
       System.out.println("[DEBUG] Export successful: " + successMessage);
       view.displayMessage(successMessage);
     } catch (Exception e) {

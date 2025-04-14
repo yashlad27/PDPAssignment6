@@ -182,21 +182,21 @@ public class CSVExporter implements IDataExporter {
       // Convert from UTC to the calendar's timezone for display
       LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), timezone);
       LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), timezone);
-      
+
       String startTime = localStartTime.format(timeFormatter);
       String endTime = localEndTime.format(timeFormatter);
-      
+
       builder.append(event.getSubject());
-      
+
       // Handle all-day events differently
       if (event.isAllDay()) {
         builder.append(" (All Day)");
       } else {
         builder.append(" from ").append(startTime)
-               .append(" to ").append(endTime);
+                .append(" to ").append(endTime);
       }
       builder.append("\n");
-      
+
       // Add location if present
       if (includeHeader || event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
         builder.append("  Location: ");
