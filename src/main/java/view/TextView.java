@@ -13,11 +13,11 @@ import model.event.Event;
 import model.event.RecurringEvent;
 
 /**
- * Text-based implementation of the calendar view.
- * This class provides a text-based user interface for the calendar application,
- * supporting both interactive (console) and headless (file) modes.
+ * Text-based implementation of the calendar view. This class provides a text-based user interface
+ * for the calendar application, supporting both interactive (console) and headless (file) modes.
  */
 public class TextView implements ICalendarView {
+
   private BufferedReader reader;
   private boolean isInteractive;
   private String currentCalendar;
@@ -102,8 +102,8 @@ public class TextView implements ICalendarView {
 
   private String formatEvent(Event event) {
     return event.getSubject() + " ("
-            + event.getStartDateTime().toLocalTime() + " - "
-            + event.getEndDateTime().toLocalTime() + ")";
+        + event.getStartDateTime().toLocalTime() + " - "
+        + event.getEndDateTime().toLocalTime() + ")";
   }
 
   @Override
@@ -140,7 +140,7 @@ public class TextView implements ICalendarView {
     displayMessage("Event Details:");
     displayMessage("  Name: " + event.getSubject());
     displayMessage("  Description: " + (event.getDescription() != null
-            ? event.getDescription() : "None"));
+        ? event.getDescription() : "None"));
     displayMessage("  Location: " + (event.getLocation() != null ? event.getLocation() : "None"));
     displayMessage("  Start: " + event.getStartDateTime());
     displayMessage("  End: " + event.getEndDateTime());

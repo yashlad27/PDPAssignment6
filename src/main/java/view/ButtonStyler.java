@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
  * Utility class for styling buttons consistently across the application.
  */
 public class ButtonStyler {
+
   private static final String EDIT_EVENT_TITLE = "Edit Event";
   private static final String EDIT_EVENT_MESSAGE = "Event is being edited";
   private static final Color PRIMARY_COLOR = new Color(0x4a86e8);
@@ -51,9 +52,9 @@ public class ButtonStyler {
    */
   public static void showEditEventPopup(JFrame parent) {
     JOptionPane.showMessageDialog(parent,
-            EDIT_EVENT_MESSAGE,
-            EDIT_EVENT_TITLE,
-            JOptionPane.INFORMATION_MESSAGE);
+        EDIT_EVENT_MESSAGE,
+        EDIT_EVENT_TITLE,
+        JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**
@@ -67,7 +68,7 @@ public class ButtonStyler {
    * @return the styled button
    */
   public static JButton applyStyle(JButton button, Color baseColor, Color hoverColor,
-                                   Color textColor, boolean isBold) {
+      Color textColor, boolean isBold) {
     System.out.println("[DEBUG-BUTTON] Styling button: " + button.getText());
 
     button.setBackground(baseColor);
@@ -82,8 +83,8 @@ public class ButtonStyler {
     button.putClientProperty("JButton.buttonType", "square");
 
     button.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(baseColor, 1),
-            BorderFactory.createEmptyBorder(6, 14, 6, 14)));
+        BorderFactory.createLineBorder(baseColor, 1),
+        BorderFactory.createEmptyBorder(6, 14, 6, 14)));
 
     button.setPreferredSize(new Dimension(100, 32));
     button.setMinimumSize(new Dimension(100, 32));
@@ -94,8 +95,8 @@ public class ButtonStyler {
         System.out.println("[DEBUG-BUTTON] Mouse entered: " + button.getText());
         button.setBackground(hoverColor);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(hoverColor, 1),
-                BorderFactory.createEmptyBorder(6, 14, 6, 14)));
+            BorderFactory.createLineBorder(hoverColor, 1),
+            BorderFactory.createEmptyBorder(6, 14, 6, 14)));
       }
 
       @Override
@@ -103,8 +104,8 @@ public class ButtonStyler {
         System.out.println("[DEBUG-BUTTON] Mouse exited: " + button.getText());
         button.setBackground(baseColor);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(baseColor, 1),
-                BorderFactory.createEmptyBorder(6, 14, 6, 14)));
+            BorderFactory.createLineBorder(baseColor, 1),
+            BorderFactory.createEmptyBorder(6, 14, 6, 14)));
       }
 
       @Override

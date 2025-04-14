@@ -3,8 +3,7 @@ package view.dialog;
 import java.time.LocalDateTime;
 
 /**
- * Interface for event edit dialogs.
- * This follows the Interface Segregation Principle by defining
+ * Interface for event edit dialogs. This follows the Interface Segregation Principle by defining
  * only methods specific to event editing operations.
  */
 public interface IEventEditDialog extends IEventDialog {

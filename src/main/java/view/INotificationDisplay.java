@@ -1,10 +1,11 @@
 package view;
 
 /**
- * Interface for notification display functionality.
- * This interface defines methods for displaying various types of messages to the user.
+ * Interface for notification display functionality. This interface defines methods for displaying
+ * various types of messages to the user.
  */
 public interface INotificationDisplay {
+
   /**
    * Displays a message to the user.
    *

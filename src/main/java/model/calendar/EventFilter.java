@@ -6,8 +6,8 @@ import java.util.List;
 import model.event.Event;
 
 /**
- * Functional interface for filtering events based on specified criteria.
- * This interface is used to implement various filtering strategies for calendar events.
+ * Functional interface for filtering events based on specified criteria. This interface is used to
+ * implement various filtering strategies for calendar events.
  */
 @FunctionalInterface
 public interface EventFilter {
@@ -21,8 +21,8 @@ public interface EventFilter {
   boolean matches(Event event);
 
   /**
-   * Returns a composed filter that represents a logical AND of this filter and another.
-   * This is a default method allowing filters to be chained together.
+   * Returns a composed filter that represents a logical AND of this filter and another. This is a
+   * default method allowing filters to be chained together.
    *
    * @param other another EventFilter
    * @return a composed filter that represents the logical AND of this filter and the other
@@ -32,8 +32,8 @@ public interface EventFilter {
   }
 
   /**
-   * Returns a filter that represents the logical negation of this filter.
-   * This is a default method providing a convenient way to negate a filter.
+   * Returns a filter that represents the logical negation of this filter. This is a default method
+   * providing a convenient way to negate a filter.
    *
    * @return a filter that represents the logical negation of this filter
    */
@@ -42,8 +42,8 @@ public interface EventFilter {
   }
 
   /**
-   * Filters a list of events based on the filter criteria.
-   * This is a default method that uses the matches method to filter events.
+   * Filters a list of events based on the filter criteria. This is a default method that uses the
+   * matches method to filter events.
    *
    * @param events the list of events to filter
    * @return a list of events that match the filter criteria

@@ -4,9 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * A functional interface representing an action to be performed on an Event object.
- * This interface provides a flexible way to define and compose event modifications
- * through a chain of operations.
+ * A functional interface representing an action to be performed on an Event object. This interface
+ * provides a flexible way to define and compose event modifications through a chain of operations.
  *
  * <p>The interface includes:
  * <ul>
@@ -27,8 +26,8 @@ public interface EventAction {
   void execute(Event event);
 
   /**
-   * Executes the action on a list of events.
-   * This is a default method that applies the action to each event in the list.
+   * Executes the action on a list of events. This is a default method that applies the action to
+   * each event in the list.
    *
    * @param events the list of events to perform the action on
    */
@@ -39,8 +38,8 @@ public interface EventAction {
   }
 
   /**
-   * Returns a composed action that executes this action followed by another.
-   * This is a default method allowing actions to be chained together.
+   * Returns a composed action that executes this action followed by another. This is a default
+   * method allowing actions to be chained together.
    *
    * @param other another EventAction
    * @return a composed action that executes this action followed by the other

@@ -14,6 +14,7 @@ import viewmodel.ExportImportViewModel;
  * Interface for GUI-specific view functionality.
  */
 public interface IGUIView {
+
   /**
    * Displays the GUI window.
    */

@@ -1,8 +1,8 @@
-import javax.swing.*;
 
 import controller.CalendarController;
 import controller.GUIController;
 import controller.ICommandFactory;
+import javax.swing.SwingUtilities;
 import model.calendar.Calendar;
 import model.calendar.CalendarManager;
 import model.calendar.ICalendar;
@@ -33,6 +33,7 @@ import view.TextView;
  * </ul>
  */
 public class CalendarApp {
+
   /**
    * Manages multiple calendars and their operations
    */
@@ -59,8 +60,8 @@ public class CalendarApp {
   private static String[] commandLineArgs;
 
   /**
-   * Main method that serves as the entry point for the application.
-   * Processes command line arguments and initializes the application in the appropriate mode.
+   * Main method that serves as the entry point for the application. Processes command line
+   * arguments and initializes the application in the appropriate mode.
    *
    * @param args Command line arguments with the following options:
    *             <ul>
@@ -78,9 +79,9 @@ public class CalendarApp {
   }
 
   /**
-   * Initializes the core components of the application.
-   * Sets up the calendar manager, view, controller, and command factories using
-   * the factory pattern to ensure proper dependency injection and component creation.
+   * Initializes the core components of the application. Sets up the calendar manager, view,
+   * controller, and command factories using the factory pattern to ensure proper dependency
+   * injection and component creation.
    *
    * <p>This method:
    * <ul>
@@ -98,13 +99,13 @@ public class CalendarApp {
     ICalendar calendar = new Calendar();
 
     controller = factory.createController(null,
-            null, calendarManager, null);
+        null, calendarManager, null);
 
     view = CalendarFactory.createView(currentMode, controller);
 
     ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
     ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
-            view);
+        view);
 
     controller.setEventCommandFactory(eventCommandFactory);
     controller.setCalendarCommandFactory(calendarCommandFactory);
@@ -112,8 +113,8 @@ public class CalendarApp {
   }
 
   /**
-   * Handles command line arguments and sets the appropriate application mode.
-   * Validates the format of arguments and ensures they meet the expected pattern.
+   * Handles command line arguments and sets the appropriate application mode. Validates the format
+   * of arguments and ensures they meet the expected pattern.
    *
    * @param args Command line arguments to process
    * @throws IllegalArgumentException if arguments are invalid or in unexpected format
@@ -129,8 +130,8 @@ public class CalendarApp {
   }
 
   /**
-   * Validates the mode argument format to ensure it matches expected pattern.
-   * Checks if the first argument is "--mode" as required.
+   * Validates the mode argument format to ensure it matches expected pattern. Checks if the first
+   * argument is "--mode" as required.
    *
    * @param modeArg the mode argument to validate
    * @throws IllegalArgumentException if the mode argument is invalid
@@ -143,8 +144,8 @@ public class CalendarApp {
   }
 
   /**
-   * Sets the application mode based on provided command line arguments.
-   * Processes the mode value and configures the application accordingly.
+   * Sets the application mode based on provided command line arguments. Processes the mode value
+   * and configures the application accordingly.
    *
    * @param args the command line arguments containing the mode specification
    * @throws IllegalArgumentException if the specified mode is invalid
@@ -169,24 +170,23 @@ public class CalendarApp {
   }
 
   /**
-   * Sets the application to GUI mode.
-   * This is the default mode when no specific mode is specified.
+   * Sets the application to GUI mode. This is the default mode when no specific mode is specified.
    */
   private static void setGUIMode() {
     currentMode = "gui";
   }
 
   /**
-   * Sets the application to interactive text mode.
-   * Enables command-line interaction with the calendar application.
+   * Sets the application to interactive text mode. Enables command-line interaction with the
+   * calendar application.
    */
   private static void setInteractiveMode() {
     currentMode = "text";
   }
 
   /**
-   * Sets the application to headless mode for batch processing.
-   * Validates that a command file is specified in the arguments.
+   * Sets the application to headless mode for batch processing. Validates that a command file is
+   * specified in the arguments.
    *
    * @param args the command line arguments containing the file specification
    * @throws IllegalArgumentException if no filename is provided for headless mode
@@ -194,15 +194,15 @@ public class CalendarApp {
   private static void setHeadlessMode(String[] args) {
     if (args.length < 3) {
       System.err.println("Headless mode requires a filename."
-              + " Usage: --mode headless filename");
+          + " Usage: --mode headless filename");
       System.exit(1);
     }
     currentMode = "text";
   }
 
   /**
-   * Starts the application in the configured mode.
-   * Delegates to the appropriate start method based on the current mode setting.
+   * Starts the application in the configured mode. Delegates to the appropriate start method based
+   * on the current mode setting.
    *
    * @throws IllegalStateException if the current mode is invalid
    */
@@ -221,8 +221,8 @@ public class CalendarApp {
   }
 
   /**
-   * Starts the application in text mode (either interactive or headless).
-   * Verifies the view implementation and delegates to the appropriate start method.
+   * Starts the application in text mode (either interactive or headless). Verifies the view
+   * implementation and delegates to the appropriate start method.
    *
    * @throws IllegalStateException if the view is not properly configured for text mode
    */
@@ -240,16 +240,16 @@ public class CalendarApp {
   }
 
   /**
-   * Starts the application in interactive mode.
-   * Initializes the controller for command-line interaction with the user.
+   * Starts the application in interactive mode. Initializes the controller for command-line
+   * interaction with the user.
    */
   private static void startInteractiveMode() {
     controller.startInteractiveMode();
   }
 
   /**
-   * Starts the application in headless mode for batch processing.
-   * Sets up the view and controller for processing commands from a file.
+   * Starts the application in headless mode for batch processing. Sets up the view and controller
+   * for processing commands from a file.
    *
    * @param args Command line arguments containing the command file specification
    * @throws IllegalStateException if headless mode setup or execution fails
@@ -274,8 +274,8 @@ public class CalendarApp {
   }
 
   /**
-   * Starts the application in GUI mode.
-   * Initializes the graphical user interface and sets up event handling.
+   * Starts the application in GUI mode. Initializes the graphical user interface and sets up event
+   * handling.
    *
    * <p>This method:
    * <ul>

@@ -5,10 +5,11 @@ import java.util.List;
 import model.calendar.ICalendar;
 
 /**
- * Interface for calendar display functionality.
- * This interface defines methods for displaying and updating calendar-related information.
+ * Interface for calendar display functionality. This interface defines methods for displaying and
+ * updating calendar-related information.
  */
 public interface ICalendarDisplay {
+
   /**
    * Updates the calendar view.
    *

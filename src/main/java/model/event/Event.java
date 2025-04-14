@@ -33,9 +33,9 @@ public class Event {
    * @param isAllDay      whether the event is an all-day event
    */
   public Event(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-               String description, String location, boolean isPublic, boolean isAllDay) {
+      String description, String location, boolean isPublic, boolean isAllDay) {
     this(UUID.randomUUID(), subject, startDateTime, endDateTime, description, location,
-            isPublic, isAllDay);
+        isPublic, isAllDay);
   }
 
   /**
@@ -49,7 +49,7 @@ public class Event {
    * @param isPublic      whether the event is public
    */
   public Event(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-               String description, String location, boolean isPublic) {
+      String description, String location, boolean isPublic) {
     if (subject == null || subject.trim().isEmpty()) {
       throw new IllegalArgumentException("Event subject cannot be null or empty");
     }
@@ -69,7 +69,7 @@ public class Event {
     if (endDateTime == null) {
       this.isAllDay = true;
       this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(),
-              LocalTime.of(23, 59, 59));
+          LocalTime.of(23, 59, 59));
     } else {
       if (endDateTime.isBefore(startDateTime)) {
         throw new IllegalArgumentException("End date/time must not be before start date/time");
@@ -92,7 +92,7 @@ public class Event {
    * @param isAllDay      whether the event is an all-day event
    */
   public Event(UUID id, String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-               String description, String location, boolean isPublic, boolean isAllDay) {
+      String description, String location, boolean isPublic, boolean isAllDay) {
     if (subject == null || subject.trim().isEmpty()) {
       throw new IllegalArgumentException("Event subject cannot be null or empty");
     }
@@ -117,7 +117,7 @@ public class Event {
     if (endDateTime == null) {
       // For all-day events, set end time to end of day
       this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(),
-              LocalTime.of(23, 59, 59));
+          LocalTime.of(23, 59, 59));
     } else {
       if (endDateTime.isBefore(startDateTime)) {
         throw new IllegalArgumentException("End date/time must not be before start date/time");
@@ -138,7 +138,7 @@ public class Event {
    * @return a new all-day Event
    */
   public static Event createAllDayEvent(String subject, LocalDate date, String description,
-                                        String location, boolean isPublic) {
+      String location, boolean isPublic) {
     LocalDateTime start = LocalDateTime.of(date, LocalTime.of(0, 0));
     LocalDateTime end = LocalDateTime.of(date, LocalTime.of(23, 59, 59));
 
@@ -173,24 +173,24 @@ public class Event {
     if (thisIsZeroDuration) {
       // It conflicts if it falls exactly at or between the other event's start and end times
       return (this.startDateTime.equals(other.startDateTime) ||
-              this.startDateTime.equals(other.endDateTime) ||
-              (this.startDateTime.isAfter(other.startDateTime) &&
-                      this.startDateTime.isBefore(other.endDateTime)));
+          this.startDateTime.equals(other.endDateTime) ||
+          (this.startDateTime.isAfter(other.startDateTime) &&
+              this.startDateTime.isBefore(other.endDateTime)));
     }
 
     // If the other is a zero-duration event
     if (otherIsZeroDuration) {
       // It conflicts if it falls exactly at or between this event's start and end times
       return (other.startDateTime.equals(this.startDateTime) ||
-              other.startDateTime.equals(this.endDateTime) ||
-              (other.startDateTime.isAfter(this.startDateTime) &&
-                      other.startDateTime.isBefore(this.endDateTime)));
+          other.startDateTime.equals(this.endDateTime) ||
+          (other.startDateTime.isAfter(this.startDateTime) &&
+              other.startDateTime.isBefore(this.endDateTime)));
     }
 
     // Standard overlap check for events with duration:
     // Events overlap if they share any time span
     return !(this.endDateTime.isBefore(other.startDateTime) ||
-            this.startDateTime.isAfter(other.endDateTime));
+        this.startDateTime.isAfter(other.endDateTime));
   }
 
   /**
@@ -276,7 +276,7 @@ public class Event {
       // Converting to all-day event
       this.isAllDay = true;
       this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(),
-              LocalTime.of(23, 59, 59));
+          LocalTime.of(23, 59, 59));
     } else {
       if (endDateTime.isBefore(this.startDateTime)) {
         throw new IllegalArgumentException("End date/time cannot be before start date/time");
@@ -332,7 +332,7 @@ public class Event {
 
     if (isAllDay) {
       this.endDateTime = LocalDateTime.of(startDateTime.toLocalDate(),
-              LocalTime.of(23, 59, 59));
+          LocalTime.of(23, 59, 59));
     }
   }
 
@@ -405,7 +405,7 @@ public class Event {
     }
     Event event = (Event) o;
     return Objects.equals(subject, event.subject) && Objects.equals(startDateTime,
-            event.startDateTime) && Objects.equals(endDateTime, event.endDateTime);
+        event.startDateTime) && Objects.equals(endDateTime, event.endDateTime);
   }
 
   @Override
@@ -416,7 +416,7 @@ public class Event {
   @Override
   public String toString() {
     return "Event{" + "subject='" + subject + '\'' + ", startDateTime=" + startDateTime
-            + ", endDateTime=" + endDateTime + ", isAllDay=" + isAllDay + ", location='" + (
-            location != null ? location : "N/A") + '\'' + '}';
+        + ", endDateTime=" + endDateTime + ", isAllDay=" + isAllDay + ", location='" + (
+        location != null ? location : "N/A") + '\'' + '}';
   }
 }

@@ -5,9 +5,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 /**
- * Handles timezone operations for the calendar application.
- * Provides methods for converting times between different timezones
- * and validating timezone formats. All internal storage is in UTC.
+ * Handles timezone operations for the calendar application. Provides methods for converting times
+ * between different timezones and validating timezone formats. All internal storage is in UTC.
  */
 public class TimeZoneHandler {
 
@@ -15,8 +14,8 @@ public class TimeZoneHandler {
   private static final String UTC_TIMEZONE = "UTC";
 
   /**
-   * Validates if the provided timezone string is valid.
-   * Checks if the timezone is a valid IANA timezone identifier.
+   * Validates if the provided timezone string is valid. Checks if the timezone is a valid IANA
+   * timezone identifier.
    *
    * @param timezone the timezone to validate
    * @return true if valid, false otherwise
@@ -87,8 +86,8 @@ public class TimeZoneHandler {
   }
 
   /**
-   * Converts a LocalDateTime from one timezone to another.
-   * This method first converts to UTC, then to the target timezone.
+   * Converts a LocalDateTime from one timezone to another. This method first converts to UTC, then
+   * to the target timezone.
    *
    * @param dateTime     the LocalDateTime to convert
    * @param fromTimezone the source timezone
@@ -109,6 +108,7 @@ public class TimeZoneHandler {
    */
   @FunctionalInterface
   public interface TimezoneConverter {
+
     /**
      * Converts a LocalDateTime from one timezone to another.
      *

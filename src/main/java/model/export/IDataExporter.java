@@ -6,11 +6,12 @@ import java.util.List;
 import model.event.Event;
 
 /**
- * Interface defining the contract for exporting calendar data in various formats.
- * This interface allows for different export implementations (CSV, JSON, etc.)
- * while keeping the calendar model independent of specific export formats.
+ * Interface defining the contract for exporting calendar data in various formats. This interface
+ * allows for different export implementations (CSV, JSON, etc.) while keeping the calendar model
+ * independent of specific export formats.
  */
 public interface IDataExporter {
+
   /**
    * Exports a list of events to a file in the specified format.
    *

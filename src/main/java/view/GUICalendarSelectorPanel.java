@@ -36,6 +36,7 @@ import model.calendar.ICalendar;
  * Panel class that handles calendar selection and creation.
  */
 public class GUICalendarSelectorPanel extends JPanel {
+
   private static final Color THEME_COLOR = new Color(0x4a86e8);
   private static final Color THEME_LIGHT = new Color(0xe6f2ff);
   private static final Color BORDER_COLOR = new Color(0xcccccc);
@@ -54,6 +55,7 @@ public class GUICalendarSelectorPanel extends JPanel {
    * Interface for calendar selection events.
    */
   public interface CalendarSelectorListener {
+
     void onCalendarSelected(ICalendar calendar);
 
     /**
@@ -78,8 +80,8 @@ public class GUICalendarSelectorPanel extends JPanel {
     /**
      * Called when a calendar is edited.
      *
-     * @param oldName    The old name of the calendar
-     * @param newName    The new name of the calendar
+     * @param oldName     The old name of the calendar
+     * @param newName     The new name of the calendar
      * @param newTimezone The new timezone of the calendar
      */
     default void onCalendarEdited(String oldName, String newName, String newTimezone) {
@@ -88,6 +90,7 @@ public class GUICalendarSelectorPanel extends JPanel {
   }
 
   private class CalendarItem extends JPanel {
+
     private final ICalendar calendar;
     private final JLabel nameLabel;
     private boolean isSelected;
@@ -143,15 +146,15 @@ public class GUICalendarSelectorPanel extends JPanel {
       if (selected) {
         setBackground(THEME_LIGHT);
         setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(THEME_COLOR),
-                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+            BorderFactory.createLineBorder(THEME_COLOR),
+            BorderFactory.createEmptyBorder(4, 4, 4, 4)
         ));
         nameLabel.setForeground(THEME_COLOR);
       } else {
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR),
-                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+            BorderFactory.createLineBorder(BORDER_COLOR),
+            BorderFactory.createEmptyBorder(4, 4, 4, 4)
         ));
         nameLabel.setForeground(Color.BLACK);
       }
@@ -329,10 +332,10 @@ public class GUICalendarSelectorPanel extends JPanel {
     revalidate();
     repaint();
   }
-  
+
   /**
-   * Refreshes the calendar list to reflect current calendar data.
-   * Should be called after calendar creation or editing operations.
+   * Refreshes the calendar list to reflect current calendar data. Should be called after calendar
+   * creation or editing operations.
    */
   public void refreshCalendarList() {
     System.out.println("[DEBUG] Refreshing calendar list");
@@ -362,14 +365,14 @@ public class GUICalendarSelectorPanel extends JPanel {
         if (index >= 0) {
           String calendarName = calendarListModel.getElementAt(index);
           System.out.println("[DEBUG] Calendar list selection changed: " + calendarName);
-          
+
           for (CalendarItem item : calendarItems) {
             if (item.getCalendar().getName().equals(calendarName)) {
               selectedCalendar = item.getCalendar();
               break;
             }
           }
-          
+
           if (listener != null) {
             listener.onCalendarSelected(calendarName);
           }
@@ -395,18 +398,18 @@ public class GUICalendarSelectorPanel extends JPanel {
             listener.onCalendarSelected(calendarName);
 
             JOptionPane.showMessageDialog(
-                    this,
-                    "Switched to calendar: " + calendarName,
-                    "Calendar Selected",
-                    JOptionPane.INFORMATION_MESSAGE);
+                this,
+                "Switched to calendar: " + calendarName,
+                "Calendar Selected",
+                JOptionPane.INFORMATION_MESSAGE);
           } catch (Exception ex) {
             System.err.println("[ERROR] Failed to switch calendar: " + ex.getMessage());
             ex.printStackTrace();
             JOptionPane.showMessageDialog(
-                    this,
-                    "Failed to switch calendar: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                this,
+                "Failed to switch calendar: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
           }
         } else {
           System.out.println("[WARNING] No calendar selection listener registered");
@@ -414,10 +417,10 @@ public class GUICalendarSelectorPanel extends JPanel {
       } else {
         System.out.println("[DEBUG] No calendar selected in the list");
         JOptionPane.showMessageDialog(
-                this,
-                "Please select a calendar from the list first",
-                "No Calendar Selected",
-                JOptionPane.WARNING_MESSAGE);
+            this,
+            "Please select a calendar from the list first",
+            "No Calendar Selected",
+            JOptionPane.WARNING_MESSAGE);
       }
     });
 
@@ -432,7 +435,7 @@ public class GUICalendarSelectorPanel extends JPanel {
    */
   private void showAddCalendarDialog() {
     JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
-            "Add", true);
+        "Add", true);
     dialog.setLayout(new BorderLayout());
     dialog.setResizable(false);
 
@@ -496,9 +499,9 @@ public class GUICalendarSelectorPanel extends JPanel {
 
       if (calendarName.isEmpty()) {
         JOptionPane.showMessageDialog(dialog,
-                "Calendar name cannot be empty.",
-                "Invalid Input",
-                JOptionPane.ERROR_MESSAGE);
+            "Calendar name cannot be empty.",
+            "Invalid Input",
+            JOptionPane.ERROR_MESSAGE);
         return;
       }
 
@@ -522,18 +525,18 @@ public class GUICalendarSelectorPanel extends JPanel {
   private void showEditCalendarDialog() {
     int selectedIndex = calendarList.getSelectedIndex();
     String selectedCalendarName;
-    
+
     if (selectedIndex >= 0) {
       selectedCalendarName = calendarListModel.getElementAt(selectedIndex);
       System.out.println("[DEBUG] Edit button: using list selection: " + selectedCalendarName);
-      
+
       if (calendarList.getSelectedIndex() != selectedIndex) {
         calendarList.setSelectedIndex(selectedIndex);
       }
     } else if (selectedCalendar != null) {
       selectedCalendarName = selectedCalendar.getName();
       System.out.println("[DEBUG] Edit button: using stored selection: " + selectedCalendarName);
-      
+
       for (int i = 0; i < calendarListModel.getSize(); i++) {
         if (calendarListModel.getElementAt(i).equals(selectedCalendarName)) {
           calendarList.setSelectedIndex(i);
@@ -545,22 +548,22 @@ public class GUICalendarSelectorPanel extends JPanel {
         selectedCalendarName = calendarListModel.getElementAt(0);
         calendarList.setSelectedIndex(0);
         System.out.println("[DEBUG] Edit button: using first calendar in list: "
-                + selectedCalendarName);
+            + selectedCalendarName);
       } else {
         selectedCalendarName = null;
       }
     }
-    
+
     if (selectedCalendarName == null) {
       JOptionPane.showMessageDialog(this,
-              "Please select a calendar to edit.",
-              "No Calendar Selected",
-              JOptionPane.WARNING_MESSAGE);
+          "Please select a calendar to edit.",
+          "No Calendar Selected",
+          JOptionPane.WARNING_MESSAGE);
       return;
     }
 
     JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
-            "Edit Calendar", true);
+        "Edit Calendar", true);
     dialog.setLayout(new GridBagLayout());
     dialog.setResizable(false);
 
@@ -579,7 +582,7 @@ public class GUICalendarSelectorPanel extends JPanel {
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JButton saveButton = new JButton("Save");
     JButton cancelButton = new JButton("Cancel");
-    
+
     ButtonStyler.applyPrimaryStyle(saveButton);
     ButtonStyler.applySecondaryStyle(cancelButton);
 
@@ -588,26 +591,26 @@ public class GUICalendarSelectorPanel extends JPanel {
 
       if (newName.isEmpty()) {
         JOptionPane.showMessageDialog(dialog,
-                "Calendar name cannot be empty.",
-                "Invalid Input",
-                JOptionPane.ERROR_MESSAGE);
+            "Calendar name cannot be empty.",
+            "Invalid Input",
+            JOptionPane.ERROR_MESSAGE);
         return;
       }
 
-      System.out.println("[DEBUG] Saving calendar edit: oldName=" + selectedCalendarName 
+      System.out.println("[DEBUG] Saving calendar edit: oldName=" + selectedCalendarName
           + ", newName=" + newName);
-      
+
       if (listener != null) {
         try {
           String currentTimezone = null;
           if (getSelectedCalendar() != null) {
             currentTimezone = getSelectedCalendar().getTimeZone().getID();
           }
-          
+
           listener.onCalendarEdited(selectedCalendarName, newName, currentTimezone);
-          
+
           refreshCalendarList();
-          
+
           SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < calendarListModel.getSize(); i++) {
               if (calendarListModel.getElementAt(i).equals(newName)) {
@@ -617,14 +620,14 @@ public class GUICalendarSelectorPanel extends JPanel {
               }
             }
           });
-          
+
         } catch (Exception ex) {
           System.err.println("[ERROR] Failed to edit calendar: " + ex.getMessage());
           ex.printStackTrace();
           JOptionPane.showMessageDialog(dialog,
-                  "Error updating calendar: " + ex.getMessage(),
-                  "Edit Failed",
-                  JOptionPane.ERROR_MESSAGE);
+              "Error updating calendar: " + ex.getMessage(),
+              "Edit Failed",
+              JOptionPane.ERROR_MESSAGE);
           return;
         }
       }

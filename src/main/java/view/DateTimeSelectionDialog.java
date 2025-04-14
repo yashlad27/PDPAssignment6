@@ -17,12 +17,12 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
 
 /**
- * A dialog component for selecting date and time values.
- * This dialog provides separate spinners for date and time selection,
- * allowing users to easily choose a specific date and time combination.
+ * A dialog component for selecting date and time values. This dialog provides separate spinners for
+ * date and time selection, allowing users to easily choose a specific date and time combination.
  * The dialog returns the selected date-time as a LocalDateTime object.
  */
 public class DateTimeSelectionDialog extends JDialog {
+
   private final JSpinner dateSpinner;
   private final JSpinner timeSpinner;
   private LocalDateTime selectedDateTime;
@@ -39,11 +39,11 @@ public class DateTimeSelectionDialog extends JDialog {
 
     // Initialize components
     dateSpinner = new JSpinner(new SpinnerDateModel(
-            Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
-            null, null, java.util.Calendar.DAY_OF_MONTH));
+        Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
+        null, null, java.util.Calendar.DAY_OF_MONTH));
     timeSpinner = new JSpinner(new SpinnerDateModel(
-            Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
-            null, null, Calendar.MINUTE));
+        Date.from(initialDateTime.atZone(ZoneId.systemDefault()).toInstant()),
+        null, null, Calendar.MINUTE));
 
     // Format spinners
     JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
@@ -67,8 +67,8 @@ public class DateTimeSelectionDialog extends JDialog {
       Date date = (Date) dateSpinner.getValue();
       Date time = (Date) timeSpinner.getValue();
       selectedDateTime = LocalDateTime.of(
-              date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-              time.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+          date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+          time.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
       );
       dispose();
     });

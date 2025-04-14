@@ -8,10 +8,9 @@ import model.event.Event;
 import viewmodel.ExportImportViewModel;
 
 /**
- * Interface defining the features and operations that a calendar view must provide
- * to interact with the controller. This abstraction reduces coupling between
- * the controller and specific view implementations.
- * Extends IGUIView to maintain compatibility with existing code.
+ * Interface defining the features and operations that a calendar view must provide to interact with
+ * the controller. This abstraction reduces coupling between the controller and specific view
+ * implementations. Extends IGUIView to maintain compatibility with existing code.
  */
 public interface CalendarViewFeatures extends IGUIView {
 

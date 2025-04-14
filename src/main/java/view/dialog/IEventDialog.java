@@ -1,9 +1,8 @@
 package view.dialog;
 
 /**
- * Base interface for all event dialog implementations.
- * This follows the Interface Segregation Principle by defining
- * a minimal interface that all dialogs must implement.
+ * Base interface for all event dialog implementations. This follows the Interface Segregation
+ * Principle by defining a minimal interface that all dialogs must implement.
  */
 public interface IEventDialog {
 

@@ -12,9 +12,9 @@ import view.ICalendarView;
 import view.TextView;
 
 /**
- * Factory class that creates and provides dependencies for the calendar application.
- * This class centralizes the creation of application components and follows the
- * Factory pattern to support Dependency Inversion.
+ * Factory class that creates and provides dependencies for the calendar application. This class
+ * centralizes the creation of application components and follows the Factory pattern to support
+ * Dependency Inversion.
  */
 public class CalendarFactory {
 
@@ -82,7 +82,7 @@ public class CalendarFactory {
    * @return an ICommandFactory for calendar commands
    */
   public ICommandFactory createCalendarCommandFactory(CalendarManager calendarManager,
-                                                      ICalendarView view) {
+      ICalendarView view) {
     return new CalendarCommandFactory(calendarManager, view);
   }
 
@@ -96,10 +96,10 @@ public class CalendarFactory {
    * @return a CalendarController instance
    */
   public CalendarController createController(ICommandFactory eventCommandFactory,
-                                             ICommandFactory calendarCommandFactory,
-                                             CalendarManager calendarManager, ICalendarView view) {
+      ICommandFactory calendarCommandFactory,
+      CalendarManager calendarManager, ICalendarView view) {
 
     return new CalendarController(eventCommandFactory, calendarCommandFactory, calendarManager,
-            view);
+        view);
   }
 }

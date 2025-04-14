@@ -7,6 +7,7 @@ import java.util.Set;
  * Utility class for validating calendar names.
  */
 public class CalendarNameValidator {
+
   private static final Set<String> existingNames = new HashSet<>();
 
   /**
@@ -50,18 +51,18 @@ public class CalendarNameValidator {
 
   private static boolean containsInvalidCharacters(String name) {
     return name.chars()
-            .mapToObj(ch -> (char) ch)
-            .anyMatch(ch -> !Character.isLetterOrDigit(ch) && ch != '_');
+        .mapToObj(ch -> (char) ch)
+        .anyMatch(ch -> !Character.isLetterOrDigit(ch) && ch != '_');
   }
 
   private static boolean isDuplicateName(String name) {
     return existingNames.stream()
-            .anyMatch(existing -> existing.equals(name));
+        .anyMatch(existing -> existing.equals(name));
   }
 
   /**
-   * Clears all existing calendar names.
-   * This method should be called before running tests to ensure a clean state.
+   * Clears all existing calendar names. This method should be called before running tests to ensure
+   * a clean state.
    */
   public static void clear() {
     existingNames.clear();

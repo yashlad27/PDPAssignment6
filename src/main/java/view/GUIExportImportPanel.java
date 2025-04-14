@@ -20,10 +20,11 @@ import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
- * A panel that manages calendar data import and export operations.
- * This component provides buttons for importing from and exporting to CSV files.
+ * A panel that manages calendar data import and export operations. This component provides buttons
+ * for importing from and exporting to CSV files.
  */
 public class GUIExportImportPanel extends JPanel {
+
   private final JButton importButton;
   private final JButton exportButton;
   private final JFileChooser fileChooser;
@@ -39,6 +40,7 @@ public class GUIExportImportPanel extends JPanel {
    * Interface for listening to export/import events.
    */
   public interface ExportImportListener {
+
     void onImport(File file);
 
     void onExport(File file);
@@ -146,15 +148,15 @@ public class GUIExportImportPanel extends JPanel {
         if (importFile != null && listener != null) {
           try {
             System.out.println("[DEBUG] Automatically starting import process for file: "
-                    + importFile.getAbsolutePath());
+                + importFile.getAbsolutePath());
 
             // Confirm import with user
             int result = JOptionPane.showConfirmDialog(
-                    this,
-                    "Import events from " + importFile.getName() + "?",
-                    "Confirm Import",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE);
+                this,
+                "Import events from " + importFile.getName() + "?",
+                "Confirm Import",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
               System.out.println("[DEBUG] User confirmed import, proceeding...");
@@ -203,10 +205,10 @@ public class GUIExportImportPanel extends JPanel {
         if (exportFile != null) {
           try {
             System.out.println("[DEBUG] Preparing to export calendar data to: "
-                    + exportFile.getAbsolutePath());
+                + exportFile.getAbsolutePath());
             System.out.println("[DEBUG] File exists before export: " + exportFile.exists());
             System.out.println("[DEBUG] File parent directory: "
-                    + exportFile.getParentFile().getAbsolutePath());
+                + exportFile.getParentFile().getAbsolutePath());
             System.out.println("[DEBUG] File can write: " + exportFile.getParentFile().canWrite());
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -220,7 +222,7 @@ public class GUIExportImportPanel extends JPanel {
             for (int i = 0; i < listeners.size(); i++) {
               ExportImportListener l = listeners.get(i);
               System.out.println("[DEBUG] Calling export listener #" + (i + 1)
-                      + ": " + l.getClass().getName());
+                  + ": " + l.getClass().getName());
               l.onExport(exportFile);
             }
 
@@ -235,10 +237,10 @@ public class GUIExportImportPanel extends JPanel {
             setCursor(Cursor.getDefaultCursor());
             showStatus("Export successful: " + exportFile.getName(), true);
             JOptionPane.showMessageDialog(
-                    this,
-                    "Calendar exported successfully to:\n" + exportFile.getAbsolutePath(),
-                    "Export Successful",
-                    JOptionPane.INFORMATION_MESSAGE);
+                this,
+                "Calendar exported successfully to:\n" + exportFile.getAbsolutePath(),
+                "Export Successful",
+                JOptionPane.INFORMATION_MESSAGE);
           } catch (Exception ex) {
             System.err.println("[ERROR] Export failed: " + ex.getMessage());
             ex.printStackTrace();
@@ -269,7 +271,7 @@ public class GUIExportImportPanel extends JPanel {
    */
   public void showImportSuccess(String message) {
     JOptionPane.showMessageDialog(this, message,
-            "Import Successful", JOptionPane.INFORMATION_MESSAGE);
+        "Import Successful", JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**

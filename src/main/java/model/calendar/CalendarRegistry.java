@@ -13,9 +13,8 @@ import model.exceptions.CalendarExceptions.ConflictingEventException;
 import model.exceptions.CalendarExceptions.DuplicateCalendarException;
 
 /**
- * Manages registration and retrieval of calendars by name.
- * This class is responsible for storing calendars and providing
- * access to them by name, following the Single Responsibility Principle.
+ * Manages registration and retrieval of calendars by name. This class is responsible for storing
+ * calendars and providing access to them by name, following the Single Responsibility Principle.
  */
 public class CalendarRegistry {
 
@@ -52,7 +51,7 @@ public class CalendarRegistry {
    * @throws DuplicateCalendarException if a calendar with the specified name already exists
    */
   public void registerCalendar(String name, Calendar calendar)
-          throws DuplicateCalendarException {
+      throws DuplicateCalendarException {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Calendar name cannot be null or empty");
     }
@@ -170,7 +169,7 @@ public class CalendarRegistry {
    * @throws CalendarNotFoundException if the calendar cannot be found
    */
   public void applyToCalendar(String calendarName, Consumer<Calendar> consumer)
-          throws CalendarNotFoundException {
+      throws CalendarNotFoundException {
     Calendar calendar = getCalendarByName(calendarName);
     consumer.accept(calendar);
   }
@@ -184,7 +183,7 @@ public class CalendarRegistry {
    * @throws DuplicateCalendarException if a calendar with newName already exists
    */
   public void renameCalendar(String oldName, String newName)
-          throws CalendarNotFoundException, DuplicateCalendarException {
+      throws CalendarNotFoundException, DuplicateCalendarException {
     if (!calendars.containsKey(oldName)) {
       throw new CalendarNotFoundException("Calendar not found: " + oldName);
     }
@@ -202,7 +201,7 @@ public class CalendarRegistry {
    * @throws CalendarNotFoundException if no active calendar is set
    */
   public void applyToActiveCalendar(Consumer<Calendar> consumer)
-          throws CalendarNotFoundException {
+      throws CalendarNotFoundException {
     if (activeCalendarName == null) {
       throw new CalendarNotFoundException("No active calendar set");
     }
@@ -210,8 +209,8 @@ public class CalendarRegistry {
   }
 
   /**
-   * Updates the name of a calendar. This method is an implementation detail and
-   * should not be called directly. Use renameCalendar instead.
+   * Updates the name of a calendar. This method is an implementation detail and should not be
+   * called directly. Use renameCalendar instead.
    *
    * @param oldName the old name of the calendar
    * @param newName the new name for the calendar

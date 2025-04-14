@@ -17,7 +17,7 @@ public class DateTimeUtil {
   private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(
-          "yyyy-MM-dd'T'HH:mm");
+      "yyyy-MM-dd'T'HH:mm");
 
   /**
    * Private constructor to prevent instantiation.
@@ -38,7 +38,7 @@ public class DateTimeUtil {
       return LocalDate.parse(dateStr, DATE_FORMATTER);
     } catch (DateTimeParseException e) {
       throw new IllegalArgumentException("Invalid date format: " + dateStr
-              + ". Expected format: YYYY-MM-DD", e);
+          + ". Expected format: YYYY-MM-DD", e);
     }
   }
 
@@ -54,7 +54,7 @@ public class DateTimeUtil {
       return LocalTime.parse(timeStr, TIME_FORMATTER);
     } catch (DateTimeParseException e) {
       throw new IllegalArgumentException("Invalid time format: " + timeStr +
-              ". Expected format: HH:MM", e);
+          ". Expected format: HH:MM", e);
     }
   }
 
@@ -71,11 +71,11 @@ public class DateTimeUtil {
     } catch (DateTimeParseException e) {
       try {
         DateTimeFormatter withSecondsFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"
-                + "'T'HH:mm:ss");
+            + "'T'HH:mm:ss");
         return LocalDateTime.parse(dateTimeStr, withSecondsFormatter);
       } catch (DateTimeParseException e2) {
         throw new IllegalArgumentException("Invalid date time format: " + dateTimeStr +
-                ". Expected format: YYYY-MM-DDThh:mm or YYYY-MM-DDThh:mm:ss", e2);
+            ". Expected format: YYYY-MM-DDThh:mm or YYYY-MM-DDThh:mm:ss", e2);
       }
     }
   }
@@ -188,9 +188,9 @@ public class DateTimeUtil {
   }
 
   /**
-   * Converts a set of DayOfWeek to a string of weekday characters.
-   * Uses 'M' for Monday, 'T' for Tuesday, 'W' for Wednesday, 'R' for Thursday,
-   * 'F' for Friday, 'S' for Saturday, and 'U' for Sunday.
+   * Converts a set of DayOfWeek to a string of weekday characters. Uses 'M' for Monday, 'T' for
+   * Tuesday, 'W' for Wednesday, 'R' for Thursday, 'F' for Friday, 'S' for Saturday, and 'U' for
+   * Sunday.
    *
    * @param weekdays the set of DayOfWeek
    * @return a string of weekday characters

@@ -13,11 +13,11 @@ import model.export.CSVExporter;
 import view.IGUIView;
 
 /**
- * ViewModel for managing CSV import/export operations.
- * This class handles the business logic for importing and exporting calendar data
- * to and from CSV files.
+ * ViewModel for managing CSV import/export operations. This class handles the business logic for
+ * importing and exporting calendar data to and from CSV files.
  */
 public class ExportImportViewModel implements IViewModel {
+
   private ICalendar currentCalendar;
   private final List<IExportImportViewModelListener> listeners;
   private CalendarManager calendarManager;
@@ -86,12 +86,10 @@ public class ExportImportViewModel implements IViewModel {
   }
 
   /**
-   * Finds a suitable calendar for import/export operations.
-   * Tries to get the calendar in the following order:
-   * 1. From the selector panel
-   * 2. From the current calendar in this view model
-   * 3. The active calendar from the calendar manager
-   * 4. The first available calendar from the registry
+   * Finds a suitable calendar for import/export operations. Tries to get the calendar in the
+   * following order: 1. From the selector panel 2. From the current calendar in this view model 3.
+   * The active calendar from the calendar manager 4. The first available calendar from the
+   * registry
    *
    * @return a suitable calendar or null if none found
    */
@@ -228,8 +226,7 @@ public class ExportImportViewModel implements IViewModel {
   }
 
   /**
-   * Updates the view after importing events.
-   * If a view is connected, updates the calendar panel.
+   * Updates the view after importing events. If a view is connected, updates the calendar panel.
    */
   public void updateViewAfterImport() {
     if (view != null && currentCalendar != null) {

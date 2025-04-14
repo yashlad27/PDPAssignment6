@@ -13,10 +13,10 @@ import model.event.Event;
 import model.event.RecurringEvent;
 
 /**
- * A unified iterator implementation that consolidates all iterator functionality
- * into a single class. This replaces the separate interfaces and implementations
- * with a more cohesive, flexible solution that maintains SOLID principles through
- * clear separation of concerns within the class structure.
+ * A unified iterator implementation that consolidates all iterator functionality into a single
+ * class. This replaces the separate interfaces and implementations with a more cohesive, flexible
+ * solution that maintains SOLID principles through clear separation of concerns within the class
+ * structure.
  */
 public class ConsolidatedIterator {
 
@@ -24,6 +24,7 @@ public class ConsolidatedIterator {
    * Interface for calendar iterators. Maintains the original interface contract.
    */
   public interface ICalendarIterator {
+
     /**
      * Checks if there are more calendars to iterate over.
      *
@@ -49,6 +50,7 @@ public class ConsolidatedIterator {
    * Interface for event iterators. Maintains the original interface contract.
    */
   public interface IEventIterator {
+
     /**
      * Checks if there are more events to iterate over.
      *
@@ -74,6 +76,7 @@ public class ConsolidatedIterator {
    * Implementation of a calendar registry iterator.
    */
   public static class CalendarRegistryIterator implements ICalendarIterator {
+
     private final List<ICalendar> calendars;
     private int currentIndex = 0;
 
@@ -109,6 +112,7 @@ public class ConsolidatedIterator {
    * Implementation of a regular event iterator.
    */
   public static class RegularEventIterator implements IEventIterator {
+
     private final List<Event> events;
     private int currentIndex = 0;
 
@@ -141,10 +145,11 @@ public class ConsolidatedIterator {
   }
 
   /**
-   * Implementation of a recurring event iterator that expands recurring events
-   * into individual occurrences within a date range.
+   * Implementation of a recurring event iterator that expands recurring events into individual
+   * occurrences within a date range.
    */
   public static class RecurringEventIterator implements IEventIterator {
+
     private final List<RecurringEvent> recurringEvents;
     private final LocalDate startDate;
     private final LocalDate endDate;
@@ -159,8 +164,8 @@ public class ConsolidatedIterator {
      * @param endDate         the end date of the range
      */
     public RecurringEventIterator(List<RecurringEvent> recurringEvents,
-                                  LocalDate startDate,
-                                  LocalDate endDate) {
+        LocalDate startDate,
+        LocalDate endDate) {
       this.recurringEvents = new ArrayList<>(recurringEvents);
       this.startDate = startDate;
       this.endDate = endDate;
@@ -197,6 +202,7 @@ public class ConsolidatedIterator {
    * Implementation of a filtered event iterator that applies a filter to an underlying iterator.
    */
   public static class FilteredEventIterator implements IEventIterator {
+
     private final IEventIterator baseIterator;
     private final EventFilter filter;
     private Event nextEvent;
@@ -250,6 +256,7 @@ public class ConsolidatedIterator {
    * Implementation of a composite event iterator that combines multiple iterators.
    */
   public static class CompositeEventIterator implements IEventIterator {
+
     private final List<IEventIterator> iterators;
     private int currentIteratorIndex = 0;
 
@@ -319,8 +326,8 @@ public class ConsolidatedIterator {
    * @return a new recurring event iterator
    */
   public static IEventIterator forRecurringEvents(List<RecurringEvent> recurringEvents,
-                                                  LocalDate startDate,
-                                                  LocalDate endDate) {
+      LocalDate startDate,
+      LocalDate endDate) {
     return new RecurringEventIterator(recurringEvents, startDate, endDate);
   }
 

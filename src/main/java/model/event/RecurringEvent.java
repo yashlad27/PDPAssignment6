@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Represents a recurring event that repeats on specified days of the week.
- * Extends the base Event class to add repetition functionality.
+ * Represents a recurring event that repeats on specified days of the week. Extends the base Event
+ * class to add repetition functionality.
  */
 public class RecurringEvent extends Event {
 
@@ -26,9 +26,9 @@ public class RecurringEvent extends Event {
   private final boolean isAllDay;
 
   /**
-   * Determines whether this recurring event spans the entire day.
-   * An all-day recurring event starts at 00:00 and ends at 23:59:59 on each occurrence day.
-   * All-day events are displayed differently in calendar views & don't require specific time slots.
+   * Determines whether this recurring event spans the entire day. An all-day recurring event starts
+   * at 00:00 and ends at 23:59:59 on each occurrence day. All-day events are displayed differently
+   * in calendar views & don't require specific time slots.
    *
    * @return true if this recurring event is marked as an all-day event, false otherwise
    */
@@ -52,9 +52,9 @@ public class RecurringEvent extends Event {
    * @param isAllDay      whether the event is an all-day event
    */
   private RecurringEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                         String description, String location,
-                         boolean isPublic, Set<DayOfWeek> repeatDays,
-                         int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
+      String description, String location,
+      boolean isPublic, Set<DayOfWeek> repeatDays,
+      int occurrences, LocalDate endDate, UUID recurringId, boolean isAllDay) {
     super(subject, startDateTime, endDateTime, description, location, isPublic);
     this.repeatDays = new HashSet<>(repeatDays);
     this.occurrences = occurrences;
@@ -71,6 +71,7 @@ public class RecurringEvent extends Event {
    * Builder class for RecurringEvent.
    */
   public static class Builder {
+
     private final String subject;
     private final LocalDateTime startDateTime;
     private final LocalDateTime endDateTime;
@@ -105,7 +106,7 @@ public class RecurringEvent extends Event {
      * @throws IllegalArgumentException if repeatDays is null or empty
      */
     public Builder(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                   Set<DayOfWeek> repeatDays) {
+        Set<DayOfWeek> repeatDays) {
       this.subject = subject;
       this.startDateTime = startDateTime;
       this.endDateTime = endDateTime;
@@ -157,8 +158,8 @@ public class RecurringEvent extends Event {
     }
 
     /**
-     * Sets the number of occurrences for the recurring event.
-     * Setting occurrences will clear any previously set end date.
+     * Sets the number of occurrences for the recurring event. Setting occurrences will clear any
+     * previously set end date.
      *
      * @param occurrences Number of times the event should occur
      * @return This builder for method chaining
@@ -170,8 +171,8 @@ public class RecurringEvent extends Event {
     }
 
     /**
-     * Sets the end date for the recurring event.
-     * Setting an end date will clear any previously set occurrences.
+     * Sets the end date for the recurring event. Setting an end date will clear any previously set
+     * occurrences.
      *
      * @param endDate The last date on which the event can occur
      * @return This builder for method chaining
@@ -183,8 +184,8 @@ public class RecurringEvent extends Event {
     }
 
     /**
-     * Sets a specific recurring ID for the event series.
-     * If not set, a random UUID will be generated.
+     * Sets a specific recurring ID for the event series. If not set, a random UUID will be
+     * generated.
      *
      * @param recurringId The UUID to use as the recurring event ID
      * @return This builder for method chaining
@@ -203,8 +204,8 @@ public class RecurringEvent extends Event {
     public RecurringEvent build() {
       validate();
       return new RecurringEvent(subject, startDateTime, endDateTime,
-              description, location, isPublic, repeatDays, occurrences,
-              endDate, recurringId, isAllDay);
+          description, location, isPublic, repeatDays, occurrences,
+          endDate, recurringId, isAllDay);
     }
 
     /**
@@ -266,7 +267,7 @@ public class RecurringEvent extends Event {
     // Continue until we've generated the requested number of occurrences
     // or reached the end date if specified
     while ((this.occurrences <= 0 || count < this.occurrences) &&
-            (this.endDate == null || !currentDate.toLocalDate().isAfter(this.endDate))) {
+        (this.endDate == null || !currentDate.toLocalDate().isAfter(this.endDate))) {
 
       // If the current day is one of the repeat days, create an occurrence
       if (repeatDays.contains(currentDate.getDayOfWeek())) {
@@ -313,13 +314,13 @@ public class RecurringEvent extends Event {
 
     // Use the earlier of our calculated end date and the requested end date
     LocalDate effectiveEndDate = (eventEndDate != null && eventEndDate.isBefore(endDate))
-            ? eventEndDate : endDate;
+        ? eventEndDate : endDate;
 
     int count = 0;
 
     // Iterate through dates and collect occurrences
     while (!currentDate.isAfter(effectiveEndDate) && (this.occurrences <= 0
-            || count < this.occurrences)) {
+        || count < this.occurrences)) {
       if (repeatDays.contains(currentDateTime.getDayOfWeek())) {
         Event occurrence = createOccurrence(currentDateTime);
         occurrences.add(occurrence);
@@ -338,8 +339,8 @@ public class RecurringEvent extends Event {
   private Event createOccurrence(LocalDateTime date) {
     // Create occurrence using UTC times directly
     LocalDateTime startTime = date.withHour(getStartDateTime().getHour())
-            .withMinute(getStartDateTime().getMinute())
-            .withSecond(getStartDateTime().getSecond());
+        .withMinute(getStartDateTime().getMinute())
+        .withSecond(getStartDateTime().getSecond());
 
     Duration duration = Duration.between(getStartDateTime(), getEndDateTime());
     LocalDateTime endTime = startTime.plus(duration);
@@ -359,12 +360,12 @@ public class RecurringEvent extends Event {
     }
 
     Event occurrence = new Event(
-            getSubject(),
-            startTime,
-            endTime,
-            getDescription(),
-            getLocation(),
-            isPublic()
+        getSubject(),
+        startTime,
+        endTime,
+        getDescription(),
+        getLocation(),
+        isPublic()
     );
 
     // Use reflection to set the id field on the new occurrence

@@ -6,11 +6,12 @@ import java.util.Date;
 import java.util.Set;
 
 /**
- * Data transfer object that encapsulates all form data from the event panel.
- * This class contains no business logic, only data from UI components.
- * It serves as a clean interface between the view and controller layers.
+ * Data transfer object that encapsulates all form data from the event panel. This class contains no
+ * business logic, only data from UI components. It serves as a clean interface between the view and
+ * controller layers.
  */
 public class EventFormData {
+
   private final String subject;
   private final Date selectedDate;
   private final Date startTime;
@@ -43,9 +44,9 @@ public class EventFormData {
    * @param autoDecline  whether auto-decline is enabled for the event
    */
   public EventFormData(String subject, Date selectedDate, Date startTime, Date endTime,
-                       String location, String description, boolean isRecurring,
-                       boolean isAllDay, Set<DayOfWeek> weekdays, int occurrences,
-                       LocalDate untilDate, boolean isPrivate, boolean autoDecline) {
+      String location, String description, boolean isRecurring,
+      boolean isAllDay, Set<DayOfWeek> weekdays, int occurrences,
+      LocalDate untilDate, boolean isPrivate, boolean autoDecline) {
     this.subject = subject;
     this.selectedDate = selectedDate;
     this.startTime = startTime;
@@ -107,9 +108,8 @@ public class EventFormData {
   }
 
   /**
-   * Determines whether this event is marked as private.
-   * Private events are typically only visible to the owner and
-   * may have restricted sharing capabilities.
+   * Determines whether this event is marked as private. Private events are typically only visible
+   * to the owner and may have restricted sharing capabilities.
    *
    * @return true if the event is marked as private, false otherwise
    */
@@ -118,9 +118,9 @@ public class EventFormData {
   }
 
   /**
-   * Determines whether conflicts with this event will be automatically declined.
-   * When auto-decline is enabled, any new event that conflicts with this one
-   * will be automatically rejected by the calendar system.
+   * Determines whether conflicts with this event will be automatically declined. When auto-decline
+   * is enabled, any new event that conflicts with this one will be automatically rejected by the
+   * calendar system.
    *
    * @return true if auto-decline is enabled for this event, false otherwise
    */

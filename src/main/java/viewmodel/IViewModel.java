@@ -4,9 +4,9 @@ package viewmodel;
  * Base interface for all ViewModels in the Model-View-ViewModel (MVVM) architecture.
  *
  * <p> This interface defines common functionality that all ViewModels should implement,
- * establishing a standard contract for MVVM implementation. ViewModels serve as an
- * intermediary between the View and Model layers, providing data binding capabilities
- * and separation of concerns.</p>
+ * establishing a standard contract for MVVM implementation. ViewModels serve as an intermediary
+ * between the View and Model layers, providing data binding capabilities and separation of
+ * concerns.</p>
  *
  * <p> In the MVVM pattern, ViewModels:</p>
  * <ul>
@@ -59,8 +59,8 @@ public interface IViewModel {
    * Refreshes the ViewModel's state.
    *
    * <p> This method should update the ViewModel with the latest data from the Model layer.
-   * It differs from {@link #initialize()} in that it doesn't perform a complete setup
-   * but rather updates existing data. Implementation should include:</p>
+   * It differs from {@link #initialize()} in that it doesn't perform a complete setup but rather
+   * updates existing data. Implementation should include:</p>
    * <ul>
    *   <li>Reloading data from the underlying Model</li>
    *   <li>Updating any calculated or derived properties</li>

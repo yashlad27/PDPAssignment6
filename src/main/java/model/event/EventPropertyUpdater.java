@@ -5,6 +5,7 @@ package model.event;
  */
 @FunctionalInterface
 public interface EventPropertyUpdater {
+
   /**
    * Updates an event property with a new value.
    *

@@ -13,11 +13,11 @@ import model.event.Event;
 import model.event.RecurringEvent;
 
 /**
- * ViewModel for managing calendar-related operations and state.
- * This class handles the business logic for calendar operations and maintains the state
- * that will be displayed in the view.
+ * ViewModel for managing calendar-related operations and state. This class handles the business
+ * logic for calendar operations and maintains the state that will be displayed in the view.
  */
 public class CalendarViewModel implements IViewModel {
+
   private ICalendar currentCalendar;
   private String selectedCalendarName;
   private LocalDate selectedDate;
@@ -32,6 +32,7 @@ public class CalendarViewModel implements IViewModel {
    * Interface for listeners that want to be notified of changes in the CalendarViewModel.
    */
   public interface CalendarViewModelListener {
+
     void onCalendarChanged(ICalendar calendar);
 
     void onDateSelected(LocalDate date);
@@ -96,8 +97,8 @@ public class CalendarViewModel implements IViewModel {
         // Get events directly from calendar
         events = currentCalendar.getEventsOnDate(date);
         recurringEvents = currentCalendar.getAllRecurringEvents().stream()
-                .filter(event -> event.getStartDateTime().toLocalDate().equals(date))
-                .collect(Collectors.toList());
+            .filter(event -> event.getStartDateTime().toLocalDate().equals(date))
+            .collect(Collectors.toList());
 
         notifyEventsUpdated();
         notifyRecurringEventsUpdated();
@@ -173,8 +174,8 @@ public class CalendarViewModel implements IViewModel {
   }
 
   /**
-   * Updates the calendar with a new calendar and its events.
-   * Method moved from GUICalendarPanel to follow MVVM pattern.
+   * Updates the calendar with a new calendar and its events. Method moved from GUICalendarPanel to
+   * follow MVVM pattern.
    *
    * @param calendar the calendar to display
    */
@@ -201,8 +202,8 @@ public class CalendarViewModel implements IViewModel {
   }
 
   /**
-   * Updates the recurring events for the calendar.
-   * Method moved from GUICalendarPanel to follow MVVM pattern.
+   * Updates the recurring events for the calendar. Method moved from GUICalendarPanel to follow
+   * MVVM pattern.
    *
    * @param recurringEvents the recurring events to update
    */
@@ -212,8 +213,7 @@ public class CalendarViewModel implements IViewModel {
   }
 
   /**
-   * Updates all events in the calendar.
-   * Method moved from GUICalendarPanel to follow MVVM pattern.
+   * Updates all events in the calendar. Method moved from GUICalendarPanel to follow MVVM pattern.
    *
    * @param events the events to update
    */
@@ -246,6 +246,7 @@ public class CalendarViewModel implements IViewModel {
    * Extended interface for CalendarViewModelListener that includes month change notifications.
    */
   public interface ExtendedCalendarViewModelListener extends CalendarViewModelListener {
+
     /**
      * Called when the current month changes.
      *

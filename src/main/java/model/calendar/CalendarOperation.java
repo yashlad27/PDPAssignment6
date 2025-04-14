@@ -6,9 +6,8 @@ import model.exceptions.CalendarExceptions.EventNotFoundException;
 import model.exceptions.CalendarExceptions.InvalidEventException;
 
 /**
- * Functional interface for performing operations on calendars.
- * This interface allows for executing operations on a Calendar instance
- * and returning a result of a generic type.
+ * Functional interface for performing operations on calendars. This interface allows for executing
+ * operations on a Calendar instance and returning a result of a generic type.
  *
  * @param <T> the type of the result returned by the operation
  */
@@ -26,5 +25,5 @@ public interface CalendarOperation<T> {
    * @throws InvalidEventException     if event parameters are invalid
    */
   T execute(Calendar calendar) throws CalendarNotFoundException, EventNotFoundException,
-          ConflictingEventException, InvalidEventException;
+      ConflictingEventException, InvalidEventException;
 }

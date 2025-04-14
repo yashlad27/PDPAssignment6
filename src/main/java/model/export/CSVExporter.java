@@ -19,21 +19,21 @@ import model.event.Event;
 import utilities.TimeZoneHandler;
 
 /**
- * Implementation of IDataExporter that handles CSV format exports.
- * This class provides functionality to convert Event objects into CSV format
- * for data persistence and interoperability with other applications.
+ * Implementation of IDataExporter that handles CSV format exports. This class provides
+ * functionality to convert Event objects into CSV format for data persistence and interoperability
+ * with other applications.
  */
 public class CSVExporter implements IDataExporter {
 
   /**
-   * Date formatter used to format just the date portion (YYYY-MM-DD) of date-time values.
-   * This is used for CSV column values that require only date information.
+   * Date formatter used to format just the date portion (YYYY-MM-DD) of date-time values. This is
+   * used for CSV column values that require only date information.
    */
   private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   /**
-   * Time formatter used to format just the time portion (HH:MM) of date-time values.
-   * This is used for CSV column values that require only time information.
+   * Time formatter used to format just the time portion (HH:MM) of date-time values. This is used
+   * for CSV column values that require only time information.
    */
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -180,7 +180,8 @@ public class CSVExporter implements IDataExporter {
 
     for (Event event : events) {
       // Convert from UTC to the calendar's timezone for display
-      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), timezone);
+      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+          timezone);
       LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), timezone);
 
       String startTime = localStartTime.format(timeFormatter);
@@ -193,7 +194,7 @@ public class CSVExporter implements IDataExporter {
         builder.append(" (All Day)");
       } else {
         builder.append(" from ").append(startTime)
-                .append(" to ").append(endTime);
+            .append(" to ").append(endTime);
       }
       builder.append("\n");
 
@@ -226,7 +227,7 @@ public class CSVExporter implements IDataExporter {
 
   private String getHeaderLine() {
     return String.join(",", "Subject", "Start Date", "Start Time", "End Date", "End Time",
-            "Description", "Location", "Is Public");
+        "Description", "Location", "Is Public");
   }
 
   private String formatEventAsCSV(Event event) {
@@ -243,14 +244,14 @@ public class CSVExporter implements IDataExporter {
     String location = event.getLocation() != null ? escapeCSV(event.getLocation()) : "";
 
     return String.join(",",
-            escapeCSV(event.getSubject()),
-            startDate,
-            startTime,
-            endDate,
-            endTime,
-            description,
-            location,
-            String.valueOf(event.isPublic()));
+        escapeCSV(event.getSubject()),
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        description,
+        location,
+        String.valueOf(event.isPublic()));
   }
 
   private String escapeCSV(String field) {
@@ -268,10 +269,10 @@ public class CSVExporter implements IDataExporter {
     StringBuilder builder = new StringBuilder();
 
     builder.append(event.getSubject())
-            .append(" from ")
-            .append(event.getStartDateTime().format(timeFormatter))
-            .append(" to ")
-            .append(event.getEndDateTime().format(timeFormatter));
+        .append(" from ")
+        .append(event.getStartDateTime().format(timeFormatter))
+        .append(" to ")
+        .append(event.getEndDateTime().format(timeFormatter));
 
     if (showDetails) {
       builder.append("\n  Location: ");

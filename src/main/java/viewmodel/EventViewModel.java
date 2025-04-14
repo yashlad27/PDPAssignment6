@@ -17,11 +17,11 @@ import model.event.Event;
 import model.event.RecurringEvent;
 
 /**
- * ViewModel for managing event-related operations and state.
- * This class handles the business logic for event operations and maintains the state
- * that will be displayed in the view.
+ * ViewModel for managing event-related operations and state. This class handles the business logic
+ * for event operations and maintains the state that will be displayed in the view.
  */
 public class EventViewModel implements IViewModel {
+
   private final CalendarController controller;
   private Event selectedEvent;
   private RecurringEvent selectedRecurringEvent;
@@ -71,15 +71,15 @@ public class EventViewModel implements IViewModel {
    * @param description   the event description
    */
   public void createEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                          String location, String description) {
+      String location, String description) {
     try {
       UUID eventId = UUID.randomUUID();
       ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
-              eventId, subject, "subject", subject);
+          eventId, subject, "subject", subject);
       editor.executeEdit(controller.getCurrentCalendar());
 
       Event event = new Event(subject, startDateTime, endDateTime,
-              description, location, true);
+          description, location, true);
       notifyEventCreated(event);
     } catch (Exception e) {
       notifyError("Failed to create event: " + e.getMessage());
@@ -96,30 +96,30 @@ public class EventViewModel implements IViewModel {
    * @param description   the new description
    */
   public void updateEvent(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime,
-                          String location, String description) {
+      String location, String description) {
     if (selectedEvent != null) {
       try {
         ConsolidatedEventEditor editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "subject", subject);
+            selectedEvent.getId(), selectedEvent.getSubject(), "subject", subject);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "start",
-                startDateTime.toString());
+            selectedEvent.getId(), selectedEvent.getSubject(), "start",
+            startDateTime.toString());
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "end",
-                endDateTime.toString());
+            selectedEvent.getId(), selectedEvent.getSubject(), "end",
+            endDateTime.toString());
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "location", location);
+            selectedEvent.getId(), selectedEvent.getSubject(), "location", location);
         editor.executeEdit(controller.getCurrentCalendar());
 
         editor = ConsolidatedEventEditor.createSingleEventEditor(
-                selectedEvent.getId(), selectedEvent.getSubject(), "description",
-                description);
+            selectedEvent.getId(), selectedEvent.getSubject(), "description",
+            description);
         editor.executeEdit(controller.getCurrentCalendar());
 
         notifyEventUpdated(selectedEvent);
@@ -159,8 +159,8 @@ public class EventViewModel implements IViewModel {
   }
 
   /**
-   * Updates the event collection with a new set of events.
-   * Moved from GUICalendarPanel to follow the MVVM pattern.
+   * Updates the event collection with a new set of events. Moved from GUICalendarPanel to follow
+   * the MVVM pattern.
    *
    * @param events the events to update with
    */
@@ -194,9 +194,8 @@ public class EventViewModel implements IViewModel {
   }
 
   /**
-   * Checks if the list of events contains an event with the same ID or
-   * the same subject on the same day.
-   * Moved from GUICalendarPanel to follow business logic separation.
+   * Checks if the list of events contains an event with the same ID or the same subject on the same
+   * day. Moved from GUICalendarPanel to follow business logic separation.
    *
    * @param events the list of events to check
    * @param event  the event to check for
@@ -212,7 +211,7 @@ public class EventViewModel implements IViewModel {
         return true;
       }
       if (e.getSubject().equals(event.getSubject()) &&
-              isSameDay(e.getStartDateTime(), event.getStartDateTime())) {
+          isSameDay(e.getStartDateTime(), event.getStartDateTime())) {
         return true;
       }
     }
@@ -232,8 +231,8 @@ public class EventViewModel implements IViewModel {
   }
 
   /**
-   * Creates a formatted event panel for display.
-   * This method formats event details for display, moved from GUICalendarPanel.
+   * Creates a formatted event panel for display. This method formats event details for display,
+   * moved from GUICalendarPanel.
    *
    * @param event the event to create a panel for
    * @return the formatted event details as HTML
@@ -245,32 +244,32 @@ public class EventViewModel implements IViewModel {
 
     StringBuilder sb = new StringBuilder();
     sb.append("<div style='margin-bottom: 10px; padding: 8px; border-left: " +
-            "4px solid #4a86e8; background-color: #f8f9fa;'>");
+        "4px solid #4a86e8; background-color: #f8f9fa;'>");
 
     // Title with time
     sb.append("<div style='font-weight: bold; color: #4a86e8;'>")
-            .append(event.getSubject()).append("</div>");
+        .append(event.getSubject()).append("</div>");
 
     // Time information
     sb.append("<div style='font-size: 0.9em; color: #555;'>");
     sb.append(event.getStartDateTime().format(TIME_FORMATTER))
-            .append(" to ")
-            .append(event.getEndDateTime().format(TIME_FORMATTER));
+        .append(" to ")
+        .append(event.getEndDateTime().format(TIME_FORMATTER));
     sb.append("</div>");
 
     // Location if available
     if (event.getLocation() != null && !event.getLocation().isEmpty()) {
       sb.append("<div style='font-size: 0.9em; color: #666;'><i>Location:</i> ")
-              .append(event.getLocation())
-              .append("</div>");
+          .append(event.getLocation())
+          .append("</div>");
     }
 
     // Description if available
     if (event.getDescription() != null && !event.getDescription().isEmpty()) {
       sb.append("<div style='font-size: 0.9em; color: #666;" +
-                      " margin-top: 4px;'><i>Description:</i> ")
-              .append(event.getDescription())
-              .append("</div>");
+              " margin-top: 4px;'><i>Description:</i> ")
+          .append(event.getDescription())
+          .append("</div>");
     }
 
     sb.append("</div>");
@@ -286,13 +285,13 @@ public class EventViewModel implements IViewModel {
    * @return formatted HTML content
    */
   public String formatEventsListForRange(List<Event> events, LocalDate startDate,
-                                         LocalDate endDate) {
+      LocalDate endDate) {
     StringBuilder html = new StringBuilder();
     html.append("<html><body style='font-family: Arial, sans-serif;'>");
 
     if (events == null || events.isEmpty()) {
       html.append("<p>No events found between ").append(startDate)
-              .append(" and ").append(endDate).append("</p>");
+          .append(" and ").append(endDate).append("</p>");
       html.append("</body></html>");
       return html.toString();
     }

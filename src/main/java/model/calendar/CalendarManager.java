@@ -11,8 +11,8 @@ import utilities.TimeZoneHandler;
 
 /**
  * Manages calendar operations and coordinates between the CalendarRegistry and TimeZoneHandler.
- * Following the Single Responsibility Principle, this class is focused on high-level
- * calendar management operations rather than storage details.
+ * Following the Single Responsibility Principle, this class is focused on high-level calendar
+ * management operations rather than storage details.
  */
 public class CalendarManager {
 
@@ -31,6 +31,7 @@ public class CalendarManager {
    * Builder class for creating CalendarManager instances.
    */
   public static class Builder {
+
     private TimeZoneHandler timezoneHandler;
 
     /**
@@ -71,7 +72,7 @@ public class CalendarManager {
    * @throws InvalidTimezoneException   if the timezone is invalid
    */
   public Calendar createCalendar(String name, String timezone)
-          throws DuplicateCalendarException, InvalidTimezoneException {
+      throws DuplicateCalendarException, InvalidTimezoneException {
     if (!timezoneHandler.isValidTimezone(timezone)) {
       throw new InvalidTimezoneException("Invalid timezone: " + timezone);
     }
@@ -121,7 +122,7 @@ public class CalendarManager {
    * @throws Exception                 if the operation throws an exception
    */
   public <T> T executeOnCalendar(String calendarName, CalendarOperation<T> operation)
-          throws CalendarNotFoundException, Exception {
+      throws CalendarNotFoundException, Exception {
     Calendar calendar = calendarRegistry.getCalendarByName(calendarName);
     return operation.execute(calendar);
   }
@@ -155,12 +156,12 @@ public class CalendarManager {
    * @throws InvalidTimezoneException  if the timezone is invalid
    */
   public void editCalendarTimezone(String calendarName, String newTimezone)
-          throws CalendarNotFoundException, InvalidTimezoneException {
+      throws CalendarNotFoundException, InvalidTimezoneException {
     if (!timezoneHandler.isValidTimezone(newTimezone)) {
       throw new InvalidTimezoneException("Invalid timezone: " + newTimezone);
     }
     calendarRegistry.applyToCalendar(calendarName, calendar -> calendar
-            .setTimezone(newTimezone));
+        .setTimezone(newTimezone));
   }
 
   /**
@@ -172,7 +173,7 @@ public class CalendarManager {
    * @throws IllegalArgumentException  if a calendar with the new name already exists
    */
   public void editCalendarName(String oldName, String newName)
-          throws CalendarNotFoundException {
+      throws CalendarNotFoundException {
     if (!calendarRegistry.hasCalendar(oldName)) {
       throw new CalendarNotFoundException("Calendar not found: " + oldName);
     }

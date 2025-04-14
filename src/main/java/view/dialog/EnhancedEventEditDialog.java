@@ -227,8 +227,8 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
 
     // Create info panel with conflict warning
     JPanel infoPanel = createInfoPanel(
-            "Note: Events cannot conflict with each other. Editing that would create "
-                    + "a conflict with another existing event is not allowed.");
+        "Note: Events cannot conflict with each other. Editing that would create "
+            + "a conflict with another existing event is not allowed.");
 
     // Main layout
     setLayout(new BorderLayout());
@@ -268,14 +268,14 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
     LocalDateTime endDateTime = event.getEndDateTime();
 
     boolean isAllDay = startDateTime.toLocalTime().equals(LocalTime.of(0, 0)) && (
-            endDateTime.toLocalTime().equals(LocalTime.of(23, 59)) || endDateTime.toLocalTime()
-                    .equals(LocalTime.of(23, 59, 59)));
+        endDateTime.toLocalTime().equals(LocalTime.of(23, 59)) || endDateTime.toLocalTime()
+            .equals(LocalTime.of(23, 59, 59)));
 
     allDayCheckBox.setSelected(isAllDay);
 
     Calendar cal = Calendar.getInstance();
     cal.set(startDateTime.getYear(), startDateTime.getMonthValue() - 1,
-            startDateTime.getDayOfMonth());
+        startDateTime.getDayOfMonth());
     dateSpinner.setValue(cal.getTime());
 
     cal = Calendar.getInstance();
@@ -355,13 +355,13 @@ public class EnhancedEventEditDialog extends AbstractEventDialog implements IEve
     endTimeCal.setTime(endTimeValue);
 
     LocalDate date = LocalDate.of(dateCal.get(Calendar.YEAR), dateCal.get(Calendar.MONTH) + 1,
-            dateCal.get(Calendar.DAY_OF_MONTH));
+        dateCal.get(Calendar.DAY_OF_MONTH));
 
     LocalTime startTime = LocalTime.of(startTimeCal.get(Calendar.HOUR_OF_DAY),
-            startTimeCal.get(Calendar.MINUTE));
+        startTimeCal.get(Calendar.MINUTE));
 
     LocalTime endTime = LocalTime.of(endTimeCal.get(Calendar.HOUR_OF_DAY),
-            endTimeCal.get(Calendar.MINUTE));
+        endTimeCal.get(Calendar.MINUTE));
 
     updatedStartDateTime = LocalDateTime.of(date, startTime);
     updatedEndDateTime = LocalDateTime.of(date, endTime);
