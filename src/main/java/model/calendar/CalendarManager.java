@@ -169,7 +169,7 @@ public class CalendarManager {
    *
    * @param oldName the current name of the calendar
    * @param newName the new name for the calendar
-   * @throws CalendarNotFoundException if a calendar with the new name already exists
+   * @throws CalendarNotFoundException xif a calendar with the new name already exists
    */
   public void editCalendarName(String oldName, String newName)
       throws CalendarNotFoundException {
