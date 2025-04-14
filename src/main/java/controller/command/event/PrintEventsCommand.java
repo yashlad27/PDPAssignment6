@@ -79,12 +79,12 @@ public class PrintEventsCommand implements ICommand {
 
         if (hasTimeComponent) {
           LocalDateTime startDateTime = startStr.contains("T") ?
-                  DateTimeUtil.parseDateTime(startStr) :
-                  DateTimeUtil.parseDate(startStr).atStartOfDay();
+              DateTimeUtil.parseDateTime(startStr) :
+              DateTimeUtil.parseDate(startStr).atStartOfDay();
 
           LocalDateTime endDateTime = endStr.contains("T") ?
-                  DateTimeUtil.parseDateTime(endStr) :
-                  DateTimeUtil.parseDate(endStr).atTime(23, 59, 59);
+              DateTimeUtil.parseDateTime(endStr) :
+              DateTimeUtil.parseDate(endStr).atTime(23, 59, 59);
 
           return printEventsInDateTimeRange(startDateTime, endDateTime);
         } else {
@@ -107,14 +107,14 @@ public class PrintEventsCommand implements ICommand {
 
     LocalDate nextDay = date.plusDays(1);
     List<Event> earlyMorningEvents = calendar.getEventsOnDate(nextDay)
-            .stream()
-            .filter(e -> {
-              LocalDateTime start = e.getStartDateTime();
-              return start != null &&
-                      start.toLocalDate().equals(nextDay) &&
-                      start.getHour() < 6;  // Events in early morning hours
-            })
-            .collect(Collectors.toList());
+        .stream()
+        .filter(e -> {
+          LocalDateTime start = e.getStartDateTime();
+          return start != null &&
+              start.toLocalDate().equals(nextDay) &&
+              start.getHour() < 6;  // Events in early morning hours
+        })
+        .collect(Collectors.toList());
 
     List<Event> allEvents = new ArrayList<>(eventsOnDate);
     allEvents.addAll(earlyMorningEvents);
@@ -140,7 +140,7 @@ public class PrintEventsCommand implements ICommand {
 
     if (eventsInRange.isEmpty()) {
       return "No events from " + startDate.format(dateFormatter) + " to "
-              + endDate.format(dateFormatter);
+          + endDate.format(dateFormatter);
     }
 
     TimeZone calendarTimeZone = calendar.getTimeZone();
@@ -148,32 +148,33 @@ public class PrintEventsCommand implements ICommand {
 
     StringBuilder result = new StringBuilder();
     result.append("Events from ").append(startDate.format(dateFormatter))
-            .append(" to ").append(endDate.format(dateFormatter)).append(":\n");
+        .append(" to ").append(endDate.format(dateFormatter)).append(":\n");
     result.append(csvExporter.formatForDisplay(eventsInRange, true, timeZoneId));
 
     return result.toString();
   }
 
-  private String printEventsInDateTimeRange(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+  private String printEventsInDateTimeRange(LocalDateTime startDateTime,
+      LocalDateTime endDateTime) {
     LocalDate startDate = startDateTime.toLocalDate();
     LocalDate endDate = endDateTime.toLocalDate();
 
     List<Event> allEvents = calendar.getEventsInRange(startDate, endDate);
 
     List<Event> eventsInTimeRange = allEvents.stream()
-            .filter(event -> {
-              LocalDateTime eventStart = event.getStartDateTime();
-              LocalDateTime eventEnd = event.getEndDateTime();
+        .filter(event -> {
+          LocalDateTime eventStart = event.getStartDateTime();
+          LocalDateTime eventEnd = event.getEndDateTime();
 
-              return !(eventEnd.isBefore(startDateTime) || eventStart.isAfter(endDateTime));
-            })
-            .collect(Collectors.toList());
+          return !(eventEnd.isBefore(startDateTime) || eventStart.isAfter(endDateTime));
+        })
+        .collect(Collectors.toList());
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     if (eventsInTimeRange.isEmpty()) {
       return "No events from " + startDateTime.format(formatter) + " to "
-              + endDateTime.format(formatter);
+          + endDateTime.format(formatter);
     }
 
     TimeZone calendarTimeZone = calendar.getTimeZone();
@@ -181,7 +182,7 @@ public class PrintEventsCommand implements ICommand {
 
     StringBuilder result = new StringBuilder();
     result.append("Events from ").append(startDateTime.format(formatter))
-            .append(" to ").append(endDateTime.format(formatter)).append(":\n");
+        .append(" to ").append(endDateTime.format(formatter)).append(":\n");
     result.append(csvExporter.formatForDisplay(eventsInTimeRange, true, timeZoneId));
 
     return result.toString();

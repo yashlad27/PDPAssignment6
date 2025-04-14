@@ -35,27 +35,27 @@ import view.TextView;
 public class CalendarApp {
 
   /**
-   * Manages multiple calendars and their operations
+   * Manages multiple calendars and their operations.
    */
   private static CalendarManager calendarManager;
 
   /**
-   * View interface for displaying calendar information
+   * View interface for displaying calendar information.
    */
   private static ICalendarView view;
 
   /**
-   * Controller for handling user interactions and business logic
+   * Controller for handling user interactions and business logic.
    */
   private static CalendarController controller;
 
   /**
-   * Current operating mode of the application (gui, text, or headless)
+   * Current operating mode of the application (gui, text, or headless).
    */
   private static String currentMode = "gui";
 
   /**
-   * Command line arguments passed to the application
+   * Command line arguments passed to the application.
    */
   private static String[] commandLineArgs;
 

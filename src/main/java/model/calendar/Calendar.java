@@ -917,11 +917,6 @@ public class Calendar implements ICalendar {
   }
 
   /**
-   * Sets the timezone of the calendar.
-   *
-   * @param timezone the new timezone for the calendar
-   */
-  /**
    * Sets the timezone of the calendar and updates all event times accordingly. When the timezone
    * changes, all events are converted to maintain the same wall-clock time in the new timezone.
    *
