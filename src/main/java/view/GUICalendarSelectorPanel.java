@@ -31,6 +31,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
 import model.calendar.ICalendar;
+import model.calendar.timezone.TimezoneService;
 
 /**
  * Panel class that handles calendar selection and creation.
@@ -170,47 +171,37 @@ public class GUICalendarSelectorPanel extends JPanel {
     setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     setBackground(new Color(0xf8f8f8));
 
-    // Title
     JLabel titleLabel = new JLabel("Calendars");
     titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-    // Create main content panel that will hold both calendar list and buttons
     JPanel contentPanel = new JPanel(new BorderLayout());
     contentPanel.setOpaque(false);
-
-    // Calendar list panel
     JPanel calendarListPanel = new JPanel(new BorderLayout());
     calendarListPanel.setOpaque(false);
     calendarListPanel.setBorder(BorderFactory.createTitledBorder("Calendars"));
-
-    // Calendar list
     calendarListModel = new DefaultListModel<>();
     calendarList = new JList<>(calendarListModel);
     calendarList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     calendarList.setVisibleRowCount(5);
 
-    // Scroll pane for calendar list
     JScrollPane scrollPane = new JScrollPane(calendarList);
     scrollPane.setBorder(null);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setPreferredSize(new Dimension(200, 150)); // Set a fixed preferred size
+    scrollPane.setPreferredSize(new Dimension(200, 150));
     calendarListPanel.add(scrollPane, BorderLayout.CENTER);
 
-    // Buttons
     addCalendarButton = new JButton("Add Calendar");
     useCalendarButton = new JButton("Use");
     editCalendarButton = new JButton("Edit");
     ButtonStyler.applyPrimaryStyle(useCalendarButton);
 
-    // Set preferred size for buttons
     Dimension buttonSize = new Dimension(100, 30);
     addCalendarButton.setPreferredSize(buttonSize);
     useCalendarButton.setPreferredSize(new Dimension(80, 30));
     editCalendarButton.setPreferredSize(new Dimension(80, 30));
 
-    // Create a panel for buttons with horizontal layout
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     buttonPanel.setOpaque(false);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 5));
@@ -218,11 +209,8 @@ public class GUICalendarSelectorPanel extends JPanel {
     buttonPanel.add(editCalendarButton);
     buttonPanel.add(useCalendarButton);
 
-    // Add components to content panel
     contentPanel.add(calendarListPanel, BorderLayout.CENTER);
     contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-    // Add components to main panel
     add(titleLabel, BorderLayout.NORTH);
     add(contentPanel, BorderLayout.CENTER);
 
@@ -238,11 +226,11 @@ public class GUICalendarSelectorPanel extends JPanel {
    * @param calendars the list of calendars
    */
   public void setCalendars(List<ICalendar> calendars) {
-    calendarListModel.clear(); // Clear the list model first
+    calendarListModel.clear();
     calendarItems.clear();
 
     for (ICalendar calendar : calendars) {
-      calendarListModel.addElement(calendar.toString()); // Add calendar names to the list model
+      calendarListModel.addElement(calendar.toString());
       CalendarItem item = new CalendarItem(calendar);
       if (calendar.equals(selectedCalendar)) {
         item.setSelected(true);
@@ -252,18 +240,6 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     revalidate();
     repaint();
-  }
-
-  /**
-   * Sets the selected calendar.
-   *
-   * @param calendar the selected calendar
-   */
-  public void setSelectedCalendar(ICalendar calendar) {
-    selectedCalendar = calendar;
-    for (CalendarItem item : calendarItems) {
-      item.setSelected(item.getCalendar().equals(calendar));
-    }
   }
 
   /**
@@ -584,22 +560,19 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.gridx = 1;
     dialog.add(nameField, gbc);
 
-    // Timezone field
     gbc.gridx = 0;
     gbc.gridy = 1;
     dialog.add(new JLabel("Timezone:"), gbc);
 
-    // Use TimezoneService to get available IANA timezones
-    model.calendar.timezone.TimezoneService timezoneService = new model.calendar.timezone.TimezoneService();
+   TimezoneService timezoneService = new TimezoneService();
     String[] availableTimezones = timezoneService.getAvailableTimezones();
     
     JComboBox<String> timezoneComboBox = new JComboBox<>(availableTimezones);
-    timezoneComboBox.setEditable(true); // Allow custom timezone entry
-    timezoneComboBox.setSelectedItem(currentTimezone); // Set current timezone as selected
+    timezoneComboBox.setEditable(true);
+    timezoneComboBox.setSelectedItem(currentTimezone);
     gbc.gridx = 1;
     dialog.add(timezoneComboBox, gbc);
 
-    // Buttons panel
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JButton saveButton = new JButton("Save");
     JButton cancelButton = new JButton("Cancel");
