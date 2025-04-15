@@ -491,6 +491,14 @@ public class GUIController {
           // Update the event list results panel with events for this date
           if (currentCalendar != null) {
             List<Event> eventsForDate = currentCalendar.getEventsOnDate(eventDate);
+            
+            // Make sure we include the currently selected event in the list
+            if (!eventsForDate.contains(event)) {
+              eventsForDate = new ArrayList<>(eventsForDate);
+              eventsForDate.add(event);
+            }
+            
+            // Update the events list panel
             view.updateEventListResultsPanel(eventDate, eventDate, eventsForDate);
             System.out.println("[DEBUG] onEventSelected: Updated event list results panel with " + 
                     eventsForDate.size() + " events for date " + eventDate);
@@ -500,14 +508,57 @@ public class GUIController {
           handlingEventSelection = false;
         }
       }
-
+      
       @Override
       public void onRecurringEventSelected(RecurringEvent event) {
         if (event == null) {
           view.displayError("No recurring event selected");
           return;
         }
-        view.getEventPanel().displayRecurringEvent(event);
+        
+        // Set the flag to indicate we're handling an event selection
+        handlingEventSelection = true;
+        
+        try {
+          System.out.println("[DEBUG] Calendar grid recurring event selected: " + event.getSubject());
+          
+          // Display the event in the event panel
+          view.getEventPanel().displayRecurringEvent(event);
+          
+          // Update the selected date to match the event's date, but don't clear the form
+          LocalDate eventDate = event.getStartDateTime().toLocalDate();
+          
+          // Don't call setSelectedDate as it clears the form
+          // Instead, just update the calendar panel's selected date
+          view.getCalendarPanel().setSelectedDate(eventDate);
+          
+          // Update the event list results panel with events for this date
+          if (currentCalendar != null) {
+            // Get all events for this date from the calendar
+            List<Event> eventsForDate = currentCalendar.getEventsOnDate(eventDate);
+            
+            // Ensure the current recurring event instance is included
+            // Get occurrences between the event date and event date (just this day)
+            List<Event> occurrencesOnDate = event.getOccurrencesBetween(eventDate, eventDate);
+            
+            // If we found an occurrence for this date and it's not already in the list
+            if (!occurrencesOnDate.isEmpty() && 
+                !eventsForDate.stream().anyMatch(e -> 
+                    occurrencesOnDate.get(0).getId().equals(e.getId()))) {
+              // Add it to our events list
+              eventsForDate = new ArrayList<>(eventsForDate);
+              eventsForDate.add(occurrencesOnDate.get(0));
+            }
+            
+            // Update the events list panel
+            view.updateEventListResultsPanel(eventDate, eventDate, eventsForDate);
+            System.out.println("[DEBUG] onRecurringEventSelected: Updated event list results panel with " + 
+                    eventsForDate.size() + " events for date " + eventDate);
+          }
+        } finally {
+          // Reset the flag when we're done
+          handlingEventSelection = false;
+        }
       }
 
       @Override
@@ -629,24 +680,40 @@ public class GUIController {
                       // Get the current date from the calendar panel
                       LocalDate currentDate = view.getCalendarPanel().getSelectedDate();
                       
+                      // Get all events from the current calendar
+                      List<Event> allEvents = currentCalendar.getAllEvents();
+                      
                       // Get events for the current date from the imported calendar
                       List<Event> eventsForCurrentDate = currentCalendar.getEventsOnDate(currentDate);
                       
+                      // Get recurring events that might occur on the current date
+                      List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
+                      for (RecurringEvent re : recurringEvents) {
+                        List<Event> occurrencesOnDate = re.getOccurrencesBetween(currentDate, currentDate);
+                        if (!occurrencesOnDate.isEmpty()) {
+                          // Add any occurrences from recurring events to today's events if not already present
+                          for (Event occurrence : occurrencesOnDate) {
+                            if (!eventsForCurrentDate.stream().anyMatch(e -> e.getId().equals(occurrence.getId()))) {
+                              eventsForCurrentDate.add(occurrence);
+                            }
+                          }
+                        }
+                      }
+                      
                       // Explicitly update the event list results panel
                       view.updateEventListResultsPanel(currentDate, currentDate, eventsForCurrentDate);
+                      System.out.println("[DEBUG] CSV Import: Updated event list results panel with " + 
+                              eventsForCurrentDate.size() + " events for date " + currentDate);
                       
-                      // Update the events in the calendar panel
-                      view.getCalendarPanel().updateEvents(eventsForCurrentDate);
-                      view.getCalendarPanel().updateEventList(currentDate);
+                      // Update the calendar grid with all events
+                      view.getCalendarPanel().updateEvents(allEvents);
+                      
+                      // Use public methods to refresh the calendar display
+                      view.getCalendarPanel().setSelectedDate(currentDate);
+                      view.getCalendarPanel().updateCalendar(currentCalendar);
                       
                       // Force a refresh of the view
                       view.refreshView();
-                      
-                      // Refresh the calendar panel with the current calendar
-                      view.getCalendarPanel().updateCalendar(currentCalendar);
-                      
-                      System.out.println("[DEBUG] CSV Import: Updated event list results panel with " + 
-                              eventsForCurrentDate.size() + " events for date " + currentDate);
                     } else {
                       view.showErrorMessage(result);
                     }

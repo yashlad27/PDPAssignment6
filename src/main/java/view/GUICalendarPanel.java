@@ -415,13 +415,15 @@ public class GUICalendarPanel extends JPanel {
 
     button.addActionListener(e -> {
       selectedDate = date;
-      boolean eventSelected = false;
+      
+      // Get events for this date to update the event list results panel
+      List<Event> eventsForDate = eventsByDate.containsKey(date) ? 
+          new ArrayList<>(eventsByDate.get(date)) : new ArrayList<>();
       
       // If there are events on this date, select the first one
-      if (eventsByDate.containsKey(date) && !eventsByDate.get(date).isEmpty()) {
-        Event firstEvent = eventsByDate.get(date).get(0);
+      if (!eventsForDate.isEmpty()) {
+        Event firstEvent = eventsForDate.get(0);
         currentSelectedEvent = firstEvent;
-        eventSelected = true;
         
         // Event auto-selected - notify listener
         if (listener != null) {
@@ -441,7 +443,13 @@ public class GUICalendarPanel extends JPanel {
       
       // Always update the UI
       updateCalendarDisplay();
-      updateEventList(date);
+      
+      // Always update event list with ALL events for the selected date
+      if (listener != null && listener instanceof CalendarViewFeatures) {
+        System.out.println("[DEBUG] Updating event list results panel for date: " + date + 
+                         " with " + eventsForDate.size() + " events");
+        ((CalendarViewFeatures) listener).updateEventListResultsPanel(date, date, eventsForDate);
+      }
     });
 
     // Add event indicators to the date button
