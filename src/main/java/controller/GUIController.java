@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -69,19 +68,10 @@ import viewmodel.ExportImportViewModel;
  * </ul>
  */
 public class GUIController {
-  /** The calendar manager responsible for managing multiple calendars */
   private final CalendarManager calendarManager;
-  
-  /** The view interface for updating the GUI */
   private final CalendarViewFeatures view;
-  
-  /** Handler for timezone conversions and management */
   private final TimeZoneHandler timezoneHandler;
-  
-  /** The currently active calendar */
   private ICalendar currentCalendar;
-  
-  /** The selected calendar for operations */
   private ICalendar selectedCalendar;
 
   /**
@@ -89,7 +79,7 @@ public class GUIController {
    * Initializes the controller with necessary components for managing calendars and the GUI.
    *
    * @param calendarManager The calendar manager for handling multiple calendars
-   * @param view The GUI view implementing CalendarViewFeatures interface
+   * @param view            The GUI view implementing CalendarViewFeatures interface
    * @throws IllegalArgumentException if either parameter is null
    */
   public GUIController(CalendarManager calendarManager, CalendarViewFeatures view) {
@@ -245,10 +235,10 @@ public class GUIController {
 
                   List<Event> eventsOnDate = currentCalendar.getEventsOnDate(currentDate);
                   view.updateEventList(eventsOnDate);
-                  
+
                   // Explicitly update the event list results panel with events for the current date
                   view.updateEventListResultsPanel(currentDate, currentDate, eventsOnDate);
-                  System.out.println("[DEBUG] onCalendarSelected: Updated event list results panel with " + 
+                  System.out.println("[DEBUG] onCalendarSelected: Updated event list results panel with " +
                           eventsOnDate.size() + " events for date " + currentDate);
 
                   view.displayMessage("Selected calendar: " + calendarName);
@@ -296,40 +286,44 @@ public class GUIController {
               @Override
               public void onCalendarEdited(String oldName, String newName, String newTimezone) {
                 try {
-                  System.out.println("[DEBUG] Editing calendar '" + oldName + "' to name='" + newName + "', timezone='" + newTimezone + "'");
-                  
+                  System.out.println("[DEBUG] Editing calendar '" + oldName + "' to name='"
+                          + newName + "', timezone='" + newTimezone + "'");
+
                   // Get the current calendar's timezone for comparison
                   ICalendar calendar = calendarManager.getCalendar(oldName);
                   String currentTimezone = calendar.getTimeZone().getID();
-                  
+
                   // Store all events from the calendar before making any changes
-                  // We'll track events using the range method which is available in the ICalendar interface
-                  
+
                   // We need to get all events for the entire year to ensure we capture everything
                   LocalDate today = LocalDate.now();
                   LocalDate firstDayOfYear = LocalDate.of(today.getYear(), 1, 1);
                   LocalDate lastDayOfYear = LocalDate.of(today.getYear(), 12, 31);
-                  
+
                   // Get all events in the calendar for the entire year
-                  List<Event> allYearEvents = calendar.getEventsInRange(firstDayOfYear, lastDayOfYear);
-                  
+                  List<Event> allYearEvents = calendar.getEventsInRange(firstDayOfYear,
+                          lastDayOfYear);
+
                   // For debugging, also get the current month events
                   LocalDate firstDayOfMonth = today.withDayOfMonth(1);
                   LocalDate lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-                  List<Event> currentMonthEvents = calendar.getEventsInRange(firstDayOfMonth, lastDayOfMonth);
-                  
-                  System.out.println("[DEBUG-CONTROLLER] Calendar '" + oldName + "' has " + allYearEvents.size() + 
-                                   " events for the year and " + currentMonthEvents.size() + 
-                                   " events for the current month");
-                  
+                  List<Event> currentMonthEvents = calendar.getEventsInRange(firstDayOfMonth,
+                          lastDayOfMonth);
+
+                  System.out.println("[DEBUG-CONTROLLER] Calendar '" + oldName + "' has "
+                          + allYearEvents.size() +
+                          " events for the year and " + currentMonthEvents.size() +
+                          " events for the current month");
+
                   // Only update the name if it changed
                   if (!oldName.equals(newName)) {
                     calendarManager.editCalendarName(oldName, newName);
-                    System.out.println("[DEBUG] Calendar name updated from '" + oldName + "' to '" + newName + "'");
+                    System.out.println("[DEBUG] Calendar name updated from '" + oldName
+                            + "' to '" + newName + "'");
                   } else {
                     System.out.println("[DEBUG] Calendar name unchanged, skipping name update");
                   }
-                  
+
                   // Update the timezone if it changed
                   if (!currentTimezone.equals(newTimezone)) {
                     // Validate timezone format
@@ -338,85 +332,75 @@ public class GUIController {
                       view.showErrorMessage("Invalid timezone format. Please use Area/Location format.");
                       return;
                     }
-                    
-                    System.out.println("[DEBUG] Updating calendar timezone from '" + currentTimezone + "' to '" + newTimezone + "'");
+
+                    System.out.println("[DEBUG] Updating calendar timezone from '"
+                            + currentTimezone + "' to '" + newTimezone + "'");
                     calendarManager.editCalendarTimezone(newName, newTimezone);
                     System.out.println("[DEBUG] Calendar timezone updated successfully");
                   } else {
-                    System.out.println("[DEBUG] Calendar timezone unchanged, skipping timezone update");
+                    System.out.println("[DEBUG] Calendar timezone unchanged, "
+                            + "skipping timezone update");
                   }
-                  
-                  // Update the selected calendar and display
+
                   selectedCalendar = calendarManager.getCalendar(newName);
-                  currentCalendar = selectedCalendar; // Also update current calendar
-                  
-                  // CRITICAL FIX: Always restore all events after rename to ensure nothing is lost
-                  // This is more reliable than checking if events were preserved
-                  System.out.println("[DEBUG] Ensuring all " + allYearEvents.size() + " events are preserved in calendar '" + newName + "'");
-                  
-                  // First, check how many events were preserved naturally
-                  List<Event> eventsAfterRename = selectedCalendar.getEventsInRange(firstDayOfYear, lastDayOfYear);
-                  System.out.println("[DEBUG] After rename: Found " + eventsAfterRename.size() + 
-                                   " events out of original " + allYearEvents.size());
-                  
-                  // Create a map of existing events by subject and start time for efficient lookup
+                  currentCalendar = selectedCalendar;
+                  System.out.println("[DEBUG] Ensuring all " + allYearEvents.size()
+                          + " events are preserved in calendar '" + newName + "'");
+
+                  List<Event> eventsAfterRename = selectedCalendar.getEventsInRange(firstDayOfYear,
+                          lastDayOfYear);
+                  System.out.println("[DEBUG] After rename: Found " + eventsAfterRename.size() +
+                          " events out of original " + allYearEvents.size());
+
                   Map<String, Event> existingEventMap = new HashMap<>();
                   for (Event event : eventsAfterRename) {
-                      String key = event.getSubject() + "_" + event.getStartDateTime();
-                      existingEventMap.put(key, event);
+                    String key = event.getSubject() + "_" + event.getStartDateTime();
+                    existingEventMap.put(key, event);
                   }
-                  
-                  // Restore all events that don't already exist
+
                   int restoredCount = 0;
                   for (Event event : allYearEvents) {
-                      String key = event.getSubject() + "_" + event.getStartDateTime();
-                      if (!existingEventMap.containsKey(key)) {
-                          try {
-                              selectedCalendar.addEvent(event, true);
-                              restoredCount++;
-                              System.out.println("[DEBUG] Restored event: " + event.getSubject() + 
-                                               " on " + event.getStartDateTime());
-                          } catch (Exception e) {
-                              System.out.println("[DEBUG] Error restoring event: " + e.getMessage());
-                          }
+                    String key = event.getSubject() + "_" + event.getStartDateTime();
+                    if (!existingEventMap.containsKey(key)) {
+                      try {
+                        selectedCalendar.addEvent(event, true);
+                        restoredCount++;
+                        System.out.println("[DEBUG] Restored event: " + event.getSubject() +
+                                " on " + event.getStartDateTime());
+                      } catch (Exception e) {
+                        System.out.println("[DEBUG] Error restoring event: " + e.getMessage());
                       }
+                    }
                   }
-                  
+
                   // Check events after restoration
-                  List<Event> eventsAfterRestoration = selectedCalendar.getEventsInRange(firstDayOfYear, lastDayOfYear);
-                  System.out.println("[DEBUG] After restoration: " + eventsAfterRestoration.size() + 
-                                   " events (restored " + restoredCount + " events)");
-                  
+                  List<Event> eventsAfterRestoration =
+                          selectedCalendar.getEventsInRange(firstDayOfYear, lastDayOfYear);
+                  System.out.println("[DEBUG] After restoration: " + eventsAfterRestoration.size() +
+                          " events (restored " + restoredCount + " events)");
+
                   // Update the UI
                   view.setSelectedCalendar(newName);
                   view.getCalendarPanel().updateCalendarName(newName);
-                  
+
                   // Refresh the calendar list to show the updated name
                   view.updateCalendarList(new ArrayList<>(calendarManager
                           .getCalendarRegistry().getCalendarNames()));
-                  
-                  // Get the currently selected date to refresh events for that date
+
                   LocalDate selectedDate = view.getCalendarPanel().getSelectedDate();
                   if (selectedDate == null) {
                     selectedDate = LocalDate.now();
                   }
-                  
-                  // Use the same date range variables we defined earlier
-                  // to check for events in the renamed calendar
-                  List<Event> currentEvents = currentCalendar.getEventsInRange(firstDayOfMonth, lastDayOfMonth);
-                  
-                  System.out.println("[DEBUG] Found " + currentEvents.size() + " events in current month after timezone/name change");
-                  
-                  // Explicitly refresh events for the selected date after timezone change
+
+                  List<Event> currentEvents = currentCalendar.getEventsInRange(firstDayOfMonth,
+                          lastDayOfMonth);
+
+                  System.out.println("[DEBUG] Found " + currentEvents.size()
+                          + " events in current month after timezone/name change");
+
                   updateEvents(selectedDate);
-                  
-                  // Update the calendar display with all events
                   updateCalendarDisplay();
-                  
-                  // Force complete UI refresh
                   view.refreshView();
-                  
-                  // Prepare the success message
                   String successMessage = "Calendar updated successfully";
                   if (!oldName.equals(newName) && !currentTimezone.equals(newTimezone)) {
                     successMessage = "Calendar name and timezone updated successfully";
@@ -425,7 +409,7 @@ public class GUIController {
                   } else if (!currentTimezone.equals(newTimezone)) {
                     successMessage = "Calendar timezone updated successfully";
                   }
-                  
+
                   view.displayMessage(successMessage);
                 } catch (Exception e) {
                   System.err.println("[ERROR] Failed to update calendar: " + e.getMessage());
@@ -444,11 +428,9 @@ public class GUIController {
             view.displayError("Please select a valid date");
             return;
           }
-          
+
           System.out.println("[DEBUG] Processing date selection for: " + date);
-          
-          // Skip updating the selected date if we're handling an event selection
-          // This prevents the form from being cleared when clicking on an event
+
           if (!handlingEventSelection) {
             setSelectedDate(date);
           } else {
@@ -461,102 +443,79 @@ public class GUIController {
         }
       }
 
-      // Flag to track if we're currently handling an event selection
-      // This prevents the date selection from clearing the form when an event is clicked
       private boolean handlingEventSelection = false;
-      
+
       @Override
       public void onEventSelected(Event event) {
         if (event == null) {
           view.displayError("No event selected");
           return;
         }
-        
-        // Set the flag to indicate we're handling an event selection
+
         handlingEventSelection = true;
-        
+
         try {
           System.out.println("[DEBUG] Calendar grid event selected: " + event.getSubject());
-          
-          // Display the event in the event panel
+
           view.getEventPanel().displayEvent(event);
-          
-          // Update the selected date to match the event's date, but don't clear the form
+
           LocalDate eventDate = event.getStartDateTime().toLocalDate();
-          
-          // Don't call setSelectedDate as it clears the form
-          // Instead, just update the calendar panel's selected date
+
           view.getCalendarPanel().setSelectedDate(eventDate);
-          
-          // Update the event list results panel with events for this date
+
           if (currentCalendar != null) {
             List<Event> eventsForDate = currentCalendar.getEventsOnDate(eventDate);
-            
-            // Make sure we include the currently selected event in the list
+
             if (!eventsForDate.contains(event)) {
               eventsForDate = new ArrayList<>(eventsForDate);
               eventsForDate.add(event);
             }
-            
-            // Update the events list panel
+
             view.updateEventListResultsPanel(eventDate, eventDate, eventsForDate);
-            System.out.println("[DEBUG] onEventSelected: Updated event list results panel with " + 
+            System.out.println("[DEBUG] onEventSelected: Updated event list results panel with " +
                     eventsForDate.size() + " events for date " + eventDate);
           }
         } finally {
-          // Reset the flag when we're done
           handlingEventSelection = false;
         }
       }
-      
+
       @Override
       public void onRecurringEventSelected(RecurringEvent event) {
         if (event == null) {
           view.displayError("No recurring event selected");
           return;
         }
-        
-        // Set the flag to indicate we're handling an event selection
+
         handlingEventSelection = true;
-        
+
         try {
-          System.out.println("[DEBUG] Calendar grid recurring event selected: " + event.getSubject());
-          
-          // Display the event in the event panel
+          System.out.println("[DEBUG] Calendar grid recurring event selected: "
+                  + event.getSubject());
           view.getEventPanel().displayRecurringEvent(event);
-          
-          // Update the selected date to match the event's date, but don't clear the form
+
           LocalDate eventDate = event.getStartDateTime().toLocalDate();
-          
-          // Don't call setSelectedDate as it clears the form
-          // Instead, just update the calendar panel's selected date
+
           view.getCalendarPanel().setSelectedDate(eventDate);
-          
-          // Update the event list results panel with events for this date
           if (currentCalendar != null) {
-            // Get all events for this date from the calendar
             List<Event> eventsForDate = currentCalendar.getEventsOnDate(eventDate);
-            
-            // Ensure the current recurring event instance is included
-            // Get occurrences between the event date and event date (just this day)
+
             List<Event> occurrencesOnDate = event.getOccurrencesBetween(eventDate, eventDate);
-            
-            // If we found an occurrence for this date and it's not already in the list
-            if (!occurrencesOnDate.isEmpty() && 
-                !eventsForDate.stream().anyMatch(e -> 
-                    occurrencesOnDate.get(0).getId().equals(e.getId()))) {
-              // Add it to our events list
+
+            if (!occurrencesOnDate.isEmpty() &&
+                    !eventsForDate.stream().anyMatch(e ->
+                            occurrencesOnDate.get(0).getId().equals(e.getId()))) {
               eventsForDate = new ArrayList<>(eventsForDate);
               eventsForDate.add(occurrencesOnDate.get(0));
             }
-            
+
             // Update the events list panel
             view.updateEventListResultsPanel(eventDate, eventDate, eventsForDate);
-            System.out.println("[DEBUG] onRecurringEventSelected: Updated event list results panel with " + 
-                    eventsForDate.size() + " events for date " + eventDate);
+            System.out.println("[DEBUG] onRecurringEventSelected:"
+                    + " Updated event list results panel with "
+                    + eventsForDate.size() + " events for date " + eventDate);
           }
         } finally {
-          // Reset the flag when we're done
           handlingEventSelection = false;
         }
       }
@@ -677,42 +636,36 @@ public class GUIController {
                     String result = importCommand.importFromFile(file);
 
                     if (result.startsWith("Successfully")) {
-                      // Get the current date from the calendar panel
                       LocalDate currentDate = view.getCalendarPanel().getSelectedDate();
-                      
-                      // Get all events from the current calendar
+
                       List<Event> allEvents = currentCalendar.getAllEvents();
-                      
-                      // Get events for the current date from the imported calendar
+
                       List<Event> eventsForCurrentDate = currentCalendar.getEventsOnDate(currentDate);
-                      
-                      // Get recurring events that might occur on the current date
+
                       List<RecurringEvent> recurringEvents = currentCalendar.getAllRecurringEvents();
                       for (RecurringEvent re : recurringEvents) {
                         List<Event> occurrencesOnDate = re.getOccurrencesBetween(currentDate, currentDate);
                         if (!occurrencesOnDate.isEmpty()) {
-                          // Add any occurrences from recurring events to today's events if not already present
                           for (Event occurrence : occurrencesOnDate) {
-                            if (!eventsForCurrentDate.stream().anyMatch(e -> e.getId().equals(occurrence.getId()))) {
+                            if (!eventsForCurrentDate.stream().anyMatch(e ->
+                                    e.getId().equals(occurrence.getId()))) {
                               eventsForCurrentDate.add(occurrence);
                             }
                           }
                         }
                       }
-                      
-                      // Explicitly update the event list results panel
-                      view.updateEventListResultsPanel(currentDate, currentDate, eventsForCurrentDate);
-                      System.out.println("[DEBUG] CSV Import: Updated event list results panel with " + 
-                              eventsForCurrentDate.size() + " events for date " + currentDate);
-                      
-                      // Update the calendar grid with all events
+
+                      view.updateEventListResultsPanel(currentDate, currentDate,
+                              eventsForCurrentDate);
+                      System.out.println("[DEBUG] CSV Import: "
+                              + "Updated event list results panel with "
+                              + eventsForCurrentDate.size() + " events for date " + currentDate);
+
                       view.getCalendarPanel().updateEvents(allEvents);
-                      
-                      // Use public methods to refresh the calendar display
+
                       view.getCalendarPanel().setSelectedDate(currentDate);
                       view.getCalendarPanel().updateCalendar(currentCalendar);
-                      
-                      // Force a refresh of the view
+
                       view.refreshView();
                     } else {
                       view.showErrorMessage(result);
@@ -801,7 +754,7 @@ public class GUIController {
       List<Event> events = getEventsOnDate(date);
       view.updateEventList(events);
       view.getCalendarPanel().updateEventList(date);
-      
+
       // Update the event list results panel with events for the current date
       view.updateEventListResultsPanel(date, date, events);
     } catch (Exception e) {
@@ -836,7 +789,7 @@ public class GUIController {
       // Update the calendar panel's event list
       view.updateEventList(events);
       view.getCalendarPanel().updateEventList(date);
-      
+
       // Update the event list results panel below the calendar grid
       view.updateEventListResultsPanel(date, date, events);
 
@@ -857,7 +810,7 @@ public class GUIController {
    * Retrieves and displays all events that fall within the start and end dates.
    *
    * @param startDate The start date of the range
-   * @param endDate The end date of the range
+   * @param endDate   The end date of the range
    */
   private void showRange(LocalDate startDate, LocalDate endDate) {
     try {
@@ -923,7 +876,7 @@ public class GUIController {
    * Retrieves all events within a date range from the current calendar.
    *
    * @param startDate The start date of the range
-   * @param endDate The end date of the range
+   * @param endDate   The end date of the range
    * @return List of events within the specified range
    */
   public List<Event> getEventsInRange(LocalDate startDate, LocalDate endDate) {
@@ -1360,10 +1313,10 @@ public class GUIController {
   /**
    * Copies an event to a different calendar or time slot.
    *
-   * @param event The event to copy
-   * @param targetCalendarName The name of the target calendar
+   * @param event               The event to copy
+   * @param targetCalendarName  The name of the target calendar
    * @param targetStartDateTime The new start date/time
-   * @param targetEndDateTime The new end date/time
+   * @param targetEndDateTime   The new end date/time
    * @return true if the copy was successful, false otherwise
    */
   public boolean copyEvent(Event event, String targetCalendarName,
@@ -1457,7 +1410,7 @@ public class GUIController {
   /**
    * Converts form data to command arguments for processing.
    *
-   * @param formData The form data to convert
+   * @param formData    The form data to convert
    * @param commandType The type of command (create, edit, etc.)
    * @return Array of command arguments
    */
@@ -1535,7 +1488,7 @@ public class GUIController {
    * Processes various calendar operations including event creation and modification.
    *
    * @param command The command to execute
-   * @param args The arguments for the command
+   * @param args    The arguments for the command
    * @return Result message indicating success or failure
    */
   public String executeCommand(String command, String[] args) {
@@ -1820,12 +1773,11 @@ public class GUIController {
             boolean updated = currentCalendar.addEvent(event, false);
             System.out.println("[DEBUG] Event updated: " + updated);
             if (updated) {
-              // Refresh all calendar views to immediately display the updated event
               LocalDate updatedEventDate = startDateTime.toLocalDate();
               updateEventList(updatedEventDate);
               view.refreshCalendarView();
-              setSelectedDate(updatedEventDate);  // This updates all relevant view components
-              view.getCalendarPanel().repaint(); // Force repaint
+              setSelectedDate(updatedEventDate);
+              view.getCalendarPanel().repaint();
               return "Event updated successfully";
             }
             return "Failed to update event";
@@ -1858,12 +1810,11 @@ public class GUIController {
             boolean updated = currentCalendar.addRecurringEvent(recurringEvent, false);
             System.out.println("[DEBUG] Recurring event updated: " + updated);
             if (updated) {
-              // Refresh all calendar views to immediately display the updated recurring event
               LocalDate updatedRecurringDate = startDateTime.toLocalDate();
               updateEventList(updatedRecurringDate);
               view.refreshCalendarView();
-              setSelectedDate(updatedRecurringDate);  // This updates all relevant view components
-              view.getCalendarPanel().repaint(); // Force repaint
+              setSelectedDate(updatedRecurringDate);
+              view.getCalendarPanel().repaint();
               return "Recurring event updated successfully";
             }
             return "Failed to update recurring event";
@@ -1893,10 +1844,9 @@ public class GUIController {
       java.util.List<Event> events = currentCalendar.getEventsOnDate(date);
       view.getCalendarPanel().updateEvents(events);
       view.getCalendarPanel().updateEventList(date);
-      
-      // Also update the event list results panel to ensure consistency
+
       view.updateEventListResultsPanel(date, date, events);
-      System.out.println("[DEBUG] updateEventList: Updated event list results panel with " + 
+      System.out.println("[DEBUG] updateEventList: Updated event list results panel with " +
               events.size() + " events for date " + date);
     }
   }
@@ -1915,19 +1865,15 @@ public class GUIController {
     view.getEventPanel().clearForm();
     view.getEventPanel().setDate(date);
     view.getCalendarPanel().setSelectedDate(date);
-    
-    // Get events for the selected date
+
     List<Event> eventsForDate = null;
     if (currentCalendar != null) {
       eventsForDate = currentCalendar.getEventsOnDate(date);
-      
-      // Update the event list results panel directly
+
       view.updateEventListResultsPanel(date, date, eventsForDate);
-      System.out.println("[DEBUG] setSelectedDate: Updated event list results panel with " + 
+      System.out.println("[DEBUG] setSelectedDate: Updated event list results panel with " +
               eventsForDate.size() + " events for date " + date);
     }
-    
-    // Update other UI components
     updateEvents(date);
     updateStatus(date);
   }
