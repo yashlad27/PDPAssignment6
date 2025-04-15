@@ -431,7 +431,7 @@ public class CommandParser {
     String eventName = removeQuotes(matcher.group(1));
 
     String[] args = {"copy", "event", eventName, "on", matcher.group(2), "--target",
-            matcher.group(3), "to", matcher.group(4)};
+                     matcher.group(3), "to", matcher.group(4)};
     return new CommandWithArgs(copyCommand, args);
   }
 
@@ -439,7 +439,7 @@ public class CommandParser {
     ICommand copyCommand = commandFactory.getCommand("copy");
 
     String[] args = {"copy", "events", "on", matcher.group(1), "--target", matcher.group(2), "to",
-            matcher.group(3)};
+                     matcher.group(3)};
     return new CommandWithArgs(copyCommand, args);
   }
 
@@ -447,7 +447,7 @@ public class CommandParser {
     ICommand copyCommand = commandFactory.getCommand("copy");
 
     String[] args = {"copy", "events", "between", matcher.group(1), "and", matcher.group(2),
-            "--target", matcher.group(3), "to", matcher.group(4)};
+                     "--target", matcher.group(3), "to", matcher.group(4)};
     return new CommandWithArgs(copyCommand, args);
   }
 

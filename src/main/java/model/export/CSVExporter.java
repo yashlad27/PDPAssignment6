@@ -47,7 +47,6 @@ public class CSVExporter implements IDataExporter {
   public List<Event> importEvents(File file) throws IOException {
     List<Event> events = new ArrayList<>();
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      // Skip header line
       String header = reader.readLine();
       if (header == null || !header.startsWith("Subject,Start Date,Start Time")) {
         throw new IOException("Invalid CSV format");
@@ -120,13 +119,9 @@ public class CSVExporter implements IDataExporter {
     if (value == null || value.isEmpty()) {
       return "";
     }
-
-    // Remove surrounding quotes if present
     if (value.startsWith("\"") && value.endsWith("\"")) {
       value = value.substring(1, value.length() - 1);
     }
-
-    // Replace escaped quotes with single quotes
     return value.replace("\"\"", "\"");
   }
 
@@ -172,32 +167,26 @@ public class CSVExporter implements IDataExporter {
 
     StringBuilder builder = new StringBuilder();
     TimeZoneHandler timezoneHandler = new TimeZoneHandler();
-
-    // Sort events by start time
     events.sort(Comparator.comparing(Event::getStartDateTime));
-
     DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     for (Event event : events) {
-      // Convert from UTC to the calendar's timezone for display
-      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(), timezone);
+      LocalDateTime localStartTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
+              timezone);
       LocalDateTime localEndTime = timezoneHandler.convertFromUTC(event.getEndDateTime(), timezone);
-      
+
       String startTime = localStartTime.format(timeFormatter);
       String endTime = localEndTime.format(timeFormatter);
-      
+
       builder.append(event.getSubject());
-      
-      // Handle all-day events differently
       if (event.isAllDay()) {
         builder.append(" (All Day)");
       } else {
         builder.append(" from ").append(startTime)
-               .append(" to ").append(endTime);
+                .append(" to ").append(endTime);
       }
       builder.append("\n");
-      
-      // Add location if present
+
       if (includeHeader || event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
         builder.append("  Location: ");
         if (event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
@@ -220,12 +209,12 @@ public class CSVExporter implements IDataExporter {
    * @return a formatted string representing the events
    */
   public String formatForDisplay(List<Event> events, boolean includeHeader) {
-    // Use system default timezone as fallback
     return formatForDisplay(events, includeHeader, TimeZone.getDefault().getID());
   }
 
   private String getHeaderLine() {
-    return String.join(",", "Subject", "Start Date", "Start Time", "End Date", "End Time",
+    return String.join(",", "Subject", "Start Date",
+            "Start Time", "End Date", "End Time",
             "Description", "Location", "Is Public");
   }
 
@@ -261,28 +250,6 @@ public class CSVExporter implements IDataExporter {
       return "\"" + field.replace("\"", "\"\"") + "\"";
     }
     return field;
-  }
-
-  private String formatEventForDisplay(Event event, boolean showDetails) {
-    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-    StringBuilder builder = new StringBuilder();
-
-    builder.append(event.getSubject())
-            .append(" from ")
-            .append(event.getStartDateTime().format(timeFormatter))
-            .append(" to ")
-            .append(event.getEndDateTime().format(timeFormatter));
-
-    if (showDetails) {
-      builder.append("\n  Location: ");
-      if (event.getLocation() != null && !event.getLocation().trim().isEmpty()) {
-        builder.append(event.getLocation());
-      } else {
-        builder.append("N/A");
-      }
-    }
-
-    return builder.toString();
   }
 
   private void ensureDirectoryExists(File directory) throws IOException {

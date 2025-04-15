@@ -74,18 +74,18 @@ public class PrintEventsCommand implements ICommand {
       try {
         String startStr = args[1];
         String endStr = args[2];
-        
+
         boolean hasTimeComponent = startStr.contains("T") || endStr.contains("T");
-        
+
         if (hasTimeComponent) {
           LocalDateTime startDateTime = startStr.contains("T") ?
                   DateTimeUtil.parseDateTime(startStr) :
                   DateTimeUtil.parseDate(startStr).atStartOfDay();
-                  
-          LocalDateTime endDateTime = endStr.contains("T") ? 
+
+          LocalDateTime endDateTime = endStr.contains("T") ?
                   DateTimeUtil.parseDateTime(endStr) :
                   DateTimeUtil.parseDate(endStr).atTime(23, 59, 59);
-          
+
           return printEventsInDateTimeRange(startDateTime, endDateTime);
         } else {
           LocalDate startDate = DateTimeUtil.parseDate(args[1]);
@@ -104,21 +104,21 @@ public class PrintEventsCommand implements ICommand {
     List<Event> eventsOnDate = calendar.getEventsOnDate(date);
 
     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    
+
     LocalDate nextDay = date.plusDays(1);
     List<Event> earlyMorningEvents = calendar.getEventsOnDate(nextDay)
             .stream()
             .filter(e -> {
-                LocalDateTime start = e.getStartDateTime();
-                return start != null && 
-                       start.toLocalDate().equals(nextDay) && 
-                       start.getHour() < 6;  // Events in early morning hours
+              LocalDateTime start = e.getStartDateTime();
+              return start != null &&
+                      start.toLocalDate().equals(nextDay) &&
+                      start.getHour() < 6;  // Events in early morning hours
             })
             .collect(Collectors.toList());
-    
+
     List<Event> allEvents = new ArrayList<>(eventsOnDate);
     allEvents.addAll(earlyMorningEvents);
-    
+
     if (allEvents.isEmpty()) {
       return "No events on " + date.format(dateFormatter);
     }
@@ -135,9 +135,9 @@ public class PrintEventsCommand implements ICommand {
 
   private String printEventsInRange(LocalDate startDate, LocalDate endDate) {
     List<Event> eventsInRange = calendar.getEventsInRange(startDate, endDate);
-    
+
     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    
+
     if (eventsInRange.isEmpty()) {
       return "No events from " + startDate.format(dateFormatter) + " to "
               + endDate.format(dateFormatter);
@@ -154,23 +154,24 @@ public class PrintEventsCommand implements ICommand {
     return result.toString();
   }
 
-  private String printEventsInDateTimeRange(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+  private String printEventsInDateTimeRange(LocalDateTime startDateTime,
+                                            LocalDateTime endDateTime) {
     LocalDate startDate = startDateTime.toLocalDate();
     LocalDate endDate = endDateTime.toLocalDate();
-    
+
     List<Event> allEvents = calendar.getEventsInRange(startDate, endDate);
-    
+
     List<Event> eventsInTimeRange = allEvents.stream()
-        .filter(event -> {
-            LocalDateTime eventStart = event.getStartDateTime();
-            LocalDateTime eventEnd = event.getEndDateTime();
-            
-            return !(eventEnd.isBefore(startDateTime) || eventStart.isAfter(endDateTime));
-        })
-        .collect(Collectors.toList());
-    
+            .filter(event -> {
+              LocalDateTime eventStart = event.getStartDateTime();
+              LocalDateTime eventEnd = event.getEndDateTime();
+
+              return !(eventEnd.isBefore(startDateTime) || eventStart.isAfter(endDateTime));
+            })
+            .collect(Collectors.toList());
+
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    
+
     if (eventsInTimeRange.isEmpty()) {
       return "No events from " + startDateTime.format(formatter) + " to "
               + endDateTime.format(formatter);

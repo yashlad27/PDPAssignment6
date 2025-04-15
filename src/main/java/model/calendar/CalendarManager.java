@@ -169,7 +169,6 @@ public class CalendarManager {
    * @param oldName the current name of the calendar
    * @param newName the new name for the calendar
    * @throws CalendarNotFoundException if no calendar with the specified name exists
-   * @throws IllegalArgumentException if a calendar with the new name already exists
    */
   public void editCalendarName(String oldName, String newName)
           throws CalendarNotFoundException {
@@ -179,14 +178,14 @@ public class CalendarManager {
     if (calendarRegistry.hasCalendar(newName)) {
       throw new IllegalArgumentException("Calendar with name '" + newName + "' already exists");
     }
-    
+
     // Validate the new name
     try {
       CalendarNameValidator.validateCalendarName(newName);
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException("Invalid new calendar name: " + e.getMessage());
     }
-    
+
     // Update the calendar name in the registry
     calendarRegistry.updateCalendarName(oldName, newName);
   }

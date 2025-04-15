@@ -5,8 +5,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -361,7 +361,7 @@ public class Calendar implements ICalendar {
     int count = 0;
 
     List<Event> matchingEvents = events.stream().filter(e -> e.getSubject().equals(subject)
-                    && !e.getStartDateTime().isBefore(startDateTime)).collect(Collectors.toList());
+            && !e.getStartDateTime().isBefore(startDateTime)).collect(Collectors.toList());
 
     for (Event event : matchingEvents) {
       if (updateEventProperty(event, property, newValue)) {
@@ -475,64 +475,64 @@ public class Calendar implements ICalendar {
     // on a different day in UTC
     LocalDate dayBefore = date.minusDays(1);
     LocalDate dayAfter = date.plusDays(1);
-    
+
     // First get all events in the expanded date range
     List<Event> allEventsInRange = getEventsInRange(dayBefore, dayAfter);
-    
+
     // Filter events based on both local date and UTC date
     LocalDate localDate = date;  // Target date in local timezone
-    
+
     for (Event event : allEventsInRange) {
-        // For events happening at day boundaries, we need to be lenient in our filtering
-        if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
-            LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
-            LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
-            
-            // Event is related to our date if:
-            // 1. The event starts or ends on our target date (classic case)
-            if (eventStartDate.equals(localDate) || eventEndDate.equals(localDate)) {
-                eventsOnDateById.put(event.getId(), event);
-            }
-            // 2. The event spans across our target date (less common)
-            else if (eventStartDate.isBefore(localDate) && eventEndDate.isAfter(localDate)) {
-                eventsOnDateById.put(event.getId(), event);
-            }
-            // 3. Special case: when an event starts VERY late (e.g., 8pm-11pm), it might be stored 
-            // as midnight-3am the next day in UTC. So events at the "start" of the next day
-            // might actually belong to our target date.
-            else if (eventStartDate.equals(localDate.plusDays(1)) && 
-                    event.getStartDateTime().getHour() < 6) { // Early hours of next day
-                eventsOnDateById.put(event.getId(), event);
-            }
-            // 4. Special case: when an event ends VERY early (e.g., 11pm-3am), it might 
-            // end on our target date. So events that end early on our target date might
-            // actually be from the previous day.
-            else if (eventEndDate.equals(localDate) && 
-                    event.getEndDateTime().getHour() < 6) { // Early hours of target day
-                eventsOnDateById.put(event.getId(), event);
-            }
-            // 5. Special case for events that start exactly at midnight
-            else if (eventStartDate.equals(localDate) && 
-                    event.getStartDateTime().getHour() == 0 && 
-                    event.getStartDateTime().getMinute() == 0) {
-                // Always include events that start exactly at midnight of the target date
-                eventsOnDateById.put(event.getId(), event);
-            }
-            // 6. Also check the day before for events crossing midnight
-            else if (eventStartDate.equals(localDate.minusDays(1)) && 
-                     eventEndDate.equals(localDate) ||
-                     eventEndDate.isAfter(localDate)) {
-                // For events that start the day before and cross midnight
-                if (event.getStartDateTime().getHour() >= 23 || 
-                    event.getEndDateTime().getHour() <= 1) {
-                    eventsOnDateById.put(event.getId(), event);
-                }
-            }
-        } else if (event.getDate() != null && event.getDate().equals(localDate)) {
-            eventsOnDateById.put(event.getId(), event);
+      // For events happening at day boundaries, we need to be lenient in our filtering
+      if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
+        LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
+        LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
+
+        // Event is related to our date if:
+        // 1. The event starts or ends on our target date (classic case)
+        if (eventStartDate.equals(localDate) || eventEndDate.equals(localDate)) {
+          eventsOnDateById.put(event.getId(), event);
         }
+        // 2. The event spans across our target date (less common)
+        else if (eventStartDate.isBefore(localDate) && eventEndDate.isAfter(localDate)) {
+          eventsOnDateById.put(event.getId(), event);
+        }
+        // 3. Special case: when an event starts VERY late (e.g., 8pm-11pm), it might be stored
+        // as midnight-3am the next day in UTC. So events at the "start" of the next day
+        // might actually belong to our target date.
+        else if (eventStartDate.equals(localDate.plusDays(1)) &&
+                event.getStartDateTime().getHour() < 6) { // Early hours of next day
+          eventsOnDateById.put(event.getId(), event);
+        }
+        // 4. Special case: when an event ends VERY early (e.g., 11pm-3am), it might
+        // end on our target date. So events that end early on our target date might
+        // actually be from the previous day.
+        else if (eventEndDate.equals(localDate) &&
+                event.getEndDateTime().getHour() < 6) { // Early hours of target day
+          eventsOnDateById.put(event.getId(), event);
+        }
+        // 5. Special case for events that start exactly at midnight
+        else if (eventStartDate.equals(localDate) &&
+                event.getStartDateTime().getHour() == 0 &&
+                event.getStartDateTime().getMinute() == 0) {
+          // Always include events that start exactly at midnight of the target date
+          eventsOnDateById.put(event.getId(), event);
+        }
+        // 6. Also check the day before for events crossing midnight
+        else if (eventStartDate.equals(localDate.minusDays(1)) &&
+                eventEndDate.equals(localDate) ||
+                eventEndDate.isAfter(localDate)) {
+          // For events that start the day before and cross midnight
+          if (event.getStartDateTime().getHour() >= 23 ||
+                  event.getEndDateTime().getHour() <= 1) {
+            eventsOnDateById.put(event.getId(), event);
+          }
+        }
+      } else if (event.getDate() != null && event.getDate().equals(localDate)) {
+        eventsOnDateById.put(event.getId(), event);
+      }
     }
-    
+
     // Handle recurring events
     for (RecurringEvent recurringEvent : this.recurringEvents) {
       List<Event> occurrences = recurringEvent.getOccurrencesBetween(date, date);
@@ -540,7 +540,7 @@ public class Calendar implements ICalendar {
         eventsOnDateById.put(occurrence.getId(), occurrence);
       }
     }
-    
+
     return new ArrayList<>(eventsOnDateById.values());
   }
 
@@ -568,15 +568,16 @@ public class Calendar implements ICalendar {
       if (event.getStartDateTime() != null && event.getEndDateTime() != null) {
         LocalDate eventStartDate = event.getStartDateTime().toLocalDate();
         LocalDate eventEndDate = event.getEndDateTime().toLocalDate();
-        
+
         // Event overlaps with range if:
         // 1. Starts within the range, or
         // 2. Ends within the range, or
         // 3. Completely spans the range (starts before and ends after)
-        boolean startsInRange = !eventStartDate.isBefore(startDate) && !eventStartDate.isAfter(endDate);
+        boolean startsInRange = !eventStartDate.isBefore(startDate)
+                && !eventStartDate.isAfter(endDate);
         boolean endsInRange = !eventEndDate.isBefore(startDate) && !eventEndDate.isAfter(endDate);
         boolean spansRange = eventStartDate.isBefore(startDate) && eventEndDate.isAfter(endDate);
-        
+
         return startsInRange || endsInRange || spansRange;
       }
       return false;
@@ -702,24 +703,6 @@ public class Calendar implements ICalendar {
       event.setPublic(!isPrivate);
       return true;
     });
-  }
-
-  /**
-   * Gets events that match a specific filter.
-   *
-   * @param filter the filter to apply
-   * @return a list of events that match the filter
-   */
-  public List<Event> getFilteredEvents(EventFilter filter) {
-    // Use the iterator pattern to filter events
-    ConsolidatedIterator.IEventIterator iterator = getFilteredEventIterator(filter);
-    List<Event> result = new ArrayList<>();
-
-    while (iterator.hasNext()) {
-      result.add(iterator.next());
-    }
-
-    return result;
   }
 
   /**
@@ -852,29 +835,25 @@ public class Calendar implements ICalendar {
     Event existingEvent = eventById.get(eventId);
     if (existingEvent == null) {
       System.out.println("[ERROR] Calendar.updateEvent - Event not found with ID: " + eventId);
-      return false; // Event not found
+      return false;
     }
 
     System.out.println("[DEBUG] Calendar.updateEvent - Found existing event: "
             + existingEvent.getSubject());
 
-    // Store the existing event temporarily and remove it from collections
     events.remove(existingEvent);
     eventById.remove(eventId);
 
     try {
-      // Check for conflicts with the updated event
       if (hasConflict(updatedEvent)) {
-        // Restore the original event if there's a conflict
         events.add(existingEvent);
         eventById.put(eventId, existingEvent);
         System.out.println("[ERROR] Calendar.updateEvent - Conflict with existing events");
         throw new ConflictingEventException("The updated event conflicts with existing events");
       }
 
-      // Use the updated event directly, but ensure we preserve the original ID
       Event newEvent = new Event(
-              eventId, // Use the original event ID directly
+              eventId,
               updatedEvent.getSubject(),
               updatedEvent.getStartDateTime(),
               updatedEvent.getEndDateTime(),
@@ -890,7 +869,6 @@ public class Calendar implements ICalendar {
               + ", Start=" + newEvent.getStartDateTime()
               + ", End=" + newEvent.getEndDateTime());
 
-      // Add the updated event
       events.add(newEvent);
       eventById.put(eventId, newEvent);
 
@@ -912,23 +890,13 @@ public class Calendar implements ICalendar {
    * @param name the new name for the calendar
    */
   public void setName(String name) {
-    // Print debug information about events before name change
-    System.out.println("[DEBUG] Calendar '" + this.name + "' has " + events.size() + 
-                     " events and " + recurringEvents.size() + " recurring events before name change");
-    
-    // Update the name
+    System.out.println("[DEBUG] Calendar '" + this.name + "' has " + events.size() +
+            " events and " + recurringEvents.size() + " recurring events before name change");
     this.name = name;
-    
-    // Print debug information about events after name change
-    System.out.println("[DEBUG] Calendar renamed to '" + name + "' with " + events.size() + 
-                     " events and " + recurringEvents.size() + " recurring events preserved");
+    System.out.println("[DEBUG] Calendar renamed to '" + name + "' with " + events.size() +
+            " events and " + recurringEvents.size() + " recurring events preserved");
   }
 
-  /**
-   * Sets the timezone of the calendar.
-   *
-   * @param timezone the new timezone for the calendar
-   */
   /**
    * Sets the timezone of the calendar and updates all event times accordingly.
    * When the timezone changes, all events are converted to maintain the same wall-clock time
@@ -939,69 +907,67 @@ public class Calendar implements ICalendar {
   public void setTimezone(String timezone) {
     TimeZone oldTimezone = this.timezone;
     TimeZone newTimezone = TimeZone.getTimeZone(timezone);
-    
-    // Skip conversion if timezone isn't actually changing
+
     if (oldTimezone.getID().equals(newTimezone.getID())) {
       return;
     }
-    
-    System.out.println("[DEBUG] Converting calendar from " + oldTimezone.getID() + " to " + newTimezone.getID());
-    System.out.println("[DEBUG] Before conversion: " + events.size() + " single events, " + 
-                       recurringEvents.size() + " recurring events");
-    
+
+    System.out.println("[DEBUG] Converting calendar from " + oldTimezone.getID()
+            + " to " + newTimezone.getID());
+    System.out.println("[DEBUG] Before conversion: " + events.size() + " single events, " +
+            recurringEvents.size() + " recurring events");
+
     // Update all single events
     for (Event event : events) {
       LocalDateTime oldStart = event.getStartDateTime();
       LocalDateTime oldEnd = event.getEndDateTime();
-      
+
       // Convert from old timezone to new timezone
       ZoneId oldZone = oldTimezone.toZoneId();
       ZoneId newZone = newTimezone.toZoneId();
-      
+
       // Convert keeping the same wall clock time
       ZonedDateTime zonedStart = oldStart.atZone(oldZone);
       ZonedDateTime zonedEnd = oldEnd.atZone(oldZone);
-      
+
       LocalDateTime newStart = zonedStart.withZoneSameLocal(newZone).toLocalDateTime();
       LocalDateTime newEnd = zonedEnd.withZoneSameLocal(newZone).toLocalDateTime();
-      
+
       // Update the event
       event.setStartDateTime(newStart);
       event.setEndDateTime(newEnd);
-      
+
       // Debug output for event conversion
-      System.out.println("[DEBUG] Converted event: " + event.getSubject() + 
-                         " from " + oldStart + " to " + newStart);
+      System.out.println("[DEBUG] Converted event: " + event.getSubject() +
+              " from " + oldStart + " to " + newStart);
     }
-    
+
     // Update all recurring events
     for (RecurringEvent recurringEvent : recurringEvents) {
       LocalDateTime oldStart = recurringEvent.getStartDateTime();
       LocalDateTime oldEnd = recurringEvent.getEndDateTime();
-      
+
       // Convert from old timezone to new timezone
       ZoneId oldZone = oldTimezone.toZoneId();
       ZoneId newZone = newTimezone.toZoneId();
-      
+
       // Convert keeping the same wall clock time
       ZonedDateTime zonedStart = oldStart.atZone(oldZone);
       ZonedDateTime zonedEnd = oldEnd.atZone(oldZone);
-      
+
       LocalDateTime newStart = zonedStart.withZoneSameLocal(newZone).toLocalDateTime();
       LocalDateTime newEnd = zonedEnd.withZoneSameLocal(newZone).toLocalDateTime();
-      
+
       // Update the recurring event
       recurringEvent.setStartDateTime(newStart);
       recurringEvent.setEndDateTime(newEnd);
-      
-      // Debug output for recurring event conversion
-      System.out.println("[DEBUG] Converted recurring event: " + recurringEvent.getSubject() + 
-                         " from " + oldStart + " to " + newStart);
+
+      System.out.println("[DEBUG] Converted recurring event: " + recurringEvent.getSubject() +
+              " from " + oldStart + " to " + newStart);
     }
-    
-    // Finally update the calendar's timezone
+
     this.timezone = newTimezone;
-    System.out.println("[DEBUG] Calendar timezone changed from " + oldTimezone.getID() + " to " + 
-                     newTimezone.getID() + " with " + events.size() + " events preserved");
+    System.out.println("[DEBUG] Calendar timezone changed from " + oldTimezone.getID() + " to " +
+            newTimezone.getID() + " with " + events.size() + " events preserved");
   }
 }
