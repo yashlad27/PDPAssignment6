@@ -559,6 +559,13 @@ public class GUICalendarSelectorPanel extends JPanel {
       return;
     }
 
+    // Get the current calendar's timezone
+    String currentTimezone = "America/New_York"; // Default timezone
+    if (getSelectedCalendar() != null) {
+      currentTimezone = getSelectedCalendar().getTimeZone().getID();
+      System.out.println("[DEBUG] Current calendar timezone: " + currentTimezone);
+    }
+
     JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
             "Edit Calendar", true);
     dialog.setLayout(new GridBagLayout());
@@ -568,6 +575,7 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.insets = new Insets(5, 5, 5, 5);
     gbc.fill = GridBagConstraints.HORIZONTAL;
 
+    // Calendar Name field
     gbc.gridx = 0;
     gbc.gridy = 0;
     dialog.add(new JLabel("Calendar Name:"), gbc);
@@ -576,6 +584,22 @@ public class GUICalendarSelectorPanel extends JPanel {
     gbc.gridx = 1;
     dialog.add(nameField, gbc);
 
+    // Timezone field
+    gbc.gridx = 0;
+    gbc.gridy = 1;
+    dialog.add(new JLabel("Timezone:"), gbc);
+
+    // Use TimezoneService to get available IANA timezones
+    model.calendar.timezone.TimezoneService timezoneService = new model.calendar.timezone.TimezoneService();
+    String[] availableTimezones = timezoneService.getAvailableTimezones();
+    
+    JComboBox<String> timezoneComboBox = new JComboBox<>(availableTimezones);
+    timezoneComboBox.setEditable(true); // Allow custom timezone entry
+    timezoneComboBox.setSelectedItem(currentTimezone); // Set current timezone as selected
+    gbc.gridx = 1;
+    dialog.add(timezoneComboBox, gbc);
+
+    // Buttons panel
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JButton saveButton = new JButton("Save");
     JButton cancelButton = new JButton("Cancel");
@@ -585,6 +609,7 @@ public class GUICalendarSelectorPanel extends JPanel {
 
     saveButton.addActionListener(e -> {
       String newName = nameField.getText().trim();
+      String newTimezone = timezoneComboBox.getSelectedItem().toString().trim();
 
       if (newName.isEmpty()) {
         JOptionPane.showMessageDialog(dialog,
@@ -595,16 +620,11 @@ public class GUICalendarSelectorPanel extends JPanel {
       }
 
       System.out.println("[DEBUG] Saving calendar edit: oldName=" + selectedCalendarName 
-          + ", newName=" + newName);
+          + ", newName=" + newName + ", newTimezone=" + newTimezone);
       
       if (listener != null) {
-        try {
-          String currentTimezone = null;
-          if (getSelectedCalendar() != null) {
-            currentTimezone = getSelectedCalendar().getTimeZone().getID();
-          }
-          
-          listener.onCalendarEdited(selectedCalendarName, newName, currentTimezone);
+        try {          
+          listener.onCalendarEdited(selectedCalendarName, newName, newTimezone);
           
           refreshCalendarList();
           
@@ -637,7 +657,7 @@ public class GUICalendarSelectorPanel extends JPanel {
     buttonsPanel.add(cancelButton);
 
     gbc.gridx = 0;
-    gbc.gridy = 1;
+    gbc.gridy = 2;
     gbc.gridwidth = 2;
     dialog.add(buttonsPanel, gbc);
 

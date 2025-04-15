@@ -1,0 +1,21 @@
+Subject,Start Date,Start Time,End Date,End Time,All Day,Description,Location,Is Public
+"Team Meeting",2025-04-21,10:00,2025-04-21,11:00,false,"Weekly team sync","Conference Room A",true
+"Project Deadline",2025-04-24,09:00,2025-04-24,17:00,false,"Final deliverable due","Office",true
+"Client Presentation",2025-04-22,14:00,2025-04-22,15:30,false,"Q2 Results","Board Room",true
+"Training Session",2025-04-23,13:00,2025-04-23,16:00,false,"New Tool Training","Training Room",true
+"Team Building",2025-04-25,09:00,2025-04-25,17:00,false,"Annual Event","Resort",true
+"Gym",2025-04-22,18:00,2025-04-22,19:30,false,"Workout session","Fitness Center",false
+"Book Club",2025-04-20,19:00,2025-04-20,21:00,false,"Monthly Meeting","Library",true
+"Movie Night",2025-04-26,20:00,2025-04-26,23:00,false,"New Release","Cinema",false
+"Dinner with Friends",2025-04-23,19:00,2025-04-23,21:00,false,"Catch up","Italian Restaurant",false
+"Marketing Review",2025-04-17,11:00,2025-04-17,12:30,false,"Q2 Campaign Review","Marketing Department",true
+"Budget Planning",2025-04-18,14:00,2025-04-18,16:00,false,"FY2026 Budget","Finance Room",true
+"Product Demo",2025-04-16,10:00,2025-04-16,11:00,false,"New Feature Demo","Demo Room",true
+"All Hands Meeting",2025-04-30,15:00,2025-04-30,16:00,false,"Company Updates","Main Hall",true
+"Code Review",2025-04-28,13:00,2025-04-28,14:00,false,"Sprint Review","Dev Room",true
+"Doctor Appointment",2025-04-29,09:30,2025-04-29,10:30,false,"Annual Checkup","Medical Center",false
+"Lunch with CEO",2025-04-24,12:00,2025-04-24,13:30,false,"Quarterly Lunch","Executive Dining",true
+"Yoga Class",2025-04-19,08:00,2025-04-19,09:00,false,"Morning Yoga","Fitness Studio",false
+"Coffee with Mentor",2025-04-15,16:00,2025-04-15,17:00,false,"Career Discussion","Coffee Shop",false
+"Team Retrospective",2025-04-25,16:00,2025-04-25,17:00,false,"Sprint Retrospective","Meeting Room B",true
+"Birthday Celebration",2025-04-17,16:30,2025-04-17,17:30,false,"Team Member Birthday","Break Room",true

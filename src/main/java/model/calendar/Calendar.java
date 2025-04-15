@@ -912,7 +912,16 @@ public class Calendar implements ICalendar {
    * @param name the new name for the calendar
    */
   public void setName(String name) {
+    // Print debug information about events before name change
+    System.out.println("[DEBUG] Calendar '" + this.name + "' has " + events.size() + 
+                     " events and " + recurringEvents.size() + " recurring events before name change");
+    
+    // Update the name
     this.name = name;
+    
+    // Print debug information about events after name change
+    System.out.println("[DEBUG] Calendar renamed to '" + name + "' with " + events.size() + 
+                     " events and " + recurringEvents.size() + " recurring events preserved");
   }
 
   /**
@@ -936,6 +945,10 @@ public class Calendar implements ICalendar {
       return;
     }
     
+    System.out.println("[DEBUG] Converting calendar from " + oldTimezone.getID() + " to " + newTimezone.getID());
+    System.out.println("[DEBUG] Before conversion: " + events.size() + " single events, " + 
+                       recurringEvents.size() + " recurring events");
+    
     // Update all single events
     for (Event event : events) {
       LocalDateTime oldStart = event.getStartDateTime();
@@ -955,6 +968,10 @@ public class Calendar implements ICalendar {
       // Update the event
       event.setStartDateTime(newStart);
       event.setEndDateTime(newEnd);
+      
+      // Debug output for event conversion
+      System.out.println("[DEBUG] Converted event: " + event.getSubject() + 
+                         " from " + oldStart + " to " + newStart);
     }
     
     // Update all recurring events
@@ -976,10 +993,15 @@ public class Calendar implements ICalendar {
       // Update the recurring event
       recurringEvent.setStartDateTime(newStart);
       recurringEvent.setEndDateTime(newEnd);
+      
+      // Debug output for recurring event conversion
+      System.out.println("[DEBUG] Converted recurring event: " + recurringEvent.getSubject() + 
+                         " from " + oldStart + " to " + newStart);
     }
     
     // Finally update the calendar's timezone
     this.timezone = newTimezone;
-    System.out.println("Calendar timezone changed from " + oldTimezone.getID() + " to " + newTimezone.getID());
+    System.out.println("[DEBUG] Calendar timezone changed from " + oldTimezone.getID() + " to " + 
+                     newTimezone.getID() + " with " + events.size() + " events preserved");
   }
 }

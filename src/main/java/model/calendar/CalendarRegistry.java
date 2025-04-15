@@ -5,11 +5,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import model.calendar.Calendar;
+import model.calendar.ICalendar;
 import model.calendar.iterator.ConsolidatedIterator;
-import model.event.Event;
-import model.event.RecurringEvent;
 import model.exceptions.CalendarNotFoundException;
-import model.exceptions.ConflictingEventException;
 import model.exceptions.DuplicateCalendarException;
 
 /**
@@ -224,34 +223,37 @@ public class CalendarRegistry {
       throw new IllegalArgumentException("Calendar already exists: " + newName);
     }
 
-    Calendar calendar = calendars.get(oldName);
-    Calendar newCalendar = new Calendar(newName, calendar.getTimeZone().getID());
-
-    // Copy all events from the old calendar to the new one
-    for (Event event : calendar.getAllEvents()) {
-      try {
-        newCalendar.addEvent(event, true);
-      } catch (ConflictingEventException e) {
-        // This should not happen since we're copying events one by one
-        throw new RuntimeException("Failed to copy event: " + e.getMessage());
-      }
-    }
-
-    // Copy all recurring events from the old calendar to the new one
-    for (RecurringEvent event : calendar.getAllRecurringEvents()) {
-      try {
-        newCalendar.addRecurringEvent(event, true);
-      } catch (ConflictingEventException e) {
-        // This should not happen since we're copying events one by one
-        throw new RuntimeException("Failed to copy recurring event: " + e.getMessage());
-      }
-    }
-
+    // Get the original calendar with all its events
+    Calendar originalCalendar = calendars.get(oldName);
+    
+    // Print debug information about the calendar before renaming
+    int eventCount = originalCalendar.getAllEvents().size();
+    int recurringEventCount = originalCalendar.getAllRecurringEvents().size();
+    System.out.println("[DEBUG-REGISTRY] Calendar '" + oldName + "' has " + eventCount + 
+                     " events and " + recurringEventCount + " recurring events before renaming");
+    
+    // Update the name of the calendar - this will preserve all events
+    originalCalendar.setName(newName);
+    
+    // Update the registry - use the SAME calendar object to preserve events
     calendars.remove(oldName);
-    calendars.put(newName, newCalendar);
-
+    calendars.put(newName, originalCalendar);
+    
+    // Update active calendar reference if needed
     if (oldName.equals(activeCalendarName)) {
       activeCalendarName = newName;
+    }
+    
+    // Verify events were preserved
+    Calendar renamedCalendar = calendars.get(newName);
+    System.out.println("[DEBUG-REGISTRY] After rename: Calendar '" + newName + "' has " + 
+                     renamedCalendar.getAllEvents().size() + " events and " + 
+                     renamedCalendar.getAllRecurringEvents().size() + " recurring events");
+    
+    // Final verification
+    if (renamedCalendar.getAllEvents().size() != eventCount) {
+      System.out.println("[WARNING] Event count mismatch after rename! Expected: " + 
+                       eventCount + ", Actual: " + renamedCalendar.getAllEvents().size());
     }
   }
 }

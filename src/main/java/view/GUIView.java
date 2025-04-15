@@ -651,8 +651,9 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView, Calendar
    * @param endDate   The end date of the range (same as startDate for single day)
    * @param events    The list of events to display
    */
-  private void updateEventListResultsPanel(LocalDate startDate, LocalDate endDate,
-                                           List<Event> events) {
+  @Override
+  public void updateEventListResultsPanel(LocalDate startDate, LocalDate endDate,
+                                          List<Event> events) {
     // Clear previous content
     eventListResultsPanel.removeAll();
 
@@ -985,6 +986,14 @@ public class GUIView extends JFrame implements ICalendarView, IGUIView, Calendar
       // Force a complete refresh of the calendar display
       calendarPanel.updateCalendar(calendarViewModel.getCurrentCalendar());
       System.out.println("[DEBUG] Calendar panel updated with imported events");
+      
+      // Get events for the currently selected date
+      List<Event> eventsForCurrentDate = calendarViewModel.getCurrentCalendar().getEventsOnDate(currentDate);
+      System.out.println("[DEBUG] Found " + eventsForCurrentDate.size() + " events for current date " + currentDate);
+      
+      // Update the event list results panel with events for the current date
+      updateEventListResultsPanel(currentDate, currentDate, eventsForCurrentDate);
+      System.out.println("[DEBUG] Event list results panel updated with events for date: " + currentDate);
 
       // Refresh the entire view
       refreshView();

@@ -150,4 +150,13 @@ public interface CalendarViewFeatures extends IGUIView {
    * @return The export/import panel
    */
   GUIExportImportPanel getExportImportPanel();
+  
+  /**
+   * Updates the event list results panel to display events under the calendar grid.
+   *
+   * @param startDate The start date of the range (or a single date)
+   * @param endDate   The end date of the range (same as startDate for single day)
+   * @param events    The list of events to display
+   */
+  void updateEventListResultsPanel(LocalDate startDate, LocalDate endDate, List<Event> events);
 } 
