@@ -45,7 +45,7 @@ Please complete this questionnaire by selecting the appropriate answer for each 
 4. Graphical Interface
 
     - The GUI has a view to display the month view of a calendar: Y
-    - The GUI allows a user to select a calendar and change timezones: Y
+    - The GUI allows a user to select a calendar and change timezones: N
     - The GUI allows a user to navigate between months: Y
     - The GUI allows a user to see the events on a day in selected calendar: Y
     - The GUI allows a user to create different event types: Y

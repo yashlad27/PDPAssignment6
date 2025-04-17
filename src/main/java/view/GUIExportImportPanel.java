@@ -142,13 +142,11 @@ public class GUIExportImportPanel extends JPanel {
         System.out.println("[DEBUG] Selected import file: " + importFile.getAbsolutePath());
         importFileLabel.setText(importFile.getName());
 
-        // Automatically trigger the import process after file selection
         if (importFile != null && listener != null) {
           try {
             System.out.println("[DEBUG] Automatically starting import process for file: "
                     + importFile.getAbsolutePath());
 
-            // Confirm import with user
             int result = JOptionPane.showConfirmDialog(
                     this,
                     "Import events from " + importFile.getName() + "?",
@@ -160,11 +158,9 @@ public class GUIExportImportPanel extends JPanel {
               System.out.println("[DEBUG] User confirmed import, proceeding...");
               setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-              // Call the listener to handle the import
               listener.onImport(importFile);
 
               setCursor(Cursor.getDefaultCursor());
-              // The success message will be shown by the viewmodel callback
             } else {
               System.out.println("[DEBUG] User cancelled import");
             }
@@ -183,16 +179,13 @@ public class GUIExportImportPanel extends JPanel {
       System.out.println("[DEBUG] Export Calendar button clicked");
       fileChooser.setDialogTitle("Save Calendar Data as CSV");
 
-      // Set up file filter for CSV files
       FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
       fileChooser.setFileFilter(filter);
 
-      // Set the default directory to the project root
       fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 
       if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         exportFile = fileChooser.getSelectedFile();
-        // Ensure the file has .csv extension
         if (!exportFile.getName().toLowerCase().endsWith(".csv")) {
           exportFile = new File(exportFile.getParentFile(), exportFile.getName() + ".csv");
         }
@@ -224,14 +217,12 @@ public class GUIExportImportPanel extends JPanel {
               l.onExport(exportFile);
             }
 
-            // Verify file was created
             System.out.println("[DEBUG] Export operation completed");
             System.out.println("[DEBUG] File exists after export: " + exportFile.exists());
             if (exportFile.exists()) {
               System.out.println("[DEBUG] Export file size: " + exportFile.length() + " bytes");
             }
 
-            // Show success message
             setCursor(Cursor.getDefaultCursor());
             showStatus("Export successful: " + exportFile.getName(), true);
             JOptionPane.showMessageDialog(
@@ -260,16 +251,6 @@ public class GUIExportImportPanel extends JPanel {
   public void addExportImportListener(ExportImportListener listener) {
     this.listener = listener;
     this.listeners.add(listener);
-  }
-
-  /**
-   * Shows a success message for an import operation with details on the number of events imported.
-   *
-   * @param message The success message with details
-   */
-  public void showImportSuccess(String message) {
-    JOptionPane.showMessageDialog(this, message,
-            "Import Successful", JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**

@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -335,13 +337,40 @@ public class GUIController {
                   return;
                 }
 
-                System.out.println("[DEBUG] Updating calendar timezone from '"
-                    + currentTimezone + "' to '" + newTimezone + "'");
-                calendarManager.editCalendarTimezone(newName, newTimezone);
-                System.out.println("[DEBUG] Calendar timezone updated successfully");
-              } else {
-                System.out.println("[DEBUG] Calendar timezone unchanged, "
-                    + "skipping timezone update");
+                // Handle timezone change if needed
+                boolean timezoneChanged = !currentTimezone.equals(newTimezone);
+                if (timezoneChanged) {
+                  System.out.println("[DEBUG] Updating calendar timezone from '" + 
+                      currentTimezone + "' to '" + newTimezone + "'");
+                  
+                  // SIMPLIFIED APPROACH: Use direct timezone update with proper error handling
+                  try {
+                    // Just update the timezone directly - the Calendar.setTimezone method already
+                    // handles proper timezone conversion with wall-clock time preservation
+                    calendarManager.editCalendarTimezone(oldName, newTimezone);
+                    System.out.println("[DEBUG] Calendar timezone updated successfully from '" + 
+                        currentTimezone + "' to '" + newTimezone + "'");
+                    
+                    // Refresh the calendar to reflect changes
+                    ICalendar updatedCalendar = calendarManager.getCalendar(newName);
+                    view.updateCalendarView(updatedCalendar);
+                    
+                    // Validate the timezone was changed properly
+                    String finalTimezone = updatedCalendar.getTimeZone().getID();
+                    if (!finalTimezone.equals(newTimezone)) {
+                      System.out.println("[WARNING] Final timezone '" + finalTimezone + 
+                          "' does not match requested timezone '" + newTimezone + "'");
+                    } else {
+                      System.out.println("[DEBUG] Timezone successfully verified as '" + finalTimezone + "'");
+                    }
+                    
+                  } catch (Exception e) {
+                    System.err.println("[ERROR] Failed to update calendar timezone: " + e.getMessage());
+                    e.printStackTrace();
+                    view.displayError("Failed to update calendar timezone: " + e.getMessage());
+                    return;
+                  }
+                }
               }
 
               selectedCalendar = calendarManager.getCalendar(newName);
@@ -393,16 +422,208 @@ public class GUIController {
               if (selectedDate == null) {
                 selectedDate = LocalDate.now();
               }
+              
+              // Handle timezone and/or name changes by creating a new calendar and preserving events
+              try {
+                // Create a map to store all events from the original calendar
+                Map<String, Event> allEventsMap = new HashMap<>();
+                LocalDate yearStart = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+                LocalDate yearEnd = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+                
+                // Collect all events from the entire year (both single and recurring)
+                List<Event> allEvents = calendar.getEventsInRange(yearStart, yearEnd);
+                
+                System.out.println("[DEBUG] Captured " + allEvents.size() + 
+                    " events from calendar before timezone/name change");
+                
+                // Store events in map with unique key (subject + datetime as string)
+                for (Event event : allEvents) {
+                    String key = event.getSubject() + "_" + event.getStartDateTime().toString();
+                    allEventsMap.put(key, event);
+                    System.out.println("[DEBUG] Stored event: " + key);
+                }
+                
+                // Generate a temporary calendar name to avoid conflicts
+                String tempCalendarName = newName + "_temp_" + System.currentTimeMillis();
+                
+                // Create the new calendar with a temporary name first
+                calendarManager.createCalendar(tempCalendarName, newTimezone);
+                ICalendar tempCalendar = calendarManager.getCalendar(tempCalendarName);
+                
+                // Add all events to the temporary calendar
+                int tempAddedCount = 0;
+                for (Event event : allEventsMap.values()) {
+                    try {
+                        // Convert event times to new timezone
+                        LocalDateTime origStart = event.getStartDateTime();
+                        LocalDateTime origEnd = event.getEndDateTime();
+                        
+                        // If timezone changed, convert event time
+                        if (!currentTimezone.equals(newTimezone)) {
+                            // Create objects for timezone conversion
+                            java.time.ZoneId oldZone = java.util.TimeZone.getTimeZone(currentTimezone).toZoneId();
+                            java.time.ZoneId newZone = java.util.TimeZone.getTimeZone(newTimezone).toZoneId();
+                            
+                            // Convert timestamps maintaining same wall-clock time
+                            java.time.ZonedDateTime zdtStart = origStart.atZone(oldZone);
+                            java.time.ZonedDateTime zdtEnd = origEnd.atZone(oldZone);
+                            
+                            origStart = zdtStart.withZoneSameLocal(newZone).toLocalDateTime();
+                            origEnd = zdtEnd.withZoneSameLocal(newZone).toLocalDateTime();
+                            
+                            System.out.println("[DEBUG] Converted event time: " + event.getSubject() + 
+                                " from " + event.getStartDateTime() + " to " + origStart);
+                        }
+                        
+                        // Create a new event with the converted times
+                        Event newEvent = new Event(
+                            event.getSubject(),
+                            origStart,
+                            origEnd,
+                            event.getDescription(),
+                            event.getLocation(),
+                            event.isPublic()
+                        );
+                        
+                        // Add the event to the temporary calendar
+                        tempCalendar.addEvent(newEvent, true); // Force add even if conflicts
+                        tempAddedCount++;
+                    } catch (Exception e) {
+                        System.err.println("[ERROR] Failed to add event to temp calendar: " + e.getMessage());
+                    }
+                }
+                
+                System.out.println("[DEBUG] Successfully added " + tempAddedCount + 
+                    " events to the temporary calendar out of " + allEventsMap.size());
+                
+                // Now remove the old calendar
+                try {
+                    calendarManager.getCalendarRegistry().removeCalendar(oldName);
+                    System.out.println("[DEBUG] Removed existing calendar '" + oldName + "'");
+                } catch (Exception e) {
+                    System.err.println("[ERROR] Failed to remove old calendar: " + e.getMessage());
+                    // Continue anyway, as the old calendar may not exist
+                }
+                
+                // Create the final calendar with the correct name
+                calendarManager.createCalendar(newName, newTimezone);
+                System.out.println("[DEBUG] Created new calendar with name='" + newName + 
+                    "', timezone='" + newTimezone + "'");
+                
+                // Get the newly created calendar
+                ICalendar newCalendar = calendarManager.getCalendar(newName);
+                
+                // Transfer events from the temporary calendar to the new calendar
+                int addedCount = 0;
+                List<Event> tempEvents = tempCalendar.getEventsInRange(yearStart, yearEnd);
+                for (Event event : tempEvents) {
+                    try {
+                        // Add the event to the new calendar
+                        newCalendar.addEvent(event, true); // Force add even if conflicts
+                        addedCount++;
+                    } catch (Exception e) {
+                        System.err.println("[ERROR] Failed to add event to final calendar: " + e.getMessage());
+                    }
+                }
+                
+                // Remove the temporary calendar
+                try {
+                    calendarManager.getCalendarRegistry().removeCalendar(tempCalendarName);
+                    System.out.println("[DEBUG] Removed temporary calendar '" + tempCalendarName + "'");
+                } catch (Exception e) {
+                    System.err.println("[ERROR] Failed to remove temporary calendar: " + e.getMessage());
+                    // Continue anyway as this is just cleanup
+                }
+                
+                // Add any remaining events from the original collection if needed
+                for (Event event : allEventsMap.values()) {
+                    try {
+                        // Convert event times to new timezone
+                        LocalDateTime origStart = event.getStartDateTime();
+                        LocalDateTime origEnd = event.getEndDateTime();
+                        
+                        // If timezone changed, convert event time
+                        if (!currentTimezone.equals(newTimezone)) {
+                            // Create objects for timezone conversion
+                            ZoneId oldZone = TimeZone.getTimeZone(currentTimezone).toZoneId();
+                            ZoneId newZone = TimeZone.getTimeZone(newTimezone).toZoneId();
+                            
+                            // Convert timestamps maintaining same wall-clock time
+                            ZonedDateTime zdtStart = origStart.atZone(oldZone);
+                            ZonedDateTime zdtEnd = origEnd.atZone(oldZone);
+                            
+                            origStart = zdtStart.withZoneSameLocal(newZone).toLocalDateTime();
+                            origEnd = zdtEnd.withZoneSameLocal(newZone).toLocalDateTime();
+                            
+                            System.out.println("[DEBUG] Converted event time: " + event.getSubject() + 
+                                " from " + event.getStartDateTime() + " to " + origStart);
+                        }
+                        
+                        // Create a new event with the converted times
+                        Event newEvent = new Event(
+                            event.getSubject(),
+                            origStart,
+                            origEnd,
+                            event.getDescription(),
+                            event.getLocation(),
+                            event.isPublic()
+                        );
+                        
+                        // Add the event to the new calendar
+                        newCalendar.addEvent(newEvent, true); // Force add even if conflicts
+                        addedCount++;
+                    } catch (Exception e) {
+                        System.err.println("[ERROR] Failed to add event: " + e.getMessage());
+                    }
+                }
+                
+                System.out.println("[DEBUG] Successfully added " + addedCount + 
+                    " events to the new calendar");
+                
+                // Set this as the new current calendar
+                selectedCalendar = newCalendar;
+                currentCalendar = newCalendar;
+                
+                // If timezone changed, update UI components to reflect new timezone
+                if (!currentTimezone.equals(newTimezone)) {
+                    System.out.println("[DEBUG] Performing view refresh after timezone change from '" + 
+                        currentTimezone + "' to '" + newTimezone + "'");
+                    
+                    // Get all events for the current month in the new calendar
+                    List<Event> currentEvents = newCalendar.getEventsInRange(firstDayOfMonth,
+                        lastDayOfMonth);
 
-              List<Event> currentEvents = currentCalendar.getEventsInRange(firstDayOfMonth,
-                  lastDayOfMonth);
-
-              System.out.println("[DEBUG] Found " + currentEvents.size()
-                  + " events in current month after timezone/name change");
-
-              updateEvents(selectedDate);
-              updateCalendarDisplay();
-              view.refreshView();
+                    System.out.println("[DEBUG] Found " + currentEvents.size() +
+                        " events in current month after timezone change");
+                        
+                    // Print a sample event for debugging
+                    if (!currentEvents.isEmpty()) {
+                        Event sampleEvent = currentEvents.get(0);
+                        System.out.println("[DEBUG] Sample event after timezone change: " + 
+                            sampleEvent.getSubject() + ", Start: " + sampleEvent.getStartDateTime() + 
+                            ", in timezone: " + newTimezone);
+                    }
+                }
+                
+                // Update UI with the new calendar
+                view.setSelectedCalendar(newName);
+                view.getCalendarPanel().updateCalendarName(newName);
+                view.updateCalendarList(new ArrayList<>(calendarManager
+                    .getCalendarRegistry().getCalendarNames()));
+                
+                // Refresh events for selected date in the UI
+                updateEvents(selectedDate);
+                view.updateCalendarView(currentCalendar);
+                view.refreshView();
+                
+              } catch (Exception e) {
+                System.err.println("[ERROR] Failed to recreate calendar with new timezone: " + e.getMessage());
+                e.printStackTrace();
+                // Fallback to standard update
+                updateEvents(selectedDate);
+                updateCalendarDisplay();
+                view.refreshView();
+              }
               String successMessage = "Calendar updated successfully";
               if (!oldName.equals(newName) && !currentTimezone.equals(newTimezone)) {
                 successMessage = "Calendar name and timezone updated successfully";
@@ -1880,10 +2101,6 @@ public class GUIController {
     updateStatus(date);
   }
 
-  /**
-   * Updates the calendar display with current information. Refreshes the view to reflect any
-   * changes in the selected calendar.
-   */
   private void updateCalendarDisplay() {
     if (selectedCalendar != null) {
       try {
