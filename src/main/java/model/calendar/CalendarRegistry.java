@@ -6,15 +6,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import model.calendar.iterator.ConsolidatedIterator;
-import model.event.Event;
-import model.event.RecurringEvent;
-import model.exceptions.CalendarExceptions.CalendarNotFoundException;
-import model.exceptions.CalendarExceptions.ConflictingEventException;
-import model.exceptions.CalendarExceptions.DuplicateCalendarException;
+import model.exceptions.CalendarNotFoundException;
+import model.exceptions.DuplicateCalendarException;
 
 /**
- * Manages registration and retrieval of calendars by name. This class is responsible for storing
- * calendars and providing access to them by name, following the Single Responsibility Principle.
+ * Manages registration and retrieval of calendars by name.
+ * This class is responsible for storing calendars and providing
+ * access to them by name, following the Single Responsibility Principle.
  */
 public class CalendarRegistry {
 
@@ -51,7 +49,7 @@ public class CalendarRegistry {
    * @throws DuplicateCalendarException if a calendar with the specified name already exists
    */
   public void registerCalendar(String name, Calendar calendar)
-      throws DuplicateCalendarException {
+          throws DuplicateCalendarException {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Calendar name cannot be null or empty");
     }
@@ -169,7 +167,7 @@ public class CalendarRegistry {
    * @throws CalendarNotFoundException if the calendar cannot be found
    */
   public void applyToCalendar(String calendarName, Consumer<Calendar> consumer)
-      throws CalendarNotFoundException {
+          throws CalendarNotFoundException {
     Calendar calendar = getCalendarByName(calendarName);
     consumer.accept(calendar);
   }
@@ -183,7 +181,7 @@ public class CalendarRegistry {
    * @throws DuplicateCalendarException if a calendar with newName already exists
    */
   public void renameCalendar(String oldName, String newName)
-      throws CalendarNotFoundException, DuplicateCalendarException {
+          throws CalendarNotFoundException, DuplicateCalendarException {
     if (!calendars.containsKey(oldName)) {
       throw new CalendarNotFoundException("Calendar not found: " + oldName);
     }
@@ -201,7 +199,7 @@ public class CalendarRegistry {
    * @throws CalendarNotFoundException if no active calendar is set
    */
   public void applyToActiveCalendar(Consumer<Calendar> consumer)
-      throws CalendarNotFoundException {
+          throws CalendarNotFoundException {
     if (activeCalendarName == null) {
       throw new CalendarNotFoundException("No active calendar set");
     }
@@ -209,8 +207,8 @@ public class CalendarRegistry {
   }
 
   /**
-   * Updates the name of a calendar. This method is an implementation detail and should not be
-   * called directly. Use renameCalendar instead.
+   * Updates the name of a calendar. This method is an implementation detail and
+   * should not be called directly. Use renameCalendar instead.
    *
    * @param oldName the old name of the calendar
    * @param newName the new name for the calendar
@@ -223,34 +221,37 @@ public class CalendarRegistry {
       throw new IllegalArgumentException("Calendar already exists: " + newName);
     }
 
-    Calendar calendar = calendars.get(oldName);
-    Calendar newCalendar = new Calendar(newName, calendar.getTimeZone().getID());
+    // Get the original calendar with all its events
+    Calendar originalCalendar = calendars.get(oldName);
 
-    // Copy all events from the old calendar to the new one
-    for (Event event : calendar.getAllEvents()) {
-      try {
-        newCalendar.addEvent(event, true);
-      } catch (ConflictingEventException e) {
-        // This should not happen since we're copying events one by one
-        throw new RuntimeException("Failed to copy event: " + e.getMessage());
-      }
-    }
+    // Print debug information about the calendar before renaming
+    int eventCount = originalCalendar.getAllEvents().size();
+    int recurringEventCount = originalCalendar.getAllRecurringEvents().size();
+    System.out.println("[DEBUG-REGISTRY] Calendar '" + oldName + "' has " + eventCount +
+            " events and " + recurringEventCount + " recurring events before renaming");
 
-    // Copy all recurring events from the old calendar to the new one
-    for (RecurringEvent event : calendar.getAllRecurringEvents()) {
-      try {
-        newCalendar.addRecurringEvent(event, true);
-      } catch (ConflictingEventException e) {
-        // This should not happen since we're copying events one by one
-        throw new RuntimeException("Failed to copy recurring event: " + e.getMessage());
-      }
-    }
+    // Update the name of the calendar - this will preserve all events
+    originalCalendar.setName(newName);
 
+    // Update the registry - use the SAME calendar object to preserve events
     calendars.remove(oldName);
-    calendars.put(newName, newCalendar);
+    calendars.put(newName, originalCalendar);
 
+    // Update active calendar reference if needed
     if (oldName.equals(activeCalendarName)) {
       activeCalendarName = newName;
+    }
+
+    // Verify events were preserved
+    Calendar renamedCalendar = calendars.get(newName);
+    System.out.println("[DEBUG-REGISTRY] After rename: Calendar '" + newName + "' has " +
+            renamedCalendar.getAllEvents().size() + " events and " +
+            renamedCalendar.getAllRecurringEvents().size() + " recurring events");
+
+    // Final verification
+    if (renamedCalendar.getAllEvents().size() != eventCount) {
+      System.out.println("[WARNING] Event count mismatch after rename! Expected: " +
+              eventCount + ", Actual: " + renamedCalendar.getAllEvents().size());
     }
   }
 }

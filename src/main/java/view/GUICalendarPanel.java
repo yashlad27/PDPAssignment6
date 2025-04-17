@@ -3,6 +3,8 @@ package view;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -415,33 +417,36 @@ public class GUICalendarPanel extends JPanel {
 
     button.addActionListener(e -> {
       selectedDate = date;
-      if (eventsByDate.containsKey(date) && !eventsByDate.get(date).isEmpty()) {
-        Event firstEvent = eventsByDate.get(date).get(0);
+
+      List<Event> eventsForDate = eventsByDate.containsKey(date) ?
+          new ArrayList<>(eventsByDate.get(date)) : new ArrayList<>();
+      if (!eventsForDate.isEmpty()) {
+        Event firstEvent = eventsForDate.get(0);
         currentSelectedEvent = firstEvent;
-        // Event auto-selected
         if (listener != null) {
+          System.out.println("[DEBUG] Date button clicked with event: " + firstEvent.getSubject());
           listener.onEventSelected(firstEvent);
         }
       } else {
         currentSelectedEvent = null;
-        // No events to select
-      }
-      if (listener != null) {
-        listener.onDateSelected(date);
+        if (listener != null) {
+          System.out.println("[DEBUG] Date button clicked with no events");
+          listener.onDateSelected(date);
+        }
       }
       updateCalendarDisplay();
-      updateEventList(date);
+      if (listener instanceof CalendarViewFeatures) {
+        System.out.println("[DEBUG] Updating event list results panel for date: " + date +
+            " with " + eventsForDate.size() + " events");
+        ((CalendarViewFeatures) listener).updateEventListResultsPanel(date, date, eventsForDate);
+      }
     });
 
-    // Add event indicators to the date button
     if (eventsByDate.containsKey(date)) {
       List<Event> events = eventsByDate.get(date);
-
-      // Convert events to local time zone for display
       TimeZoneHandler timezoneHandler = new TimeZoneHandler();
       String systemTimezone = timezoneHandler.getSystemDefaultTimezone();
 
-      // Filter the events to only include those that actually occur on this date in local time
       List<Event> eventsOnThisDate = new ArrayList<>();
       for (Event event : events) {
         LocalDateTime localStartDateTime = timezoneHandler.convertFromUTC(event.getStartDateTime(),
@@ -451,15 +456,12 @@ public class GUICalendarPanel extends JPanel {
           eventsOnThisDate.add(event);
         }
       }
-
-      // Deduplicate events based on subject to prevent multiple indicators for recurring events
       Map<String, Event> uniqueEventsBySubject = new HashMap<>();
       for (Event event : eventsOnThisDate) {
         uniqueEventsBySubject.putIfAbsent(event.getSubject(), event);
       }
       List<Event> uniqueEvents = new ArrayList<>(uniqueEventsBySubject.values());
 
-      // Display up to two events
       for (int i = 0; i < Math.min(uniqueEvents.size(), 2); i++) {
         Event event = uniqueEvents.get(i);
         JPanel eventIndicator = createEventIndicator(event);
@@ -467,7 +469,6 @@ public class GUICalendarPanel extends JPanel {
         eventsPanel.add(Box.createVerticalStrut(2));
       }
 
-      // Show how many more unique events there are
       if (uniqueEvents.size() > 2) {
         JLabel moreLabel = new JLabel("+ " + (uniqueEvents.size() - 2) + " more");
         moreLabel.setFont(new Font("Arial", Font.PLAIN, 9));
@@ -711,6 +712,7 @@ public class GUICalendarPanel extends JPanel {
   public void updateEventList(LocalDate date) {
     if (currentCalendar == null) {
       System.out.println("[DEBUG] No calendar selected");
+      displayMessageInEventList("No calendar selected");
       return;
     }
 
@@ -720,15 +722,130 @@ public class GUICalendarPanel extends JPanel {
       boolean hasEvents = eventsByDate.containsKey(date) && !eventsByDate.get(date).isEmpty();
 
       if (!hasEvents) {
+        displayMessageInEventList(
+            "No events for " + date.format(DateTimeFormatter.ofPattern("MMM d, yyyy")));
         return;
       }
 
       List<Event> eventsOnDate = new ArrayList<>(eventsByDate.get(date));
-
       eventsOnDate = dedupRecurringEvents(eventsOnDate);
 
+      JPanel eventsContainer = new JPanel();
+      eventsContainer.setLayout(new BoxLayout(eventsContainer, BoxLayout.Y_AXIS));
+      eventsContainer.setBackground(Color.WHITE);
+
+      JLabel dateLabel = new JLabel(date.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
+      dateLabel.setFont(new Font("Arial", Font.BOLD, 16));
+      dateLabel.setForeground(HEADER_COLOR);
+      dateLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+      eventsContainer.add(dateLabel);
+
+      for (Event event : eventsOnDate) {
+        JPanel eventPanel = new JPanel();
+        eventPanel.setLayout(new BorderLayout());
+        eventPanel.setBackground(Color.WHITE);
+        eventPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+        JLabel subjectLabel = new JLabel(event.getSubject());
+        subjectLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        subjectLabel.setForeground(TEXT_COLOR);
+
+        LocalDateTime startTime = event.getStartDateTime();
+        String timeText = startTime.format(DateTimeFormatter.ofPattern("h:mm a"));
+        JLabel timeLabel = new JLabel(timeText);
+        timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        JLabel descLabel = null;
+        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+          descLabel = new JLabel(event.getDescription());
+          descLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        }
+
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.add(subjectLabel);
+        infoPanel.add(timeLabel);
+        if (descLabel != null) {
+          infoPanel.add(descLabel);
+        }
+
+        eventPanel.add(infoPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(Color.WHITE);
+
+        JButton editButton = new JButton("Edit");
+        editButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        editButton.setFocusPainted(false);
+
+        JButton printButton = new JButton("Print");
+        printButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        printButton.setFocusPainted(false);
+
+        final Event finalEvent = event;
+        editButton.addActionListener(e -> {
+          currentSelectedEvent = finalEvent;
+          handleEventAction(finalEvent.getId().toString(), "edit");
+        });
+
+        printButton.addActionListener(e -> {
+          currentSelectedEvent = finalEvent;
+          handleEventAction(finalEvent.getId().toString(), "print");
+        });
+
+        buttonPanel.add(editButton);
+        buttonPanel.add(printButton);
+        eventPanel.add(buttonPanel, BorderLayout.EAST);
+
+        eventPanel.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            currentSelectedEvent = finalEvent;
+            highlightEvent(eventPanel);
+            if (listener != null) {
+              if (finalEvent instanceof RecurringEvent) {
+                listener.onRecurringEventSelected((RecurringEvent) finalEvent);
+              } else {
+                listener.onEventSelected(finalEvent);
+              }
+            }
+          }
+        });
+
+        eventsContainer.add(eventPanel);
+      }
+      JScrollPane scrollPane = new JScrollPane(eventsContainer);
+      scrollPane.setBorder(null);
+      scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+      if (eventListArea.getParent() instanceof JViewport) {
+        JViewport viewport = (JViewport) eventListArea.getParent();
+        if (viewport.getParent() instanceof JScrollPane) {
+          JScrollPane oldScrollPane = (JScrollPane) viewport.getParent();
+          Container parent = oldScrollPane.getParent();
+          if (parent != null) {
+            int index = -1;
+            for (int i = 0; i < parent.getComponentCount(); i++) {
+              if (parent.getComponent(i) == oldScrollPane) {
+                index = i;
+                break;
+              }
+            }
+            if (index >= 0) {
+              parent.remove(oldScrollPane);
+              parent.add(scrollPane, index);
+              parent.revalidate();
+              parent.repaint();
+            }
+          }
+        }
+      }
     } catch (Exception e) {
       System.err.println("Error updating event list: " + e.getMessage());
+      e.printStackTrace();
+      displayMessageInEventList("Error displaying events: " + e.getMessage());
     }
   }
 

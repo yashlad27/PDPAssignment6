@@ -28,10 +28,7 @@ public class CommandFactory implements ICommandFactory {
    * @param view     the view for user interaction
    */
   public CommandFactory(ICalendar calendar, ICalendarView view) {
-    if (calendar == null) {
-      throw new IllegalArgumentException("Calendar cannot be null");
-    }
-
+    // Allow null calendar, we'll check before operations
     if (view == null) {
       throw new IllegalArgumentException("View cannot be null");
     }
@@ -51,13 +48,33 @@ public class CommandFactory implements ICommandFactory {
     registerEditCommand();
     registerUseCommand();
 
-    commands.put("print", new PrintEventsCommand(calendar)::execute);
+    commands.put("print", args -> {
+      if (isCalendarMissing()) {
+        return "Error: No calendar selected. Please create a calendar first and use it.";
+      }
+      return new PrintEventsCommand(calendar).execute(args);
+    });
 
-    commands.put("show", new ShowStatusCommand(calendar)::execute);
+    commands.put("show", args -> {
+      if (isCalendarMissing()) {
+        return "Error: No calendar selected. Please create a calendar first and use it.";
+      }
+      return new ShowStatusCommand(calendar).execute(args);
+    });
 
-    commands.put("export", new ExportCalendarCommand(calendar)::execute);
+    commands.put("export", args -> {
+      if (isCalendarMissing()) {
+        return "Error: No calendar selected. Please create a calendar first and use it.";
+      }
+      return new ExportCalendarCommand(calendar).execute(args);
+    });
 
-    commands.put("import", new ImportCalendarCommand(calendar)::execute);
+    commands.put("import", args -> {
+      if (isCalendarMissing()) {
+        return "Error: No calendar selected. Please create a calendar first and use it.";
+      }
+      return new ImportCalendarCommand(calendar).execute(args);
+    });
 
     commands.put("copy", args -> "Command forwarded to CalendarCommandFactory");
 
@@ -68,20 +85,27 @@ public class CommandFactory implements ICommandFactory {
    * Registers the create command with all its subcommands.
    */
   private void registerCreateCommand() {
-    CreateEventCommand createCmd = new CreateEventCommand(calendar);
-    commands.put("create", createCmd::execute);
+    commands.put("create", args -> {
+      if (isCalendarMissing()) {
+        return "Error: No calendar selected. Please create a calendar first and use it.";
+      }
+      CreateEventCommand createCmd = new CreateEventCommand(calendar);
+      return createCmd.execute(args);
+    });
   }
 
   /**
    * Registers the edit command with all its subcommands.
    */
   private void registerEditCommand() {
-    EditEventCommand editCmd = new EditEventCommand(calendar);
-
     commands.put("edit", (args) -> {
       if (args.length > 0 && args[0].equals("calendar")) {
         return "Command forwarded to CalendarCommandFactory";
       }
+      if (isCalendarMissing()) {
+        return "Error: No calendar selected. Please create a calendar first and use it.";
+      }
+      EditEventCommand editCmd = new EditEventCommand(calendar);
       return editCmd.execute(args);
     });
   }
@@ -138,6 +162,15 @@ public class CommandFactory implements ICommandFactory {
    */
   public ICalendar getCalendar() {
     return calendar;
+  }
+  
+  /**
+   * Checks if a calendar is missing or not set.
+   *
+   * @return true if calendar is null, false otherwise
+   */
+  private boolean isCalendarMissing() {
+    return calendar == null;
   }
 
   /**

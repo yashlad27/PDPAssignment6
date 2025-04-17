@@ -3,10 +3,8 @@ import controller.CalendarController;
 import controller.GUIController;
 import controller.ICommandFactory;
 import javax.swing.SwingUtilities;
-import model.calendar.Calendar;
 import model.calendar.CalendarManager;
-import model.calendar.ICalendar;
-import model.exceptions.CalendarExceptions.CalendarNotFoundException;
+import model.exceptions.CalendarNotFoundException;
 import model.factory.CalendarFactory;
 import utilities.TimeZoneHandler;
 import view.CalendarViewFeatures;
@@ -34,29 +32,10 @@ import view.TextView;
  */
 public class CalendarApp {
 
-  /**
-   * Manages multiple calendars and their operations.
-   */
   private static CalendarManager calendarManager;
-
-  /**
-   * View interface for displaying calendar information.
-   */
   private static ICalendarView view;
-
-  /**
-   * Controller for handling user interactions and business logic.
-   */
   private static CalendarController controller;
-
-  /**
-   * Current operating mode of the application (gui, text, or headless).
-   */
   private static String currentMode = "gui";
-
-  /**
-   * Command line arguments passed to the application.
-   */
   private static String[] commandLineArgs;
 
   /**
@@ -96,14 +75,14 @@ public class CalendarApp {
     CalendarFactory factory = new CalendarFactory();
     TimeZoneHandler timezoneHandler = factory.createTimeZoneHandler();
     calendarManager = factory.createCalendarManager(timezoneHandler);
-    ICalendar calendar = new Calendar();
-
+    
     controller = factory.createController(null,
         null, calendarManager, null);
 
     view = CalendarFactory.createView(currentMode, controller);
 
-    ICommandFactory eventCommandFactory = factory.createEventCommandFactory(calendar, view);
+    // No default calendar - create factory without a calendar
+    ICommandFactory eventCommandFactory = factory.createEventCommandFactory(null, view);
     ICommandFactory calendarCommandFactory = factory.createCalendarCommandFactory(calendarManager,
         view);
 
